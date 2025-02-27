@@ -40,7 +40,12 @@ public:
     }
 
     SimTK::Vector getRandomZ() {
-        return SimTK::Test::randVector(state.getNZ());
+        SimTK::Vector z(state.getNZ());
+        for (int i = 0; i < z.size(); ++i) {
+            SimTK::Random::Uniform random(0, 1);
+            z[i] = random.getValue();
+        }
+        return z;
     }
 
     SimTK::Vector getRandomY() {
