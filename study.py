@@ -1,30 +1,52 @@
 import os
 import yaml
 
-class Model(object):
-    def __init__(self, study, name, filename):
-        self.study = study
+class Test(object):
+    def __init__(self, model, name, metadata=None):
+        self.model = model
+        self.study = model.study
         self.name = name
-        self.filename = filename
-        self.path = os.path.join(self.study.config['models_path'], self.filename)
-        # self.conditions = list()
+        self.metadata = metadata
+        self.rel_path = os.path.join(self.model.rel_path, name)
+        self.results_exp_path = os.path.join(self.study.config['results_path'],
+             self.rel_path)
         self.tasks = list()
 
-    # def add_condition(self, *args, **kwargs):
-    #     """Example: `cond.add_condition('loaded')`"""
-    #     cond = Condition(self, None, *args, **kwargs)
-    #     assert not self.contains_condition(cond.name)
-    #     self.conditions.append(cond)
-    #     return cond
-    
-    # def get_condition(self, name):
-    #     for cond in self.conditions:
-    #         if cond.name == name:
-    #             return cond
-    #     return None
+    def add_task(self, cls, *args, **kwargs):
+        """Add a TestTask for this test.
+        """
+        task = cls(self, *args, **kwargs)
+        self.tasks.append(task)
+        return task
 
-    # def contains_condition(self, name):
-    #     return (self.get_condition(name) != None)
+
+class Model(object):
+    def __init__(self, study, filename):
+        self.study = study
+        self.filename = filename
+        self.path = os.path.join(self.study.config['models_path'], self.filename)
+        self.name = filename.replace('.osim', '')
+        self.rel_path = self.name
+        self.results_path = os.path.join(self.study.config['results_path'], 
+                                         self.rel_path)
+        self.tests = list()
+        self.tasks = list()
+
+    def add_test(self, *args, **kwargs):
+        """Example: `model.add_test('realize')`"""
+        test = Test(self, *args, **kwargs)
+        assert not self.contains_test(test.name)
+        self.tests.append(test)
+        return test
+    
+    def get_test(self, name):
+        for test in self.tests:
+            if test.name == test:
+                return test
+        return None
+
+    def contains_test(self, name):
+        return (self.get_test(name) != None)
     
     def add_task(self, cls, *args, **kwargs):
         """Add a ModelTask for this model.

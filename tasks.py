@@ -99,15 +99,20 @@ class ModelTask(StudyTask):
     def __init__(self, model):
         super(ModelTask, self).__init__(model.study)
         self.model = model
+
+class TestTask(ModelTask):
+    def __init__(self, test):
+        super(TestTask, self).__init__(test.model)
+        self.test = test
             
 ######################################################################
 #                           CUSTOM TASKS                             #
 ######################################################################
 
-class InstallDependencies(StudyTask):
+class TaskInstallDependencies(StudyTask):
     REGISTRY = []
     def __init__(self, study):
-        super(InstallDependencies, self).__init__(study)
+        super(TaskInstallDependencies, self).__init__(study)
         self.name = 'install_dependencies'
         
         self.install_script = os.path.join(self.study.config['dependencies_path'], 
@@ -126,19 +131,34 @@ class InstallDependencies(StudyTask):
         if p.returncode != 0:
             raise Exception('Non-zero exit status: code %s.' % p.returncode)
         
-class GenerateModels(ModelTask):
+class TaskGenerateModels(ModelTask):
     REGISTRY = []
     def __init__(self, model, flags):
-        super(GenerateModels, self).__init__(model)
+        super(TaskGenerateModels, self).__init__(model)
         self.name = f'generate_models_{model.name}'
         self.flags = flags
+        self.generator = ModelGenerator(model.path, flags)
+        model_names = self.generator.generate_model_names()
+        model_paths = [os.path.join(self.study.config['models_path'], model.name,
+                       f'{model_name}.osim') for model_name in model_names]
         
-        self.default_model_path = os.path.basename(model.path).replace(
-                '.osim', '_nomuscdyn.osim')
         self.add_action([model.path], 
-                        [self.default_model_path], 
+                        model_paths, 
                         self.generate_models)
-
+        
     def generate_models(self, file_dep, target):
-        generator = ModelGenerator(file_dep[0], self.flags)
-        generator.generate_models()
+        self.generator.generate_models()
+
+class TaskRunTest(TestTask):
+    REGISTRY = []
+    def __init__(self, test, flags):
+        super(TaskRunTest, self).__init__(test)
+        self.name = f'run_test_{test.name}'
+        self.flags = flags
+
+        self.add_action([test.model.path], 
+                        [test.results_exp_path], 
+                        self.run_test)
+
+    def run_test(self, file_dep, target):
+        pass

@@ -27,13 +27,13 @@ from tasks import *
 study = Study('opensim_benchmark')
 
 # Add study tasks.
-study.add_task(InstallDependencies)
+study.add_task(TaskInstallDependencies)
 
 # Add models to the study.
-model = study.add_model('rajagopal', 'RajagopalLaiUhlrich2023.osim')
-flags = ['ignore_activation_dynamics', 'ignore_tendon_compliance', 
-         'remove_wrap_objects']
-model.add_task(GenerateModels, flags)
+model = study.add_model('RajagopalLaiUhlrich2023.osim')
+flags = ['ignore_muscle_dynamics', 'remove_wrap_objects', 'disable_constraints']
+model.add_task(TaskGenerateModels, flags)
+realize = model.add_test('realize')
 
 # colormap = 'plasma'
 # cmap = plt.get_cmap(colormap)
