@@ -9,4 +9,4 @@ find_package(OpenSim REQUIRED CONFIG)
 find_package(benchmark REQUIRED)
 
 # Add source directory
-add_subdirectory(src)
+add_subdirectory(benchmarks)

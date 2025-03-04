@@ -1,7 +1,7 @@
 import os
 import yaml
 
-class Test(object):
+class Benchmark(object):
     def __init__(self, model, name, metadata=None):
         self.model = model
         self.study = model.study
@@ -13,7 +13,7 @@ class Test(object):
         self.tasks = list()
 
     def add_task(self, cls, *args, **kwargs):
-        """Add a TestTask for this test.
+        """Add a BenchmarkTask for this benchmark.
         """
         task = cls(self, *args, **kwargs)
         self.tasks.append(task)
@@ -29,24 +29,24 @@ class Model(object):
         self.rel_path = self.name
         self.results_path = os.path.join(self.study.config['results_path'], 
                                          self.rel_path)
-        self.tests = list()
+        self.benchmarks = list()
         self.tasks = list()
 
-    def add_test(self, *args, **kwargs):
-        """Example: `model.add_test('realize')`"""
-        test = Test(self, *args, **kwargs)
-        assert not self.contains_test(test.name)
-        self.tests.append(test)
-        return test
+    def add_benchmark(self, *args, **kwargs):
+        """Example: `model.add_benchmark('realize')`"""
+        benchmark = Benchmark(self, *args, **kwargs)
+        assert not self.contains_benchmark(benchmark.name)
+        self.benchmarks.append(benchmark)
+        return benchmark
     
-    def get_test(self, name):
-        for test in self.tests:
-            if test.name == test:
-                return test
+    def get_benchmark(self, name):
+        for benchmark in self.benchmarks:
+            if benchmark.name == benchmark:
+                return benchmark
         return None
 
-    def contains_test(self, name):
-        return (self.get_test(name) != None)
+    def contains_benchmark(self, name):
+        return (self.get_benchmark(name) != None)
     
     def add_task(self, cls, *args, **kwargs):
         """Add a ModelTask for this model.

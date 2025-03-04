@@ -1,7 +1,6 @@
 import sys
 import os
 import yaml
-import numpy as np
 with open('config.yaml') as f:
     config = yaml.safe_load(f)
 
@@ -11,8 +10,10 @@ DOIT_CONFIG = {
         }
 
 # Settings for plots.
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-plt.rc('font', family='Helvetica, Arial, sans-serif', size=8)
+plt.rc('font', size=8)
 plt.rc('errorbar', capsize=1.5)
 plt.rc('lines', markeredgewidth=1)
 plt.rc('legend', fontsize=8)
@@ -31,10 +32,26 @@ study.add_task(TaskInstallDependencies)
 
 # Add models to the study.
 model = study.add_model('RajagopalLaiUhlrich2023.osim')
-flags = ['ignore_muscle_dynamics', 'remove_wrap_objects', 'disable_constraints']
-model.add_task(TaskGenerateModels, flags)
-realize = model.add_test('realize')
 
-# colormap = 'plasma'
-# cmap = plt.get_cmap(colormap)
-# indices = np.linspace(0, 1.0, len(study.subtalar_suffixes)) 
+flags = ['ignore_muscle_dynamics', 'remove_wrap_objects', 'disable_constraints',
+         'remove_muscles']
+model.add_task(TaskGenerateModels, flags)
+
+# realize = model.add_benchmark('realize')
+# realize.add_task(TaskRunBenchmark, model.tasks[-1])
+
+forward = model.add_benchmark('forward')
+exe_args = {'final_time': 0.01}
+forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+
+
+# exe_args = {'final_time': 0.01, 'step_size': 1e-3}
+# forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+# exe_args = {'final_time': 0.01, 'step_size': 1e-3, 'randomize': 1}
+# forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+# exe_args = {'final_time': 0.1}
+# forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+# exe_args = {'final_time': 0.1, 'randomize': 1}
+# forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+

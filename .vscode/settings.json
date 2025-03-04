@@ -3,5 +3,7 @@
         "OpenSim_DIR": "/home/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_core_install/cmake",
         "Simbody_DIR": "/home/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/simbody/lib/cmake/simbody",
         "benchmark_DIR": "/home/nbianco/Developer/perf/OpenSimBenchmark/dependencies/benchmark/benchmark_install/lib/cmake/benchmark",
+        "docopt_DIR": "/home/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/docopt/lib/cmake/docopt",
+        "docopt_INCLUDE_DIRS": "/home/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/docopt/include",
     },
 }

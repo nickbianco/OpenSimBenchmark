@@ -8,7 +8,8 @@ class ModelGenerator:
     all_flags = [
         'ignore_muscle_dynamics',
         'remove_wrap_objects',
-        'disable_constraints'
+        'disable_constraints',
+        'remove_muscles'
     ]
 
     def __init__(self, model_path, flags_to_include=None):
@@ -39,10 +40,12 @@ class ModelGenerator:
             muscle.set_ignore_activation_dynamics(ignore_muscle_dynamics)
             muscle.set_ignore_tendon_compliance(ignore_muscle_dynamics)
 
+        tag = ''
         if ignore_muscle_dynamics:
             model_name += '_nomuscdyn'
+            tag = 'no musc. dyn.'
 
-        return model_name
+        return model_name, tag
 
     @staticmethod
     def remove_wrap_objects(model, model_name):
@@ -51,6 +54,10 @@ class ModelGenerator:
             muscle = muscles.get(i)
             geometry_path = muscle.getGeometryPath()
             geometry_path.updWrapSet().clearAndDestroy()
+            # Remove all path points except the first and last.
+            pathPoints = geometry_path.updPathPointSet()
+            while pathPoints.getSize() > 2:
+                pathPoints.remove(1)
 
         bodies = model.getBodySet()
         for i in range(bodies.getSize()):
@@ -59,8 +66,25 @@ class ModelGenerator:
 
         model.finalizeConnections()
         model_name += '_nowrap'
+        tag = 'no wrapping'
 
-        return model_name
+        return model_name, tag
+    
+    @staticmethod
+    def remove_muscles(model, model_name):
+        muscles = model.getMuscles()
+        size = muscles.getSize()
+        while size:
+            muscle = muscles.get(0)
+            index = model.getForceSet().getIndex(muscle, 0)
+            model.updForceSet().remove(index)
+            size = muscles.getSize()
+
+        model.finalizeConnections()
+        model_name += '_nomuscles'
+        tag = 'no muscles'
+
+        return model_name, tag
     
     @staticmethod
     def disable_constraints(model, model_name):
@@ -69,28 +93,46 @@ class ModelGenerator:
 
         model.finalizeConnections()
         model_name += '_noconstraints'
+        tag = 'no constraints'
 
-        return model_name
+        return model_name, tag
 
     def generate_model(self, flags, print_model=True):
         model = osim.Model(self.model_path)
         model.initSystem()
         model_name = f'{self.model_name}'
+        tags = list()
 
-        model_name = self.set_muscle_dynamics(model, model_name, 
+        model_name, tag = self.set_muscle_dynamics(model, model_name, 
                                               flags['ignore_muscle_dynamics'])
+        if tag: tags.append(tag)
         
         if flags['remove_wrap_objects']:
-            model_name = self.remove_wrap_objects(model, model_name)
+            model_name, tag = self.remove_wrap_objects(model, model_name)
+            tags.append(tag)
 
         if flags['disable_constraints']:
-            model_name = self.disable_constraints(model, model_name)
+            model_name, tag = self.disable_constraints(model, model_name)
+            tags.append(tag)
+
+        if flags['remove_muscles']:
+            model_name, tag = self.remove_muscles(model, model_name)
+            tags.append(tag)
 
         if print_model:
             model.printToXML(os.path.join(self.model_dir, f"{model_name}.osim"))
             print(f' --> Generated {model_name}.osim')
 
-        return model_name
+        # Sort tags by length.
+        tags.sort(key=len)
+
+        # Create one tag that combines all tags delimited by a new line.
+        tag = '\n'.join(tags)
+
+        if not tag:
+            tag = 'base model'
+
+        return model_name, tag
 
     def verify_flags(self):
         if self.flags_to_include:
@@ -98,6 +140,16 @@ class ModelGenerator:
                 if flag not in self.all_flags:
                     print(f"Error: '{flag}' is not a valid flag.")
                     sys.exit(1)
+
+    def filter_flags(self, flags):
+        if 'remove_muscles' in flags and flags['remove_muscles']:
+            if 'ignore_muscle_dynamics' in flags and flags['ignore_muscle_dynamics']:
+                return False
+            
+            if 'remove_wrap_objects' in flags and flags['remove_wrap_objects']:
+                return False
+            
+        return True
 
     def get_flags_list(self):
         # Verify the user-specified flags.
@@ -116,7 +168,9 @@ class ModelGenerator:
             for combination in combinations:
                 flags = {flag: combination[i] for i, 
                          flag in enumerate(self.flags_to_include)}
-                flags_list.append(flags)
+                
+                if self.filter_flags(flags):
+                    flags_list.append(flags)
 
         return flags_list
 
@@ -130,8 +184,10 @@ class ModelGenerator:
         # Generate model names for each combination of flags.
         flags_list = self.get_flags_list()
         model_names = list()
+        model_tags = list()
         for flags in flags_list:
-            model_name = self.generate_model(flags, False)
+            model_name, model_tag = self.generate_model(flags, False)
             model_names.append(model_name)
+            model_tags.append(model_tag)
         
-        return model_names
+        return model_names, model_tags

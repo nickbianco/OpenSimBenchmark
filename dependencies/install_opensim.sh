@@ -56,7 +56,7 @@ cd $WORKING_DIR/opensim-core/dependencies/build
 cmake $WORKING_DIR/opensim-core/dependencies -DCMAKE_INSTALL_PREFIX=$WORKING_DIR/opensim_dependencies_install/ -DSUPERBUILD_ezc3d=on -DOPENSIM_WITH_CASADI=$MOCO -DOPENSIM_WITH_TROPTER=$MOCO
 cmake . -LAH
 cmake --build . --config $DEBUG_TYPE -j$NUM_JOBS
-echo
+
 
 # Build and install opensim-core.
 mkdir -p $WORKING_DIR/opensim-core/build

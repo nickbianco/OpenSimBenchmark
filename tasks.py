@@ -73,9 +73,6 @@ class Task(object):
 
     @classmethod
     def create_doit_tasks(cls):
-        """Create a specific task for each registered instance of this
-        class.
-        """
         # Python-doit invokes this function for any object in the `doit`
         # namespace that has it; this is how python-doit registers the tasks.
         for instance in cls.REGISTRY:
@@ -100,10 +97,12 @@ class ModelTask(StudyTask):
         super(ModelTask, self).__init__(model.study)
         self.model = model
 
-class TestTask(ModelTask):
-    def __init__(self, test):
-        super(TestTask, self).__init__(test.model)
-        self.test = test
+class BenchmarkTask(ModelTask):
+    def __init__(self, benchmark):
+        super(BenchmarkTask, self).__init__(benchmark.model)
+        self.benchmark = benchmark
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+                                      benchmark.name)
             
 ######################################################################
 #                           CUSTOM TASKS                             #
@@ -138,27 +137,108 @@ class TaskGenerateModels(ModelTask):
         self.name = f'generate_models_{model.name}'
         self.flags = flags
         self.generator = ModelGenerator(model.path, flags)
-        model_names = self.generator.generate_model_names()
-        model_paths = [os.path.join(self.study.config['models_path'], model.name,
-                       f'{model_name}.osim') for model_name in model_names]
+        self.model_names, self.model_tags = self.generator.generate_model_names()
+        self.model_paths = [os.path.join(self.study.config['models_path'], model.name,
+                       f'{model_name}.osim') for model_name in self.model_names]
         
         self.add_action([model.path], 
-                        model_paths, 
+                        self.model_paths, 
                         self.generate_models)
         
     def generate_models(self, file_dep, target):
         self.generator.generate_models()
 
-class TaskRunTest(TestTask):
+class TaskRunBenchmark(BenchmarkTask):
     REGISTRY = []
-    def __init__(self, test, flags):
-        super(TaskRunTest, self).__init__(test)
-        self.name = f'run_test_{test.name}'
-        self.flags = flags
+    def __init__(self, benchmark, generate_models_task, exe_args):
+        super(TaskRunBenchmark, self).__init__(benchmark)
+        self.exe_args = exe_args
+        self.benchmark_name = f'benchmark_{benchmark.name}'
+        for arg in self.exe_args:
+            self.benchmark_name  += f'_{arg}{exe_args[arg]}'
+        self.benchmark_name  += f'_{benchmark.model.name}'
+        self.name = f'run_{self.benchmark_name}'
+        self.model_names = generate_models_task.model_names
+        self.model_paths = generate_models_task.model_paths
+        self.model_tags = generate_models_task.model_tags
 
-        self.add_action([test.model.path], 
-                        [test.results_exp_path], 
+        subdir = ''
+        first = True
+        for arg in self.exe_args:
+            if first:
+                subdir += f'{arg}{exe_args[arg]}'
+                first = False
+            else:
+                subdir += f'_{arg}{exe_args[arg]}'
+
+        self.result_path = os.path.join(benchmark.results_exp_path, subdir)
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+
+        self.out_paths = [os.path.join(benchmark.results_exp_path, subdir, 
+                                       f'{model_name}.json') 
+                          for model_name in self.model_names]
+
+        self.add_action(self.model_paths, 
+                        self.out_paths, 
                         self.run_test)
 
     def run_test(self, file_dep, target):
-        pass
+        import subprocess
+        
+        for model_path, out_path in zip(file_dep, target):
+            command = f'{self.exe_path} {model_path}'
+            for arg in self.exe_args:
+                command += f' --{arg} {self.exe_args[arg]}'
+            command += f' --benchmark_out={out_path}'
+            p = subprocess.run(command, check=True, shell=True,
+                               cwd=self.benchmark.results_exp_path)
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+            
+class TaskPlotBenchmark(BenchmarkTask):
+    REGISTRY = []
+    def __init__(self, benchmark, run_task):
+        super(TaskPlotBenchmark, self).__init__(benchmark)
+        self.benchmark_name = run_task.benchmark_name
+        self.name = f'plot_{self.benchmark_name}'
+
+        self.model_names = run_task.model_names
+        self.model_tags = run_task.model_tags
+        self.out_paths = run_task.out_paths
+        self.result_path = run_task.result_path
+        self.cpu_times_path = os.path.join(self.result_path, 'cpu_times.png')
+
+        self.add_action(self.out_paths, 
+                        [self.cpu_times_path],
+                        self.plot_benchmark)
+        
+    def plot_benchmark(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+        
+        cpu_times = list()
+        time_unit = None
+        for out_path in file_dep:
+            with open(out_path) as f:
+                data = json.load(f)
+            
+            cpu_times.append(data['benchmarks'][0]['cpu_time'])
+            time_unit = data['benchmarks'][0]['time_unit']
+
+        labels = self.model_tags.copy()
+        # Sort labels and cpu_times by cpu_times.
+        labels, cpu_times = zip(*sorted(zip(labels, cpu_times), key=lambda x: x[1]))
+
+        plt.figure(figsize=(10, 6))
+        plt.bar(labels, cpu_times)
+        plt.xticks(rotation=45)
+        plt.xlabel('Model')
+        plt.ylabel(f'CPU Time ({time_unit})')
+        plt.title(self.benchmark_name)
+
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
+
+        
