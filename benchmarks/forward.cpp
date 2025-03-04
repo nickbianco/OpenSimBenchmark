@@ -7,12 +7,12 @@ static const char HELP[] =
 R"(Benchmark a forward simulation.
 
 Usage:
-  forward <model> [--final_time <time>] [--step_size <size>] [--randomize <bool>]
+  forward <model> [--time <time>] [--step <step>] [--randomize <bool>]
   forward -h | --help
 
 Options:
-  -f <time>, --final_time <time>  Set the final time.
-  -s <size>, --step_size <size>   Set the step size.
+  -t <time>, --time <time>        Set the final time.
+  -s <step>, --step <step>        Set the step size.
   -r <bool>, --randomize <bool>   Randomize the initial state.
 )";
 
@@ -65,14 +65,14 @@ int main(int argc, char** argv) {
     // Final time and step size.
     double final_time = 1.0; // seconds
     if (args["--final_time"]) {
-        final_time = std::stod(args["--final_time"].asString());
+        final_time = std::stod(args["--time"].asString());
         OPENSIM_THROW_IF(final_time <= 0, OpenSim::Exception, 
                 "Final time must be positive.");
     }
 
     double step_size = -1; // seconds
     if (args["--step_size"]) {
-        step_size = std::stod(args["--step_size"].asString());
+        step_size = std::stod(args["--step"].asString());
         OPENSIM_THROW_IF(step_size <= 0, OpenSim::Exception, 
                 "Step size must be positive.");
     }

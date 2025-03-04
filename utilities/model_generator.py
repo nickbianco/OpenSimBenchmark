@@ -123,12 +123,8 @@ class ModelGenerator:
             model.printToXML(os.path.join(self.model_dir, f"{model_name}.osim"))
             print(f' --> Generated {model_name}.osim')
 
-        # Sort tags by length.
         tags.sort(key=len)
-
-        # Create one tag that combines all tags delimited by a new line.
         tag = '\n'.join(tags)
-
         if not tag:
             tag = 'base model'
 

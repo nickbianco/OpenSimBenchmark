@@ -230,10 +230,9 @@ class TaskPlotBenchmark(BenchmarkTask):
         # Sort labels and cpu_times by cpu_times.
         labels, cpu_times = zip(*sorted(zip(labels, cpu_times), key=lambda x: x[1]))
 
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(7, 4))
         plt.bar(labels, cpu_times)
         plt.xticks(rotation=45)
-        plt.xlabel('Model')
         plt.ylabel(f'CPU Time ({time_unit})')
         plt.title(self.benchmark_name)
 

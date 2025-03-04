@@ -41,17 +41,17 @@ model.add_task(TaskGenerateModels, flags)
 # realize.add_task(TaskRunBenchmark, model.tasks[-1])
 
 forward = model.add_benchmark('forward')
-exe_args = {'final_time': 0.01}
+exe_args = {'time': 0.01}
 forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
 forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
 
 
-# exe_args = {'final_time': 0.01, 'step_size': 1e-3}
+# exe_args = {'time': 0.01, 'step': 1e-3}
 # forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
-# exe_args = {'final_time': 0.01, 'step_size': 1e-3, 'randomize': 1}
+# exe_args = {'time': 0.01, 'step': 1e-3, 'randomize': 1}
 # forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
-# exe_args = {'final_time': 0.1}
+# exe_args = {'time': 0.1}
 # forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
-# exe_args = {'final_time': 0.1, 'randomize': 1}
+# exe_args = {'time': 0.1, 'randomize': 1}
 # forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
 
