@@ -15,7 +15,9 @@ config.yaml
 # pycache
 __pycache__/
 
-
 # Ignore all subdirectories under models/, but don't ignore 
 # the models/ directory itself.
 models/*/
+
+# Results
+/results

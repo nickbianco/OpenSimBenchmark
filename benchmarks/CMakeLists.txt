@@ -7,3 +7,7 @@ target_include_directories(realize PRIVATE ${docopt_INCLUDE_DIRS})
 add_executable(forward forward.cpp utilities.h)
 target_link_libraries(forward ${OpenSim_LIBRARIES} benchmark::benchmark docopt_s)
 target_include_directories(forward PRIVATE ${docopt_INCLUDE_DIRS})
+
+add_executable(manager manager.cpp utilities.h)
+target_link_libraries(manager ${OpenSim_LIBRARIES} benchmark::benchmark docopt_s)
+target_include_directories(manager PRIVATE ${docopt_INCLUDE_DIRS})

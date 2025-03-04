@@ -227,13 +227,18 @@ class TaskPlotBenchmark(BenchmarkTask):
             time_unit = data['benchmarks'][0]['time_unit']
 
         labels = self.model_tags.copy()
-        # Sort labels and cpu_times by cpu_times.
         labels, cpu_times = zip(*sorted(zip(labels, cpu_times), key=lambda x: x[1]))
 
         plt.figure(figsize=(7, 4))
         plt.bar(labels, cpu_times)
+        plt.yscale('log')
+        plt.yticks([1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000], 
+                   ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', '1 s', '10 s', '100 s'])
         plt.xticks(rotation=45)
-        plt.ylabel(f'CPU Time ({time_unit})')
+        plt.ylabel(f'CPU Time')
+        plt.grid(axis='y', linestyle='--')
+        ax = plt.gca()
+        ax.set_axisbelow(True)
         plt.title(self.benchmark_name)
 
         plt.tight_layout()
