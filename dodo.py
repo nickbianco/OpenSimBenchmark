@@ -33,42 +33,72 @@ study.add_task(TaskInstallDependencies)
 # Add models to the study.
 model = study.add_model('RajagopalLaiUhlrich2023.osim')
 
-flags = ['ignore_muscle_dynamics', 'remove_wrap_objects', 'disable_constraints',
-         'remove_muscles']
+flags = ['ignore_activation_dynamics', 'ignore_tendon_compliance', 'remove_wrap_objects', 
+         'disable_constraints', 'remove_muscles']
 model.add_task(TaskGenerateModels, flags)
 
-# realize = model.add_benchmark('realize')
-# realize.add_task(TaskRunBenchmark, model.tasks[-1])
 
 forward = model.add_benchmark('forward')
 
-exe_args = {'time': 0.01}
-forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.01})
 forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
 
-exe_args = {'time': 0.1}
-forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.1})
 forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
 
-exe_args = {'time': 1.0}
-forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 1.0})
+forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+
+
+forward.add_task(TaskRunBenchmark, model.tasks[-1], 
+                 exe_args={'time': 0.01, 'step': 1e-3})
+forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+
+forward.add_task(TaskRunBenchmark, model.tasks[-1], 
+                 exe_args={'time': 0.1, 'step': 1e-3})
+forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+
+forward.add_task(TaskRunBenchmark, model.tasks[-1], 
+                 exe_args={'time': 1.0, 'step': 1e-3})
 forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
 
 
 
 manager = model.add_benchmark('manager')
 
-exe_args = {'time': 0.01}
-manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.01})
 manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
 
-exe_args = {'time': 0.1}
-manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.1})
 manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
 
-exe_args = {'time': 1.0}
-manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args)
+manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 1.0})
 manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+
+
+manager.add_task(TaskRunBenchmark, model.tasks[-1], 
+                 exe_args={'time': 0.01, 'step': 1e-3})
+manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+
+manager.add_task(TaskRunBenchmark, model.tasks[-1], 
+                 exe_args={'time': 0.1, 'step': 1e-3} )
+manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+
+manager.add_task(TaskRunBenchmark, model.tasks[-1], 
+                 exe_args={'time': 1.0, 'step': 1e-3} )
+manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+
+
+realize = model.add_benchmark('realize')
+
+realize.add_task(TaskRunBenchmark, model.tasks[-1])
+realize.add_task(TaskPlotBenchmark, realize.tasks[-1])    
+
+realize.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'randomize': 1})
+realize.add_task(TaskPlotBenchmark, realize.tasks[-1]) 
+
+
+
 
 
 

@@ -6,7 +6,8 @@ import os
 
 class ModelGenerator:
     all_flags = [
-        'ignore_muscle_dynamics',
+        'ignore_activation_dynamics',
+        'ignore_tendon_compliance',
         'remove_wrap_objects',
         'disable_constraints',
         'remove_muscles'
@@ -31,19 +32,36 @@ class ModelGenerator:
 
         # Disable logging.
         osim.Logger.setLevelString('error')
-    
+
     @staticmethod
-    def set_muscle_dynamics(model, model_name, ignore_muscle_dynamics):
+    def set_base_model(model):
         muscles = model.updMuscles()
         for i in range(muscles.getSize()):
             muscle = muscles.get(i)
-            muscle.set_ignore_activation_dynamics(ignore_muscle_dynamics)
-            muscle.set_ignore_tendon_compliance(ignore_muscle_dynamics)
+            muscle.set_ignore_activation_dynamics(False)
+            muscle.set_ignore_tendon_compliance(False)
+    
+    @staticmethod
+    def ignore_activation_dynamics(model, model_name):
+        muscles = model.updMuscles()
+        for i in range(muscles.getSize()):
+            muscle = muscles.get(i)
+            muscle.set_ignore_activation_dynamics(True)
 
-        tag = ''
-        if ignore_muscle_dynamics:
-            model_name += '_nomuscdyn'
-            tag = 'no musc. dyn.'
+        model_name += '_noactdyn'
+        tag = 'no act. dyn.'
+
+        return model_name, tag
+    
+    @staticmethod
+    def ignore_tendon_compliance(model, model_name):
+        muscles = model.updMuscles()
+        for i in range(muscles.getSize()):
+            muscle = muscles.get(i)
+            muscle.set_ignore_tendon_compliance(True)
+
+        model_name += '_notendyn'
+        tag = 'no ten. dyn.'
 
         return model_name, tag
 
@@ -103,9 +121,15 @@ class ModelGenerator:
         model_name = f'{self.model_name}'
         tags = list()
 
-        model_name, tag = self.set_muscle_dynamics(model, model_name, 
-                                              flags['ignore_muscle_dynamics'])
-        if tag: tags.append(tag)
+        self.set_base_model(model)
+
+        if flags['ignore_activation_dynamics']:
+            model_name, tag = self.ignore_activation_dynamics(model, model_name)
+            tags.append(tag)
+
+        if flags['ignore_tendon_compliance']:
+            model_name, tag = self.ignore_tendon_compliance(model, model_name)
+            tags.append(tag)
         
         if flags['remove_wrap_objects']:
             model_name, tag = self.remove_wrap_objects(model, model_name)
@@ -139,7 +163,10 @@ class ModelGenerator:
 
     def filter_flags(self, flags):
         if 'remove_muscles' in flags and flags['remove_muscles']:
-            if 'ignore_muscle_dynamics' in flags and flags['ignore_muscle_dynamics']:
+            if 'ignore_activation_dynamics' in flags and flags['ignore_activation_dynamics']:
+                return False
+            
+            if 'ignore_tendon_compliance' in flags and flags['ignore_tendon_compliance']:
                 return False
             
             if 'remove_wrap_objects' in flags and flags['remove_wrap_objects']:

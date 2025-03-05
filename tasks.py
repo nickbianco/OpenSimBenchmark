@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from doit.action import CmdAction
 from utilities.model_generator import ModelGenerator
 
@@ -150,8 +151,10 @@ class TaskGenerateModels(ModelTask):
 
 class TaskRunBenchmark(BenchmarkTask):
     REGISTRY = []
-    def __init__(self, benchmark, generate_models_task, exe_args):
+    def __init__(self, benchmark, generate_models_task, exe_args=None):
         super(TaskRunBenchmark, self).__init__(benchmark)
+        if exe_args is None:
+            exe_args = dict()
         self.exe_args = exe_args
         self.benchmark_name = f'benchmark_{benchmark.name}'
         for arg in self.exe_args:
@@ -170,6 +173,9 @@ class TaskRunBenchmark(BenchmarkTask):
                 first = False
             else:
                 subdir += f'_{arg}{exe_args[arg]}'
+
+        if not subdir:
+            subdir = 'default'
 
         self.result_path = os.path.join(benchmark.results_exp_path, subdir)
         if not os.path.exists(self.result_path):
@@ -217,32 +223,71 @@ class TaskPlotBenchmark(BenchmarkTask):
         import matplotlib.pyplot as plt
         import json
         
-        cpu_times = list()
-        time_unit = None
+        # Initialize the dictionary of CPU times.
+        cpu_times = dict()
+        num_benchmarks = 0
+        with open(file_dep[0]) as f:
+            data = json.load(f)
+            for benchmark in data['benchmarks']:
+                cpu_times[benchmark['name']] = list()
+            num_benchmarks = len(data['benchmarks'])
+        colors = plt.cm.jet(range(num_benchmarks))
+
+        # Fill the dictionary with CPU times.
         for out_path in file_dep:
             with open(out_path) as f:
                 data = json.load(f)
-            
-            cpu_times.append(data['benchmarks'][0]['cpu_time'])
-            time_unit = data['benchmarks'][0]['time_unit']
+                for benchmark in data['benchmarks']:
+                    cpu_times[benchmark['name']].append(benchmark['cpu_time'])
 
+
+        # Sort the CPU times and labels.
+        sorted_indices = np.argsort(cpu_times[list(cpu_times.keys())[0]])
         labels = self.model_tags.copy()
-        labels, cpu_times = zip(*sorted(zip(labels, cpu_times), key=lambda x: x[1]))
+        for key in cpu_times:
+            cpu_times[key] = [cpu_times[key][i] for i in sorted_indices]
+        labels = [labels[i] for i in sorted_indices]
 
-        plt.figure(figsize=(7, 4))
-        plt.bar(labels, cpu_times)
-        plt.yscale('log')
-        plt.yticks([1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000], 
-                   ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', '1 s', '10 s', '100 s'])
-        plt.xticks(rotation=45)
-        plt.ylabel(f'CPU Time')
-        plt.grid(axis='y', linestyle='--')
-        ax = plt.gca()
+        # Plot the CPU times.
+        x = np.arange(len(labels))
+        width = 0.6 / num_benchmarks
+        multiplier = 0
+        if num_benchmarks > 1:
+            multiplier = -num_benchmarks // 2
+
+        fig, ax = plt.subplots(figsize=(5, 8))
+        
+        for benchmark, cpu_time in cpu_times.items():
+            offset = width * multiplier
+            ax.barh(x + offset, cpu_time, width, label=benchmark)
+            multiplier += 1
+
+        all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
+        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', 
+                           '1 s', '10 s', '100 s']
+        max_value = 0
+        for key, value in cpu_times.items():
+            max_value = max(max_value, max(value))
+
+        xticks = list()
+        xticklabels = list()
+        for xtick, xticklabel in zip(all_xticks, all_xticklabels):
+            if xtick < 100 * max_value:
+                xticks.append(xtick)
+                xticklabels.append(xticklabel)
+
+        plt.xscale('log')
+        plt.xticks(xticks, xticklabels)
+        plt.yticks(x, labels, fontsize=6)
+        plt.xlabel(f'CPU Time')
+        plt.grid(axis='x', linestyle='--')
+        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
+
         ax.set_axisbelow(True)
         plt.title(self.benchmark_name)
+        plt.legend(loc='lower right', fontsize=6)
 
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
-
         
