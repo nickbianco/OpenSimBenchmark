@@ -1,14 +1,14 @@
 #include <benchmark/benchmark.h>
 #include <OpenSim/OpenSim.h>
 #include <string>
-#include "utilities.h"
+#include "../utilities/utilities.h"
 
 static const char HELP[] =
-R"(Benchmark a forward simulation.
+R"(Benchmark a forward simulation using OpenSim's Manager.
 
 Usage:
-  forward <model> [--time <time>] [--step <step>] [--randomize <bool>]
-  forward -h | --help
+  manager <model> [--time <time>] [--step <step>] [--randomize <bool>]
+  manager -h | --help
 
 Options:
   -t <time>, --time <time>        Set the final time.
@@ -16,7 +16,7 @@ Options:
   -r <bool>, --randomize <bool>   Randomize the initial state.
 )";
 
-static void BM_Forward(benchmark::State& st, const StateGenerator& generator, 
+static void BM_Manager(benchmark::State& st, const StateGenerator& generator, 
         OpenSim::Model& model, SimTK::State& state,
         double time, double step, bool randomize) {
 
@@ -32,18 +32,16 @@ static void BM_Forward(benchmark::State& st, const StateGenerator& generator,
 
     state.setTime(0);
 
-    SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
+    Manager manager(model);
     if (step > 0) {
-        integrator.setFixedStepSize(step);
+        manager.setIntegratorMinimumStepSize(step);
+        manager.setIntegratorMaximumStepSize(step);
     }
-
-    SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
-    timeStepper.initialize(state);
-    timeStepper.setReportAllSignificantStates(true);
+    manager.initialize(state);
     
     // Run the benchmark.
     for (auto _ : st) {
-        timeStepper.stepTo(time);
+        manager.integrate(time);
     }
 }
 
@@ -89,7 +87,7 @@ int main(int argc, char** argv) {
     // generator.printBounds();
 
     // Register the benchmarks.
-    benchmark::RegisterBenchmark("forward", BM_Forward, 
+    benchmark::RegisterBenchmark("manager", BM_Manager, 
             std::ref(generator),
             std::ref(model), 
             std::ref(state),

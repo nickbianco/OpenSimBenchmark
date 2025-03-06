@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 #include <OpenSim/OpenSim.h>
 #include <string>
-#include "utilities.h"
+#include "../utilities/utilities.h"
 
 static const char HELP[] =
 R"(Benchmark realizing an OpenSim::Model to a SimTK::Stage.

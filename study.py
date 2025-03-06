@@ -8,12 +8,31 @@ class Benchmark(object):
         self.name = name
         self.metadata = metadata
         self.rel_path = os.path.join(self.model.rel_path, name)
-        self.results_exp_path = os.path.join(self.study.config['results_path'],
+        self.results_path = os.path.join(self.study.config['results_path'],
              self.rel_path)
         self.tasks = list()
 
     def add_task(self, cls, *args, **kwargs):
         """Add a BenchmarkTask for this benchmark.
+        """
+        task = cls(self, *args, **kwargs)
+        self.tasks.append(task)
+        return task
+
+
+class Perf(object):
+    def __init__(self, model, name, metadata=None):
+        self.model = model
+        self.study = model.study
+        self.name = name
+        self.metadata = metadata
+        self.rel_path = os.path.join(self.model.rel_path, name)
+        self.results_path = os.path.join(self.study.config['results_path'],
+             self.rel_path)
+        self.tasks = list()
+
+    def add_task(self, cls, *args, **kwargs):
+        """Add PerfTask for this perf.
         """
         task = cls(self, *args, **kwargs)
         self.tasks.append(task)
@@ -30,10 +49,11 @@ class Model(object):
         self.results_path = os.path.join(self.study.config['results_path'], 
                                          self.rel_path)
         self.benchmarks = list()
+        self.perfs = list()
         self.tasks = list()
 
     def add_benchmark(self, *args, **kwargs):
-        """Example: `model.add_benchmark('realize')`"""
+        """Example: `model.add_benchmark('benchmark_realize')`"""
         benchmark = Benchmark(self, *args, **kwargs)
         assert not self.contains_benchmark(benchmark.name)
         self.benchmarks.append(benchmark)
@@ -41,12 +61,28 @@ class Model(object):
     
     def get_benchmark(self, name):
         for benchmark in self.benchmarks:
-            if benchmark.name == benchmark:
+            if benchmark.name == name:
                 return benchmark
         return None
 
     def contains_benchmark(self, name):
         return (self.get_benchmark(name) != None)
+
+    def add_perf(self, *args, **kwargs):
+        """Example: `model.add_perf('perf_realize')`"""
+        perf = Perf(self, *args, **kwargs)
+        assert not self.contains_perf(perf.name)
+        self.perfs.append(perf)
+        return perf
+    
+    def get_perf(self, name):
+        for perf in self.perfs:
+            if perf.name == name:
+                return perf
+        return None
+
+    def contains_perf(self, name):
+        return (self.get_perf(name) != None)
     
     def add_task(self, cls, *args, **kwargs):
         """Add a ModelTask for this model.

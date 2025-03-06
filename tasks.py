@@ -104,6 +104,13 @@ class BenchmarkTask(ModelTask):
         self.benchmark = benchmark
         self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
                                       benchmark.name)
+
+class PerfTask(ModelTask):
+    def __init__(self, perf):
+        super(PerfTask, self).__init__(perf.model)
+        self.perf = perf
+        self.exe_path =  os.path.join(self.study.config['perfs_path'], 
+                                      perf.name)
             
 ######################################################################
 #                           CUSTOM TASKS                             #
@@ -156,7 +163,7 @@ class TaskRunBenchmark(BenchmarkTask):
         if exe_args is None:
             exe_args = dict()
         self.exe_args = exe_args
-        self.benchmark_name = f'benchmark_{benchmark.name}'
+        self.benchmark_name = f'{benchmark.name}'
         for arg in self.exe_args:
             self.benchmark_name  += f'_{arg}{exe_args[arg]}'
         self.benchmark_name  += f'_{benchmark.model.name}'
@@ -177,19 +184,18 @@ class TaskRunBenchmark(BenchmarkTask):
         if not subdir:
             subdir = 'default'
 
-        self.result_path = os.path.join(benchmark.results_exp_path, subdir)
+        self.result_path = os.path.join(benchmark.results_path, subdir)
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
-        self.out_paths = [os.path.join(benchmark.results_exp_path, subdir, 
-                                       f'{model_name}.json') 
+        self.out_paths = [os.path.join(self.result_path, f'{model_name}.json') 
                           for model_name in self.model_names]
 
         self.add_action(self.model_paths, 
                         self.out_paths, 
-                        self.run_test)
+                        self.run_benchmark)
 
-    def run_test(self, file_dep, target):
+    def run_benchmark(self, file_dep, target):
         import subprocess
         
         for model_path, out_path in zip(file_dep, target):
@@ -198,7 +204,7 @@ class TaskRunBenchmark(BenchmarkTask):
                 command += f' --{arg} {self.exe_args[arg]}'
             command += f' --benchmark_out={out_path}'
             p = subprocess.run(command, check=True, shell=True,
-                               cwd=self.benchmark.results_exp_path)
+                               cwd=self.benchmark.results_path)
             if p.returncode != 0:
                 raise Exception('Non-zero exit status: code %s.' % p.returncode)
             
@@ -255,13 +261,16 @@ class TaskPlotBenchmark(BenchmarkTask):
         if num_benchmarks > 1:
             multiplier = -num_benchmarks // 2
 
+        # Create the figure and axis.
         fig, ax = plt.subplots(figsize=(5, 8))
         
+        # Plot the CPU times.
         for benchmark, cpu_time in cpu_times.items():
             offset = width * multiplier
             ax.barh(x + offset, cpu_time, width, label=benchmark)
             multiplier += 1
 
+        # Set the x-axis labels based on max CPU time.
         all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
         all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', 
                            '1 s', '10 s', '100 s']
@@ -276,18 +285,108 @@ class TaskPlotBenchmark(BenchmarkTask):
                 xticks.append(xtick)
                 xticklabels.append(xticklabel)
 
+        # Set the plot parameters.
         plt.xscale('log')
         plt.xticks(xticks, xticklabels)
         plt.yticks(x, labels, fontsize=6)
         plt.xlabel(f'CPU Time')
         plt.grid(axis='x', linestyle='--')
         plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
-
         ax.set_axisbelow(True)
         plt.title(self.benchmark_name)
         plt.legend(loc='lower right', fontsize=6)
 
+        # Save the plot.
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
+
+
+class TaskRunPerf(PerfTask):
+    REGISTRY = []
+    def __init__(self, perf, generate_models_task, exe_args=None):
+        super(TaskRunPerf, self).__init__(perf)
+        if exe_args is None:
+            exe_args = dict()
+        self.exe_args = exe_args
+        self.perf_name = f'{perf.name}'
+        for arg in self.exe_args:
+            self.perf_name  += f'_{arg}{exe_args[arg]}'
+        self.perf_name  += f'_{perf.model.name}'
+        self.name = f'run_{self.perf_name}'
+        self.model_names = generate_models_task.model_names
+        self.model_paths = generate_models_task.model_paths
+        self.model_tags = generate_models_task.model_tags
+
+        subdir = ''
+        first = True
+        for arg in self.exe_args:
+            if first:
+                subdir += f'{arg}{exe_args[arg]}'
+                first = False
+            else:
+                subdir += f'_{arg}{exe_args[arg]}'
+
+        if not subdir:
+            subdir = 'default'
+
+        self.result_path = os.path.join(perf.results_path, subdir)
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+
+        self.out_paths = [os.path.join(self.result_path, f'{model_name}.data') 
+                          for model_name in self.model_names]
+
+        self.add_action(self.model_paths, 
+                        self.out_paths, 
+                        self.run_perf)
+
+    def run_perf(self, file_dep, target):
+        import subprocess
+
+        # perf record -g --call-graph dwarf ./opensim_simulation
+        # perf script | stackcollapse-perf.pl | flamegraph.pl > perf.svg
+        for model_path, out_path in zip(file_dep, target):
+            command = f'perf record -F 99 -a -g'
+            command += f' -o {out_path} {self.exe_path} {model_path}'
+            for arg in self.exe_args:
+                command += f' --{arg} {self.exe_args[arg]}'
+            p = subprocess.run(command, check=True, shell=True,
+                               cwd=self.perf.results_path)
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+            
+
+class TaskGeneratePerfSVG(PerfTask):
+    REGISTRY = []
+    def __init__(self, perf, run_task):
+        super(TaskGeneratePerfSVG, self).__init__(perf)
+        self.perf_name = run_task.perf_name
+        self.name = f'generate_svg_{self.perf_name}'
+
+        self.model_names = run_task.model_names
+        self.model_tags = run_task.model_tags
+        self.out_paths = run_task.out_paths
+        self.result_path = run_task.result_path
+        self.svg_paths = [os.path.join(self.result_path, f'{model_name}.html') 
+                          for model_name in self.model_names]
+
+        self.add_action(self.out_paths, 
+                        self.svg_paths,
+                        self.generate_perf_svg)
+        
+    def generate_perf_svg(self, file_dep, target):
+        import subprocess
+        flamegraph = os.path.join(self.study.config['flamegraph_path'], 'flamegraph.pl')
+        stackcollapse = os.path.join(self.study.config['flamegraph_path'], 
+                                     'stackcollapse-perf.pl')
+
+        # perf record -g --call-graph dwarf ./opensim_simulation
+        # perf script | stackcollapse-perf.pl | flamegraph.pl > perf.svg
+        for out_path, svg_path in zip(file_dep, target):
+            command = f'perf script -i {out_path} | {stackcollapse}'
+            command += f' | {flamegraph} > {svg_path}'
+            p = subprocess.run(command, check=True, shell=True)
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
         

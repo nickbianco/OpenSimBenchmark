@@ -38,64 +38,79 @@ flags = ['ignore_activation_dynamics', 'ignore_tendon_compliance', 'remove_wrap_
 model.add_task(TaskGenerateModels, flags)
 
 
-forward = model.add_benchmark('forward')
+benchmark_forward = model.add_benchmark('benchmark_forward')
 
-forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.01})
-forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.01})
+benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
-forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.1})
-forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.1})
+benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
-forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 1.0})
-forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 1.0})
+benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
 
-forward.add_task(TaskRunBenchmark, model.tasks[-1], 
+benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
                  exe_args={'time': 0.01, 'step': 1e-3})
-forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
-forward.add_task(TaskRunBenchmark, model.tasks[-1], 
+benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
                  exe_args={'time': 0.1, 'step': 1e-3})
-forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
-forward.add_task(TaskRunBenchmark, model.tasks[-1], 
+benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
                  exe_args={'time': 1.0, 'step': 1e-3})
-forward.add_task(TaskPlotBenchmark, forward.tasks[-1])
+benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
 
 
-manager = model.add_benchmark('manager')
+benchmark_manager = model.add_benchmark('benchmark_manager')
 
-manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.01})
-manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.01})
+benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
 
-manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.1})
-manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 0.1})
+benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
 
-manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 1.0})
-manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 1.0})
+benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
 
 
-manager.add_task(TaskRunBenchmark, model.tasks[-1], 
+benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], 
                  exe_args={'time': 0.01, 'step': 1e-3})
-manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
 
-manager.add_task(TaskRunBenchmark, model.tasks[-1], 
+benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], 
                  exe_args={'time': 0.1, 'step': 1e-3} )
-manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
 
-manager.add_task(TaskRunBenchmark, model.tasks[-1], 
+benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], 
                  exe_args={'time': 1.0, 'step': 1e-3} )
-manager.add_task(TaskPlotBenchmark, manager.tasks[-1])
+benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
 
 
-realize = model.add_benchmark('realize')
+benchmark_realize = model.add_benchmark('benchmark_realize')
 
-realize.add_task(TaskRunBenchmark, model.tasks[-1])
-realize.add_task(TaskPlotBenchmark, realize.tasks[-1])    
+benchmark_realize.add_task(TaskRunBenchmark, model.tasks[-1])
+benchmark_realize.add_task(TaskPlotBenchmark, benchmark_realize.tasks[-1])    
 
-realize.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'randomize': 1})
-realize.add_task(TaskPlotBenchmark, realize.tasks[-1]) 
+benchmark_realize.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'randomize': 1})
+benchmark_realize.add_task(TaskPlotBenchmark, benchmark_realize.tasks[-1]) 
+
+
+perf_forward = model.add_perf('perf_forward')
+
+perf_forward.add_task(TaskRunPerf, model.tasks[-1], exe_args={'time': 0.001})
+perf_forward.add_task(TaskGeneratePerfSVG, perf_forward.tasks[-1])
+
+perf_forward.add_task(TaskRunPerf, model.tasks[-1], exe_args={'time': 0.1})
+perf_forward.add_task(TaskGeneratePerfSVG, perf_forward.tasks[-1])
+
+
+perf_realize = model.add_perf('perf_realize')
+
+perf_realize.add_task(TaskRunPerf, model.tasks[-1])
+perf_realize.add_task(TaskGeneratePerfSVG, perf_realize.tasks[-1])
 
 
 
