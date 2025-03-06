@@ -344,8 +344,6 @@ class TaskRunPerf(PerfTask):
     def run_perf(self, file_dep, target):
         import subprocess
 
-        # perf record -g --call-graph dwarf ./opensim_simulation
-        # perf script | stackcollapse-perf.pl | flamegraph.pl > perf.svg
         for model_path, out_path in zip(file_dep, target):
             command = f'perf record -F 99 -a -g'
             command += f' -o {out_path} {self.exe_path} {model_path}'
@@ -381,8 +379,6 @@ class TaskGeneratePerfSVG(PerfTask):
         stackcollapse = os.path.join(self.study.config['flamegraph_path'], 
                                      'stackcollapse-perf.pl')
 
-        # perf record -g --call-graph dwarf ./opensim_simulation
-        # perf script | stackcollapse-perf.pl | flamegraph.pl > perf.svg
         for out_path, svg_path in zip(file_dep, target):
             command = f'perf script -i {out_path} | {stackcollapse}'
             command += f' | {flamegraph} > {svg_path}'
