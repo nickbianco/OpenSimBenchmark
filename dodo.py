@@ -36,6 +36,7 @@ model = study.add_model('RajagopalLaiUhlrich2023.osim')
 flags = ['ignore_activation_dynamics', 'ignore_tendon_compliance', 'remove_wrap_objects', 
          'disable_constraints', 'remove_muscles']
 model.add_task(TaskGenerateModels, flags)
+model_names = model.tasks[-1].model_names
 
 
 benchmark_forward = model.add_benchmark('benchmark_forward')
@@ -49,18 +50,6 @@ benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 1.0})
 benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
-
-benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
-                 exe_args={'time': 0.01, 'step': 1e-3})
-benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
-
-benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
-                 exe_args={'time': 0.1, 'step': 1e-3})
-benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
-
-benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
-                 exe_args={'time': 1.0, 'step': 1e-3})
-benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
 
 
@@ -76,41 +65,35 @@ benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': 
 benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
 
 
-benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], 
-                 exe_args={'time': 0.01, 'step': 1e-3})
-benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
-
-benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], 
-                 exe_args={'time': 0.1, 'step': 1e-3} )
-benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
-
-benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], 
-                 exe_args={'time': 1.0, 'step': 1e-3} )
-benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])
-
-
 benchmark_realize = model.add_benchmark('benchmark_realize')
 
 benchmark_realize.add_task(TaskRunBenchmark, model.tasks[-1])
 benchmark_realize.add_task(TaskPlotBenchmark, benchmark_realize.tasks[-1])    
 
-benchmark_realize.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'randomize': 1})
-benchmark_realize.add_task(TaskPlotBenchmark, benchmark_realize.tasks[-1]) 
 
 
 perf_forward = model.add_perf('perf_forward')
 
-perf_forward.add_task(TaskRunPerf, model.tasks[-1], exe_args={'time': 0.001})
-perf_forward.add_task(TaskGeneratePerfSVG, perf_forward.tasks[-1])
+perf_forward.add_task(TaskRunPerf, model.tasks[-1], exe_args={'time': 0.01})
+perf_forward.add_task(TaskGenerateFlameGraph, perf_forward.tasks[-1])
 
 perf_forward.add_task(TaskRunPerf, model.tasks[-1], exe_args={'time': 0.1})
-perf_forward.add_task(TaskGeneratePerfSVG, perf_forward.tasks[-1])
+perf_forward.add_task(TaskGenerateFlameGraph, perf_forward.tasks[-1])
+
+perf_forward.add_task(TaskRunPerf, model.tasks[-1], exe_args={'time': 1.0})
+perf_forward.add_task(TaskGenerateFlameGraph, perf_forward.tasks[-1])
+
+model1 = 'RajagopalLaiUhlrich2023'
+model2 = 'RajagopalLaiUhlrich2023_noconstraints_nomuscles'
+perf_forward.add_task(TaskGenerateDifferentialFlameGraph, perf_forward.tasks[-2], 
+                      model1, model2)
 
 
 perf_realize = model.add_perf('perf_realize')
 
 perf_realize.add_task(TaskRunPerf, model.tasks[-1])
-perf_realize.add_task(TaskGeneratePerfSVG, perf_realize.tasks[-1])
+perf_realize.add_task(TaskGenerateFlameGraph, perf_realize.tasks[-1])
+
 
 
 

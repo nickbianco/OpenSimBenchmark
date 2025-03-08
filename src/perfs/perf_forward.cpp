@@ -6,13 +6,11 @@ static const char HELP[] =
 R"(Analyze a forward simulation with 'perf'.
 
 Usage:
-  perf_forward <model> [--time <time>] [--step <step>] [--randomize <bool>]
+  perf_forward <model> <output> [--time <time>]
   perf_forward -h | --help
 
 Options:
   -t <time>, --time <time>        Set the final time.
-  -s <step>, --step <step>        Set the step size.
-  -r <bool>, --randomize <bool>   Randomize the initial state.
 )";
 
 
@@ -47,34 +45,41 @@ int main(int argc, char** argv) {
                 "Step size must be positive.");
     }
 
-    bool randomize = false;
-    if (args["--randomize"]) {
-        randomize = (bool)std::stod(args["--randomize"].asString());
-        std::cout << "Randomize initial state: " << randomize << std::endl;
-    }
+    // Get the output file.
+    std::string output_file = args["<output>"].asString();
 
-    // Create a state generator.
-    StateGenerator generator(model);
-
-    if (randomize) {
-        // Get a random state vector.
-        state.updY() = generator.getRandomY();
-
-        // Get a random control vector.
-        SimTK::Vector controls = generator.getRandomControls();
-        model.realizeVelocity(state);
-        model.setControls(state, controls);  
-    }
-
+    // Run the forward integration simulation.
     state.setTime(0);
 
     SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
-    if (step > 0) {
-        integrator.setFixedStepSize(step);
-    }
-
     SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
     timeStepper.initialize(state);
     
     timeStepper.stepTo(time);
+
+    std::unordered_map<std::string, int> outputs;
+    outputs["num_steps_attempted"] = integrator.getNumStepsAttempted();
+    outputs["num_steps_taken"] = integrator.getNumStepsTaken();
+    outputs["num_realizations"] = integrator.getNumRealizations();
+    outputs["num_q_projections"] = integrator.getNumQProjections();
+    outputs["num_u_projections"] = integrator.getNumUProjections();
+    outputs["num_projections"] = integrator.getNumProjections();
+    outputs["num_error_test_failures"] = integrator.getNumErrorTestFailures();
+    outputs["num_convergence_test_failures"] = 
+            integrator.getNumConvergenceTestFailures();
+    outputs["num_iterations"] = integrator.getNumIterations();
+    outputs["num_realization_failures"] = 
+            integrator.getNumRealizationFailures();
+    outputs["num_q_projection_failures"] = 
+            integrator.getNumQProjectionFailures();
+    outputs["num_u_projection_failures"] = 
+            integrator.getNumUProjectionFailures();
+    outputs["num_projection_failures"] = 
+            integrator.getNumProjectionFailures();
+    outputs["num_convergent_iterations"] = 
+            integrator.getNumConvergentIterations();
+    outputs["num_divergent_iterations"] = 
+            integrator.getNumDivergentIterations();
+
+    saveMapToJsonFile(outputs, output_file);
 }

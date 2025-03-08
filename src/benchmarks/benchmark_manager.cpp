@@ -7,28 +7,17 @@ static const char HELP[] =
 R"(Benchmark a forward simulation using OpenSim's Manager.
 
 Usage:
-  manager <model> [--time <time>] [--step <step>] [--randomize <bool>]
+  manager <model> [--time <time>] [--step <step>]
   manager -h | --help
 
 Options:
   -t <time>, --time <time>        Set the final time.
   -s <step>, --step <step>        Set the step size.
-  -r <bool>, --randomize <bool>   Randomize the initial state.
 )";
 
-static void BM_Manager(benchmark::State& st, const StateGenerator& generator, 
+static void BM_Manager(benchmark::State& st,
         OpenSim::Model& model, SimTK::State& state,
-        double time, double step, bool randomize) {
-
-    if (randomize) {
-        // Get a random state vector.
-        state.updY() = generator.getRandomY();
-
-        // Get a random control vector.
-        SimTK::Vector controls = generator.getRandomControls();
-        model.realizeVelocity(state);
-        model.setControls(state, controls);  
-    }
+        double time, double step) {
 
     state.setTime(0);
 
@@ -61,6 +50,9 @@ int main(int argc, char** argv) {
     OpenSim::Model model(args["<model>"].asString());
     SimTK::State state = model.initSystem();
 
+    // Add a controller.
+    add_controller(model);
+
     // Final time and step size.
     double time = 1.0; // seconds
     if (args["--time"]) {
@@ -76,22 +68,11 @@ int main(int argc, char** argv) {
                 "Step size must be positive.");
     }
 
-    bool randomize = false;
-    if (args["--randomize"]) {
-        randomize = (bool)std::stod(args["--randomize"].asString());
-        std::cout << "Randomize initial state: " << randomize << std::endl;
-    }
-
-    // Create a state generator.
-    StateGenerator generator(model);
-    // generator.printBounds();
-
     // Register the benchmarks.
     benchmark::RegisterBenchmark("manager", BM_Manager, 
-            std::ref(generator),
             std::ref(model), 
             std::ref(state),
-            time, step, randomize)->Unit(benchmark::kMillisecond);
+            time, step)->Unit(benchmark::kMillisecond);
 
     benchmark::Initialize(&argc, argv);
     benchmark::RunSpecifiedBenchmarks();

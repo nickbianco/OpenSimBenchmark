@@ -336,6 +336,8 @@ class TaskRunPerf(PerfTask):
 
         self.out_paths = [os.path.join(self.result_path, f'{model_name}.data') 
                           for model_name in self.model_names]
+        self.json_paths = [os.path.join(self.result_path, f'{model_name}.json')
+                           for model_name in self.model_names]
 
         self.add_action(self.model_paths, 
                         self.out_paths, 
@@ -344,9 +346,9 @@ class TaskRunPerf(PerfTask):
     def run_perf(self, file_dep, target):
         import subprocess
 
-        for model_path, out_path in zip(file_dep, target):
-            command = f'perf record -F 99 -a -g'
-            command += f' -o {out_path} {self.exe_path} {model_path}'
+        for model_path, out_path, json_path in zip(file_dep, target, self.json_paths):
+            command = f'perf record -e cycles:u -F 99 -a -g'
+            command += f' -o {out_path} {self.exe_path} {model_path} {json_path}'
             for arg in self.exe_args:
                 command += f' --{arg} {self.exe_args[arg]}'
             p = subprocess.run(command, check=True, shell=True,
@@ -355,34 +357,84 @@ class TaskRunPerf(PerfTask):
                 raise Exception('Non-zero exit status: code %s.' % p.returncode)
             
 
-class TaskGeneratePerfSVG(PerfTask):
+class TaskGenerateFlameGraph(PerfTask):
     REGISTRY = []
     def __init__(self, perf, run_task):
-        super(TaskGeneratePerfSVG, self).__init__(perf)
+        super(TaskGenerateFlameGraph, self).__init__(perf)
         self.perf_name = run_task.perf_name
-        self.name = f'generate_svg_{self.perf_name}'
+        self.name = f'generate_flamegraph_{self.perf_name}'
 
         self.model_names = run_task.model_names
         self.model_tags = run_task.model_tags
         self.out_paths = run_task.out_paths
         self.result_path = run_task.result_path
-        self.svg_paths = [os.path.join(self.result_path, f'{model_name}.html') 
+        self.html_paths = [os.path.join(self.result_path, f'{model_name}.html') 
                           for model_name in self.model_names]
 
         self.add_action(self.out_paths, 
-                        self.svg_paths,
-                        self.generate_perf_svg)
+                        self.html_paths,
+                        self.generate_flamegraph)
         
-    def generate_perf_svg(self, file_dep, target):
+    def generate_flamegraph(self, file_dep, target):
         import subprocess
-        flamegraph = os.path.join(self.study.config['flamegraph_path'], 'flamegraph.pl')
-        stackcollapse = os.path.join(self.study.config['flamegraph_path'], 
-                                     'stackcollapse-perf.pl')
 
-        for out_path, svg_path in zip(file_dep, target):
-            command = f'perf script -i {out_path} | {stackcollapse}'
-            command += f' | {flamegraph} > {svg_path}'
-            p = subprocess.run(command, check=True, shell=True)
+        for out_path, html_path in zip(file_dep, target):
+            command = f'cp {out_path} perf.data && '
+            command += f'perf script report flamegraph --allow-download && '
+            command += f'cp flamegraph.html {html_path} && '
+            command += f'rm flamegraph.html perf.data'
+            p = subprocess.run(command, check=True, shell=True,
+                               cwd=self.perf.results_path)
             if p.returncode != 0:
                 raise Exception('Non-zero exit status: code %s.' % p.returncode)
         
+
+class TaskGenerateDifferentialFlameGraph(PerfTask):
+    REGISTRY = []
+    def __init__(self, perf, run_task, model1, model2, negated=False):
+        super(TaskGenerateDifferentialFlameGraph, self).__init__(perf)
+        self.negated = negated
+        self.negated_name = '_negated' if negated else ''
+        self.negated_flag = '--negate' if negated else ''
+
+        self.name = f'generate{self.negated_name}_differential_flamegraph_' \
+                    f'{run_task.perf_name}_{model1}_vs_{model2}'
+        
+        
+        self.result_path = run_task.result_path
+        self.out_paths = [os.path.join(self.result_path, f'{model_name}.data') 
+                          for model_name in [model1, model2]]
+
+        self.html_path = os.path.join(self.result_path,
+                                      f'{model1}_vs_{model2}{self.negated_name}.html')
+
+        self.add_action(self.out_paths, 
+                        [self.html_path],
+                        self.generate_differential_flamegraph)
+        
+    def generate_differential_flamegraph(self, file_dep, target):
+        import subprocess
+
+        flamegraph = os.path.join(self.study.config['flamegraph_path'], 'flamegraph.pl')
+        stackcollapse = os.path.join(self.study.config['flamegraph_path'], 
+                                     'stackcollapse-perf.pl')
+        difffolded = os.path.join(self.study.config['flamegraph_path'], 'difffolded.pl')
+
+        if self.negated:
+            first = file_dep[1]
+            second = file_dep[0]
+        else:
+            first = file_dep[0]
+            second = file_dep[1]
+
+        command = f'perf script -i {first} > out.stacks1 && '
+        command += f'perf script -i {second} > out.stacks2 && '
+        command += f'{stackcollapse} out.stacks1 > out.folded1 && '
+        command += f'{stackcollapse} out.stacks2 > out.folded2 && '
+        command += f'{difffolded} -n out.folded1 out.folded2 | '
+        command += f'{flamegraph} {self.negated_flag} > {target[0]} && '
+        command += f'rm out.stacks1 out.stacks2 out.folded1 out.folded2'
+        p = subprocess.run(command, check=True, shell=True,
+                           cwd=self.perf.results_path)
+        if p.returncode != 0:
+            raise Exception('Non-zero exit status: code %s.' % p.returncode)
