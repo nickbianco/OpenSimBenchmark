@@ -8,8 +8,19 @@ models_dir = os.path.join('..', '..', 'models')
 dst = os.path.join(models_dir, 'Rajagopal.osim')
 shutil.copyfile('subject_walk_scaled.osim', dst)
 
+# Base model.
+baseModel = osim.Model('subject_walk_scaled.osim')
+muscles = baseModel.updMuscles()
+for i in range(muscles.getSize()):
+    muscle = muscles.get(i)
+    muscle.set_ignore_activation_dynamics(False)
+    muscle.set_ignore_tendon_compliance(False)
+baseModel.finalizeConnections()
+baseModel.initSystem()
+baseModel.printToXML(os.path.join(models_dir, 'Rajagopal.osim'))
+
 # PathActuator model.
-modelProcessor = osim.ModelProcessor('subject_walk_scaled.osim')
+modelProcessor = osim.ModelProcessor(baseModel)
 modelProcessor.append(osim.ModOpReplaceMusclesWithPathActuators())
 model = modelProcessor.process()
 model.finalizeConnections()
@@ -17,7 +28,7 @@ model.initSystem()
 model.printToXML(os.path.join(models_dir, 'RajagopalPathActuators.osim'))
 
 # Function-based path model.
-modelProcessor = osim.ModelProcessor('subject_walk_scaled.osim')
+modelProcessor = osim.ModelProcessor(baseModel)
 modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(
     'subject_walk_scaled_FunctionBasedPathSet.xml'))
 model = modelProcessor.process()
@@ -26,7 +37,7 @@ model.initSystem()
 model.printToXML(os.path.join(models_dir, 'RajagopalFunctionBasedPaths.osim'))
 
 # Function-based PathActuators model.
-modelProcessor = osim.ModelProcessor('subject_walk_scaled.osim')
+modelProcessor = osim.ModelProcessor(baseModel)
 modelProcessor.append(osim.ModOpReplaceMusclesWithPathActuators())
 modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(
     'subject_walk_scaled_FunctionBasedPathSet.xml'))
@@ -38,6 +49,7 @@ model.printToXML(os.path.join(models_dir, 'RajagopalFunctionBasedPathActuators.o
 # DeGrooteFregly2016Muscle model.
 modelProcessor = osim.ModelProcessor('subject_walk_scaled.osim')
 modelProcessor.append(osim.ModOpReplaceMusclesWithDeGrooteFregly2016())
+modelProcessor.append(osim.ModOpIgnoreTendonCompliance())
 model = modelProcessor.process()
 model.finalizeConnections()
 model.initSystem()
@@ -46,6 +58,7 @@ model.printToXML(os.path.join(models_dir, 'RajagopalDGF.osim'))
 # Function-based DeGrooteFregly2016Muscle model.
 modelProcessor = osim.ModelProcessor('subject_walk_scaled.osim')
 modelProcessor.append(osim.ModOpReplaceMusclesWithDeGrooteFregly2016())
+modelProcessor.append(osim.ModOpIgnoreTendonCompliance())
 modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(
     'subject_walk_scaled_FunctionBasedPathSet.xml'))
 model = modelProcessor.process()

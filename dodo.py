@@ -83,14 +83,12 @@ add_model('RajagopalFunctionBasedPathActuators',
 
 add_model('RajagopalDGF', 'Rajagopal\nDeGroote-Fregly muscles', 
           flags=['ignore_activation_dynamics', 
-                 'ignore_tendon_compliance', 
                  'disable_constraints', 
                  'remove_muscles'])  
 
 add_model('RajagopalFunctionBasedPathsDGF', 
           'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths', 
           flags=['ignore_activation_dynamics', 
-                 'ignore_tendon_compliance', 
                  'disable_constraints', 
                  'remove_muscles'])  
 
