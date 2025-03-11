@@ -40,14 +40,15 @@ class Perf(object):
 
 
 class Model(object):
-    def __init__(self, study, filename):
+    def __init__(self, study, name, label):
         self.study = study
-        self.filename = filename
+        self.name = name
+        self.filename = f'{name}.osim'
         self.path = os.path.join(self.study.config['models_path'], self.filename)
-        self.name = filename.replace('.osim', '')
         self.rel_path = self.name
         self.results_path = os.path.join(self.study.config['results_path'], 
                                          self.rel_path)
+        self.label = label
         self.benchmarks = list()
         self.perfs = list()
         self.tasks = list()

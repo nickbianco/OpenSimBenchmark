@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 #include <OpenSim/OpenSim.h>
 #include <string>
-#include "../utilities/utilities.h"
+#include "../../utilities/utilities.h"
 
 static const char HELP[] =
 R"(Benchmark a forward simulation.
@@ -19,7 +19,6 @@ static void BM_Forward(benchmark::State& st,
         OpenSim::Model& model, SimTK::State& state,
         double time, double step) {
 
-    state.setTime(0);
 
     SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
     if (step > 0) {
@@ -27,8 +26,8 @@ static void BM_Forward(benchmark::State& st,
     }
 
     SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
+    state.setTime(0);
     timeStepper.initialize(state);
-    timeStepper.setReportAllSignificantStates(true);
     
     // Run the benchmark.
     for (auto _ : st) {
@@ -51,9 +50,6 @@ int main(int argc, char** argv) {
             "Model file must be provided.");
     OpenSim::Model model(args["<model>"].asString());
     SimTK::State state = model.initSystem();
-
-    // Add a controller.
-    add_controller(model);
 
     // Final time and step size.
     double time = 1.0; // seconds

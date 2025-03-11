@@ -6,5 +6,5 @@
         "docopt_DIR": "/home/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/docopt/lib/cmake/docopt",
         "docopt_INCLUDE_DIRS": "/home/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/docopt/include",
     },
-    "livePreview.defaultPreviewPath": "/results/RajagopalLaiUhlrich2023/perf_forward/time1.0/RajagopalLaiUhlrich2023_noconstraints_nomuscles_vs_RajagopalLaiUhlrich2023_negated.html",
+    "livePreview.defaultPreviewPath": "/results/Maier2024_shoulder/perf_realize/default/Maier2024_shoulder.html",
 }

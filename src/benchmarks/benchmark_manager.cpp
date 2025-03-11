@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 #include <OpenSim/OpenSim.h>
 #include <string>
-#include "../utilities/utilities.h"
+#include "../../utilities/utilities.h"
 
 static const char HELP[] =
 R"(Benchmark a forward simulation using OpenSim's Manager.
@@ -49,9 +49,6 @@ int main(int argc, char** argv) {
             "Model file must be provided.");
     OpenSim::Model model(args["<model>"].asString());
     SimTK::State state = model.initSystem();
-
-    // Add a controller.
-    add_controller(model);
 
     // Final time and step size.
     double time = 1.0; // seconds

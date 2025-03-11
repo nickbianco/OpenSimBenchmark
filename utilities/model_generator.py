@@ -76,7 +76,7 @@ class ModelGenerator:
             pathPoints = geometry_path.updPathPointSet()
             while pathPoints.getSize() > 2:
                 pathPoints.remove(1)
-
+                
         bodies = model.getBodySet()
         for i in range(bodies.getSize()):
             body = bodies.get(i)
@@ -123,23 +123,23 @@ class ModelGenerator:
 
         self.set_base_model(model)
 
-        if flags['ignore_activation_dynamics']:
+        if flags.get('ignore_activation_dynamics'):
             model_name, tag = self.ignore_activation_dynamics(model, model_name)
             tags.append(tag)
 
-        if flags['ignore_tendon_compliance']:
+        if flags.get('ignore_tendon_compliance'):
             model_name, tag = self.ignore_tendon_compliance(model, model_name)
             tags.append(tag)
         
-        if flags['remove_wrap_objects']:
+        if flags.get('remove_wrap_objects'):
             model_name, tag = self.remove_wrap_objects(model, model_name)
             tags.append(tag)
 
-        if flags['disable_constraints']:
+        if flags.get('disable_constraints'):
             model_name, tag = self.disable_constraints(model, model_name)
             tags.append(tag)
 
-        if flags['remove_muscles']:
+        if flags.get('remove_muscles'):
             model_name, tag = self.remove_muscles(model, model_name)
             tags.append(tag)
 
