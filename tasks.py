@@ -1,6 +1,9 @@
 import os
 import numpy as np
 from doit.action import CmdAction
+import shutil
+import opensim as osim
+
 from utilities.model_generator import ModelGenerator
 
 ######################################################################
@@ -155,6 +158,86 @@ class TaskInstallDependencies(StudyTask):
         if p.returncode != 0:
             raise Exception('Non-zero exit status: code %s.' % p.returncode)
         
+class TaskCreateRajagopalModels(StudyTask):
+    REGISTRY = []
+    def __init__(self, study):
+        super(TaskCreateRajagopalModels, self).__init__(study)
+        self.name = 'create_rajagopal_models'
+        self.base_model_path = os.path.join(self.study.config['data_path'],
+                                             'Rajagopal', 'subject_walk_scaled.osim')
+        self.function_based_paths = os.path.join(
+                self.study.config['data_path'], 'Rajagopal', 
+                'subject_walk_scaled_FunctionBasedPathSet.xml')
+        
+        self.model_names = ['Rajagopal', 'RajagopalPathActuators',
+                            'RajagopalFunctionBasedPaths', 
+                            'RajagopalFunctionBasedPathActuators',
+                            'RajagopalDGF',
+                            'RajagopalFunctionBasedPathsDGF']
+        self.model_paths = list()
+        for model_name in self.model_names:
+            self.model_paths.append(os.path.join(self.study.config['models_path'], 
+                                                 f'{model_name}.osim'))
+    
+        
+        self.add_action([self.base_model_path, self.function_based_paths], 
+                        self.model_paths, 
+                        self.create_rajagopal_models)
+        
+    def create_rajagopal_models(self, file_dep, target):
+        osim.Logger.setLevelString('error')
+        
+        # Base model.
+        shutil.copyfile(file_dep[0], target[0])
+        print(f' --> Created {target[0]}')
+
+        # PathActuator model.
+        modelProcessor = osim.ModelProcessor(file_dep[0])
+        modelProcessor.append(osim.ModOpReplaceMusclesWithPathActuators())
+        model = modelProcessor.process()
+        model.finalizeConnections()
+        model.initSystem()
+        model.printToXML(target[1])
+        print(f' --> Created {target[1]}')
+
+        # Function-based path model.
+        modelProcessor = osim.ModelProcessor(file_dep[0])
+        modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(file_dep[1]))
+        model = modelProcessor.process()
+        model.finalizeConnections()
+        model.initSystem()
+        model.printToXML(target[2])
+        print(f' --> Created {target[2]}')
+
+        # Function-based PathActuators model.
+        modelProcessor = osim.ModelProcessor(file_dep[0])
+        modelProcessor.append(osim.ModOpReplaceMusclesWithPathActuators())
+        modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(file_dep[1]))
+        model = modelProcessor.process()
+        model.finalizeConnections()
+        model.initSystem()
+        model.printToXML(target[3])
+        print(f' --> Created {target[3]}')
+
+        # DeGrooteFregly2016Muscle model.
+        modelProcessor = osim.ModelProcessor(file_dep[0])
+        modelProcessor.append(osim.ModOpReplaceMusclesWithDeGrooteFregly2016())
+        model = modelProcessor.process()
+        model.finalizeConnections()
+        model.initSystem()
+        model.printToXML(target[4])
+
+        # Function-based DeGrooteFregly2016Muscle model.
+        modelProcessor = osim.ModelProcessor(file_dep[0])
+        modelProcessor.append(osim.ModOpReplaceMusclesWithDeGrooteFregly2016())
+        modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(file_dep[1]))
+        model = modelProcessor.process()
+        model.finalizeConnections()
+        model.initSystem()
+        model.printToXML(target[5])
+        print(f' --> Created {target[5]}')
+
+        
 class TaskGenerateModels(ModelTask):
     REGISTRY = []
     def __init__(self, model, flags):
@@ -196,23 +279,39 @@ class TaskRunBenchmark(BenchmarkTask):
 
         self.out_paths = [os.path.join(self.result_path, f'{model_name}.json') 
                           for model_name in self.model_names]
-
-        self.add_action(self.model_paths, 
+        
+        self.add_action(self.model_paths,
                         self.out_paths, 
                         self.run_benchmark)
 
     def run_benchmark(self, file_dep, target):
         import subprocess
-        
+        import json
         for model_path, out_path in zip(file_dep, target):
             command = f'{self.exe_path} {model_path}'
             for arg in self.exe_args:
                 command += f' --{arg} {self.exe_args[arg]}'
             command += f' --benchmark_out={out_path}'
-            p = subprocess.run(command, check=True, shell=True,
-                               cwd=self.benchmark.results_path)
-            if p.returncode != 0:
-                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+            try:
+                p = subprocess.run(command, check=True, shell=True,
+                                    cwd=self.benchmark.results_path)
+                if p.returncode != 0:
+                    raise Exception(f'Non-zero exit status: code {p.returncode}.')
+                
+            except Exception as e:
+                output = dict()
+                output['failed'] = True
+                output['error'] = str(e)
+                with open(out_path, 'w') as f:
+                    json.dump(output, f, indent=4)
+
+            if not os.path.exists(out_path):
+                output = dict()
+                output['failed'] = True
+                output['error'] = 'No output file was created.'
+                with open(out_path, 'w') as f:
+                    json.dump(output, f, indent=4) 
+                
             
 class TaskPlotBenchmark(BenchmarkTask):
     REGISTRY = []
@@ -234,25 +333,35 @@ class TaskPlotBenchmark(BenchmarkTask):
     def plot_benchmark(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
+
+        # Filter out failed benchmark tests.
+        model_tags = list()
+        out_paths = list()
+        for model_tag, out_path in zip(self.model_tags, file_dep):
+            with open(out_path) as f:
+                data = json.load(f)
+                if 'failed' not in data:
+                    model_tags.append(model_tag)
+                    out_paths.append(out_path)
         
         # Initialize the dictionary of CPU times.
         cpu_times = dict()
         num_benchmarks = 0
-        with open(file_dep[0]) as f:
+        with open(out_paths[0]) as f:
             data = json.load(f)
             for benchmark in data['benchmarks']:
                 cpu_times[benchmark['name']] = list()
             num_benchmarks = len(data['benchmarks'])
 
         # Fill the dictionary with CPU times.
-        for out_path in file_dep:
+        for out_path in out_paths:
             with open(out_path) as f:
                 data = json.load(f)
                 for benchmark in data['benchmarks']:
                     cpu_times[benchmark['name']].append(benchmark['cpu_time'])
 
         # Plot the CPU times.
-        y = np.arange(len(self.model_tags))
+        y = np.arange(len(model_tags))
         width = 0.6 / num_benchmarks
         multiplier = 0
         if num_benchmarks > 1:
@@ -285,7 +394,7 @@ class TaskPlotBenchmark(BenchmarkTask):
         # Set the plot parameters.
         plt.xscale('log')
         plt.xticks(xticks, xticklabels)
-        plt.yticks(y, self.model_tags, fontsize=6)
+        plt.yticks(y, model_tags, fontsize=6)
         plt.xlabel(f'CPU Time')
         plt.grid(axis='x', linestyle='--')
         plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
@@ -301,12 +410,13 @@ class TaskPlotBenchmark(BenchmarkTask):
 
 class TaskRunPerf(PerfTask):
     REGISTRY = []
-    def __init__(self, perf, generate_models_task, exe_args=None):
+    def __init__(self, perf, event, generate_models_task, exe_args=None):
         super(TaskRunPerf, self).__init__(perf)
         if exe_args is None:
             exe_args = dict()
         self.exe_args = exe_args
-        self.perf_name = f'{perf.name}'
+        self.event = event
+        self.perf_name = f'{perf.name}_{self.event}'
         for arg in self.exe_args:
             self.perf_name  += f'_{arg}{exe_args[arg]}'
         self.perf_name  += f'_{perf.model.name}'
@@ -316,7 +426,7 @@ class TaskRunPerf(PerfTask):
         self.model_tags = generate_models_task.model_tags
         self.subdir = get_sub_directory(self.exe_args)
 
-        self.result_path = os.path.join(perf.results_path, self.subdir)
+        self.result_path = os.path.join(perf.results_path, self.subdir, self.event)
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
@@ -331,18 +441,30 @@ class TaskRunPerf(PerfTask):
 
     def run_perf(self, file_dep, target):
         import subprocess
-
-        # perf record -e LLC-loads -c 10000 -a -g -- sleep 5; jmaps
         for model_path, out_path, json_path in zip(file_dep, target, self.json_paths):
-            command = f'perf record -e cycles,instructions,'
-            command += f'cache-references,cache-misses -F 997 -a -g'
+            command = f'perf record -e {self.event} -F 997 -a -g'
             command += f' -o {out_path} {self.exe_path} {model_path} {json_path}'
             for arg in self.exe_args:
                 command += f' --{arg} {self.exe_args[arg]}'
-            p = subprocess.run(command, check=True, shell=True,
-                               cwd=self.perf.results_path)
-            if p.returncode != 0:
-                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+            try:
+                p = subprocess.run(command, check=True, shell=True,
+                                cwd=self.perf.results_path)
+                if p.returncode != 0:
+                    raise Exception('Non-zero exit status: code %s.' % p.returncode)
+            except Exception as e:
+                import json
+                output = dict()
+                output['failed'] = True
+                output['error'] = str(e)
+                with open(json_path, 'w') as f:
+                    json.dump(output, f, indent=4)
+
+            if not os.path.exists(out_path):
+                output = dict()
+                output['failed'] = True
+                output['error'] = 'No output file was created.'
+                with open(out_path, 'w') as f:
+                    json.dump(output, f, indent=4) 
             
 
 class TaskPlotPerf(PerfTask):
@@ -364,21 +486,32 @@ class TaskPlotPerf(PerfTask):
                         [self.time_elapsed_path],
                         self.plot_time_elapsed)
         
-        self.add_action(self.json_paths, 
-                        [self.num_steps_path],
-                        self.plot_num_steps)
-        
-        self.add_action(self.json_paths,
-                        [self.step_size_path],
-                        self.plot_step_size)
+        if 'forward' in self.perf_name:
+            self.add_action(self.json_paths, 
+                            [self.num_steps_path],
+                            self.plot_num_steps)
+            
+            self.add_action(self.json_paths,
+                            [self.step_size_path],
+                            self.plot_step_size)
         
         
     def plot_time_elapsed(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
+
+        # Filter out failed perf tests.
+        json_paths = list()
+        model_tags = list()
+        for model_tag, json_path in zip(self.model_tags, file_dep):
+            with open(json_path) as f:
+                data = json.load(f)
+                if 'failed' not in data:
+                    model_tags.append(model_tag)
+                    json_paths.append(json_path)
         
         time_elapsed = list()
-        for json_path in file_dep:
+        for json_path in json_paths:
             with open(json_path, 'rb') as f:
                 data = json.load(f)
                 time_elapsed.append(1000.0*data['time_elapsed'])
@@ -387,7 +520,7 @@ class TaskPlotPerf(PerfTask):
         fig, ax = plt.subplots(figsize=(5, 8))
         
         # Plot time elapsed.
-        y = np.arange(len(self.model_tags))
+        y = np.arange(len(model_tags))
         ax.barh(y, time_elapsed, label='time elapsed')
 
         # Set the x-axis labels based on max CPU time.
@@ -406,7 +539,7 @@ class TaskPlotPerf(PerfTask):
         # Set the plot parameters.
         plt.xscale('log')
         plt.xticks(xticks, xticklabels)
-        plt.yticks(y, self.model_tags, fontsize=6)
+        plt.yticks(y, model_tags, fontsize=6)
         plt.xlabel(f'Time Elapsed')
         plt.grid(axis='x', linestyle='--')
         plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
@@ -423,6 +556,16 @@ class TaskPlotPerf(PerfTask):
     def plot_num_steps(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
+
+        # Filter out failed perf tests.
+        json_paths = list()
+        model_tags = list()
+        for model_tag, json_path in zip(self.model_tags, file_dep):
+            with open(json_path) as f:
+                data = json.load(f)
+                if 'failed' not in data:
+                    model_tags.append(model_tag)
+                    json_paths.append(json_path)
     
         num_steps_taken = list()
         num_iterations = list()
@@ -439,7 +582,7 @@ class TaskPlotPerf(PerfTask):
                 num_error_test_failures.append(data['num_error_test_failures'])
 
         # Plot the number of steps.
-        y = np.arange(len(self.model_tags))
+        y = np.arange(len(model_tags))
         width = 0.15
         multiplier = -2
 
@@ -481,7 +624,7 @@ class TaskPlotPerf(PerfTask):
         # Set the plot parameters.
         plt.xscale('log')
         plt.xticks(xticks, xticklabels)
-        plt.yticks(y, self.model_tags, fontsize=6)
+        plt.yticks(y, model_tags, fontsize=6)
         plt.xlabel(f'Steps')
         plt.grid(axis='x', linestyle='--')
         plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
@@ -498,6 +641,16 @@ class TaskPlotPerf(PerfTask):
     def plot_step_size(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
+
+        # Filter out failed perf tests.
+        json_paths = list()
+        model_tags = list()
+        for model_tag, json_path in zip(self.model_tags, file_dep):
+            with open(json_path) as f:
+                data = json.load(f)
+                if 'failed' not in data:
+                    model_tags.append(model_tag)
+                    json_paths.append(json_path)
         
         initial_step_size = list()
         final_step_size = list()
@@ -510,7 +663,7 @@ class TaskPlotPerf(PerfTask):
                 time_per_realization.append(1000.0 * data['time_per_realization'])
 
        # Plot the step size.
-        y = np.arange(len(self.model_tags))
+        y = np.arange(len(model_tags))
         width = 0.2
         multiplier = -1
 
@@ -548,7 +701,7 @@ class TaskPlotPerf(PerfTask):
         # Set the plot parameters.
         plt.xscale('log')
         plt.xticks(xticks, xticklabels)
-        plt.yticks(y, self.model_tags, fontsize=6)
+        plt.yticks(y, model_tags, fontsize=6)
         plt.xlabel(f'CPU Time')
         plt.grid(axis='x', linestyle='--')
         plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
@@ -571,6 +724,7 @@ class TaskGenerateFlameGraph(PerfTask):
 
         self.model_names = run_task.model_names
         self.model_tags = run_task.model_tags
+        self.json_paths = run_task.json_paths
         self.out_paths = run_task.out_paths
         self.result_path = run_task.result_path
         self.html_paths = [os.path.join(self.result_path, f'{model_name}.html') 
@@ -581,17 +735,35 @@ class TaskGenerateFlameGraph(PerfTask):
                         self.generate_flamegraph)
         
     def generate_flamegraph(self, file_dep, target):
+        import json
         import subprocess
 
-        for out_path, html_path in zip(file_dep, target):
+        # Filter out failed perf tests.
+        out_paths = list()
+        html_paths = list()
+        for out_path, html_path, json_path in zip(file_dep, target, self.json_paths):
+            with open(json_path) as f:
+                data = json.load(f)
+                if 'failed' not in data:
+                    out_paths.append(out_path)
+                    html_paths.append(html_path)
+
+        # Generate the flamegraphs.
+        for out_path, html_path in zip(out_paths, html_paths):
             command = f'cp {out_path} perf.data && '
             command += f'perf script report flamegraph --allow-download && '
             command += f'cp flamegraph.html {html_path} && '
             command += f'rm flamegraph.html perf.data'
-            p = subprocess.run(command, check=True, shell=True,
-                               cwd=self.perf.results_path)
-            if p.returncode != 0:
-                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+            try: 
+                p = subprocess.run(command, check=True, shell=True,
+                                cwd=self.perf.results_path)
+                if p.returncode != 0:
+                    raise Exception('Non-zero exit status: code %s.' % p.returncode)
+            except Exception as e:
+                with open(html_path, 'w') as f:
+                    f.write('')
+                print(f'Error generating flamegraph: {e}')
+
 
 class TaskGenerateDifferentialFlameGraph(PerfTask):
     REGISTRY = []
@@ -638,10 +810,15 @@ class TaskGenerateDifferentialFlameGraph(PerfTask):
         command += f'{difffolded} -n out.folded1 out.folded2 | '
         command += f'{flamegraph} {self.negated_flag} > {target[0]} && '
         command += f'rm out.stacks1 out.stacks2 out.folded1 out.folded2'
-        p = subprocess.run(command, check=True, shell=True,
-                           cwd=self.perf.results_path)
-        if p.returncode != 0:
-            raise Exception('Non-zero exit status: code %s.' % p.returncode)
+        try:
+            p = subprocess.run(command, check=True, shell=True,
+                            cwd=self.perf.results_path)
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+        except Exception as e:
+            with open(target[0], 'w') as f:
+                f.write('')
+            print(f'Error generating differential flamegraph: {e}')
         
 
 class TaskPlotBenchmarkComparison(StudyTask):
@@ -655,7 +832,11 @@ class TaskPlotBenchmarkComparison(StudyTask):
         self.model_names = model_names
         self.models = list()
         for model_name in model_names:
-            self.models.append(self.study.get_model(model_name))
+            model = self.study.get_model(model_name)
+            if model is None:
+                print(f' --> {self.name}: Model {model_name} not found.')
+            else:
+                self.models.append(model)
         self.model_suffix = model_suffix
         self.benchmark = benchmark
         self.exe_args = exe_args

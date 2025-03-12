@@ -5444,8 +5444,6 @@
 					<pennation_angle_at_optimal>0.11478091999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -5519,8 +5517,6 @@
 					<pennation_angle_at_optimal>0.13777038999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -5594,8 +5590,6 @@
 					<pennation_angle_at_optimal>0.19470502000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -5669,8 +5663,6 @@
 					<pennation_angle_at_optimal>0.16804429000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -5744,8 +5736,6 @@
 					<pennation_angle_at_optimal>0.20730759000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -5819,8 +5809,6 @@
 					<pennation_angle_at_optimal>0.31148325999999998</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -5894,8 +5882,6 @@
 					<pennation_angle_at_optimal>0.17591823000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -5969,8 +5955,6 @@
 					<pennation_angle_at_optimal>0.26422317000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6044,8 +6028,6 @@
 					<pennation_angle_at_optimal>0.21825824999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6119,8 +6101,6 @@
 					<pennation_angle_at_optimal>0.19726811</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6194,8 +6174,6 @@
 					<pennation_angle_at_optimal>0.22483914999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6269,8 +6247,6 @@
 					<pennation_angle_at_optimal>0.25802551000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6344,8 +6320,6 @@
 					<pennation_angle_at_optimal>0.21022682000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6419,8 +6393,6 @@
 					<pennation_angle_at_optimal>0.16568155000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6494,8 +6466,6 @@
 					<pennation_angle_at_optimal>0.35401178</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6569,8 +6539,6 @@
 					<pennation_angle_at_optimal>0.36738206000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6644,8 +6612,6 @@
 					<pennation_angle_at_optimal>0.38241613000000002</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6719,8 +6685,6 @@
 					<pennation_angle_at_optimal>0.31655591</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6794,8 +6758,6 @@
 					<pennation_angle_at_optimal>0.31655591</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6869,8 +6831,6 @@
 					<pennation_angle_at_optimal>0.31655591</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -6944,8 +6904,6 @@
 					<pennation_angle_at_optimal>0.17453293</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7019,8 +6977,6 @@
 					<pennation_angle_at_optimal>0</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7094,8 +7050,6 @@
 					<pennation_angle_at_optimal>0.01745329</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7169,8 +7123,6 @@
 					<pennation_angle_at_optimal>0.17200156</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7244,8 +7196,6 @@
 					<pennation_angle_at_optimal>0.27991397000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7319,8 +7269,6 @@
 					<pennation_angle_at_optimal>0.20523611999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7394,8 +7342,6 @@
 					<pennation_angle_at_optimal>0.24795247000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7469,8 +7415,6 @@
 					<pennation_angle_at_optimal>0.17453293</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7544,8 +7488,6 @@
 					<pennation_angle_at_optimal>0.21552513000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7619,8 +7561,6 @@
 					<pennation_angle_at_optimal>0.21701490000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7694,8 +7634,6 @@
 					<pennation_angle_at_optimal>0.026135419999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7769,8 +7707,6 @@
 					<pennation_angle_at_optimal>0.25456146000000002</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7844,8 +7780,6 @@
 					<pennation_angle_at_optimal>0.24129500000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7919,8 +7853,6 @@
 					<pennation_angle_at_optimal>0.38142888000000003</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -7994,8 +7926,6 @@
 					<pennation_angle_at_optimal>0.052359879999999998</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8069,8 +7999,6 @@
 					<pennation_angle_at_optimal>0.19518281000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8144,8 +8072,6 @@
 					<pennation_angle_at_optimal>0.22648906999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8219,8 +8145,6 @@
 					<pennation_angle_at_optimal>0.063099730000000007</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8294,8 +8218,6 @@
 					<pennation_angle_at_optimal>0.25286729000000002</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8369,8 +8291,6 @@
 					<pennation_angle_at_optimal>0.42222252999999998</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8444,8 +8364,6 @@
 					<pennation_angle_at_optimal>0.11478091999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8519,8 +8437,6 @@
 					<pennation_angle_at_optimal>0.13777038999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8594,8 +8510,6 @@
 					<pennation_angle_at_optimal>0.19470502000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8669,8 +8583,6 @@
 					<pennation_angle_at_optimal>0.16804429000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8744,8 +8656,6 @@
 					<pennation_angle_at_optimal>0.20730759000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8819,8 +8729,6 @@
 					<pennation_angle_at_optimal>0.31148325999999998</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8894,8 +8802,6 @@
 					<pennation_angle_at_optimal>0.17591823000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -8969,8 +8875,6 @@
 					<pennation_angle_at_optimal>0.26422317000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9044,8 +8948,6 @@
 					<pennation_angle_at_optimal>0.21825824999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9119,8 +9021,6 @@
 					<pennation_angle_at_optimal>0.19726811</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9194,8 +9094,6 @@
 					<pennation_angle_at_optimal>0.22483914999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9269,8 +9167,6 @@
 					<pennation_angle_at_optimal>0.25802551000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9344,8 +9240,6 @@
 					<pennation_angle_at_optimal>0.21022682000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9419,8 +9313,6 @@
 					<pennation_angle_at_optimal>0.16568155000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9494,8 +9386,6 @@
 					<pennation_angle_at_optimal>0.35401178</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9569,8 +9459,6 @@
 					<pennation_angle_at_optimal>0.36738206000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9644,8 +9532,6 @@
 					<pennation_angle_at_optimal>0.38241613000000002</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9719,8 +9605,6 @@
 					<pennation_angle_at_optimal>0.31655591</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9794,8 +9678,6 @@
 					<pennation_angle_at_optimal>0.31655591</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9869,8 +9751,6 @@
 					<pennation_angle_at_optimal>0.31655591</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -9944,8 +9824,6 @@
 					<pennation_angle_at_optimal>0.17453293</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10019,8 +9897,6 @@
 					<pennation_angle_at_optimal>0</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10094,8 +9970,6 @@
 					<pennation_angle_at_optimal>0.01745329</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10169,8 +10043,6 @@
 					<pennation_angle_at_optimal>0.17200156</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10244,8 +10116,6 @@
 					<pennation_angle_at_optimal>0.27991397000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10319,8 +10189,6 @@
 					<pennation_angle_at_optimal>0.20523611999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10394,8 +10262,6 @@
 					<pennation_angle_at_optimal>0.24795247000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10469,8 +10335,6 @@
 					<pennation_angle_at_optimal>0.17453293</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10544,8 +10408,6 @@
 					<pennation_angle_at_optimal>0.21552513000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10619,8 +10481,6 @@
 					<pennation_angle_at_optimal>0.21701490000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10694,8 +10554,6 @@
 					<pennation_angle_at_optimal>0.026135419999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10769,8 +10627,6 @@
 					<pennation_angle_at_optimal>0.25456146000000002</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10844,8 +10700,6 @@
 					<pennation_angle_at_optimal>0.24129500000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10919,8 +10773,6 @@
 					<pennation_angle_at_optimal>0.38142888000000003</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -10994,8 +10846,6 @@
 					<pennation_angle_at_optimal>0.052359879999999998</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -11069,8 +10919,6 @@
 					<pennation_angle_at_optimal>0.19518281000000001</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -11144,8 +10992,6 @@
 					<pennation_angle_at_optimal>0.22648906999999999</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -11219,8 +11065,6 @@
 					<pennation_angle_at_optimal>0.063099730000000007</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -11294,8 +11138,6 @@
 					<pennation_angle_at_optimal>0.25286729000000002</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->
@@ -11369,8 +11211,6 @@
 					<pennation_angle_at_optimal>0.42222252999999998</pennation_angle_at_optimal>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
 					<ignore_tendon_compliance>false</ignore_tendon_compliance>
-					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
-					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--The linear damping of the fiber.-->
 					<fiber_damping>0.01</fiber_damping>
 					<!--Assumed initial activation level if none is assigned.-->

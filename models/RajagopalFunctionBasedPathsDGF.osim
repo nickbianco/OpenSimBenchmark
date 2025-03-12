@@ -5581,7 +5581,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -5631,7 +5631,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -5681,7 +5681,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -5731,7 +5731,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -5781,7 +5781,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -5831,7 +5831,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -5881,7 +5881,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -5931,7 +5931,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -5981,7 +5981,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6031,7 +6031,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6081,7 +6081,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6131,7 +6131,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6181,7 +6181,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6231,7 +6231,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6281,7 +6281,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6331,7 +6331,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6381,7 +6381,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6431,7 +6431,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6481,7 +6481,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6531,7 +6531,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6581,7 +6581,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6631,7 +6631,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6681,7 +6681,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6731,7 +6731,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6781,7 +6781,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6831,7 +6831,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6881,7 +6881,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6931,7 +6931,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -6981,7 +6981,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7031,7 +7031,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7081,7 +7081,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7131,7 +7131,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7181,7 +7181,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7231,7 +7231,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7281,7 +7281,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7331,7 +7331,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7381,7 +7381,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7431,7 +7431,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7481,7 +7481,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7531,7 +7531,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7581,7 +7581,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7631,7 +7631,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7681,7 +7681,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7731,7 +7731,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7781,7 +7781,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7831,7 +7831,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7881,7 +7881,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7931,7 +7931,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -7981,7 +7981,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8031,7 +8031,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8081,7 +8081,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8131,7 +8131,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8181,7 +8181,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8231,7 +8231,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8281,7 +8281,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8331,7 +8331,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8381,7 +8381,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8431,7 +8431,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8481,7 +8481,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8531,7 +8531,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8581,7 +8581,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8631,7 +8631,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8681,7 +8681,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8731,7 +8731,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8781,7 +8781,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8831,7 +8831,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8881,7 +8881,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8931,7 +8931,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -8981,7 +8981,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9031,7 +9031,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9081,7 +9081,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9131,7 +9131,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9181,7 +9181,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9231,7 +9231,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9281,7 +9281,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9331,7 +9331,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9381,7 +9381,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9431,7 +9431,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9481,7 +9481,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->
@@ -9531,7 +9531,7 @@
 					<!--Maximum contraction velocity of the fibers, in optimal fiberlengths/second-->
 					<max_contraction_velocity>10</max_contraction_velocity>
 					<!--Compute muscle dynamics ignoring tendon compliance. Tendon is assumed to be rigid.-->
-					<ignore_tendon_compliance>true</ignore_tendon_compliance>
+					<ignore_tendon_compliance>false</ignore_tendon_compliance>
 					<!--Compute muscle dynamics ignoring activation dynamics. Activation is equivalent to excitation.-->
 					<ignore_activation_dynamics>false</ignore_activation_dynamics>
 					<!--Smaller value means activation can increase more rapidly. Default: 0.015 seconds. Bounds: (0, inf]-->

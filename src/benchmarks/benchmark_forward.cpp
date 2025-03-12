@@ -66,12 +66,24 @@ int main(int argc, char** argv) {
                 "Step size must be positive.");
     }
 
+    // Run test integration. This allows us to fail early, preventing a
+    // half-written JSON file from benchmark.    
+    SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
+    if (step > 0) {
+        integrator.setFixedStepSize(step);
+    }
+    SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
+    state.setTime(0);
+    timeStepper.initialize(state);    
+    timeStepper.stepTo(time);
+
     // Register the benchmarks.
     benchmark::RegisterBenchmark("forward", BM_Forward, 
             std::ref(model), 
             std::ref(state),
             time, step)->Unit(benchmark::kMillisecond);
 
+    // Run the benchmarks.
     benchmark::Initialize(&argc, argv);
     benchmark::RunSpecifiedBenchmarks();
     benchmark::Shutdown();

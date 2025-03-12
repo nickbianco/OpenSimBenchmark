@@ -32,6 +32,14 @@ class ModelGenerator:
 
         # Disable logging.
         osim.Logger.setLevelString('error')
+
+    @staticmethod
+    def set_base_model(model):
+        muscles = model.updMuscles()
+        for i in range(muscles.getSize()):
+            muscle = muscles.get(i)
+            muscle.set_ignore_activation_dynamics(False)
+            muscle.set_ignore_tendon_compliance(False)
     
     @staticmethod
     def ignore_activation_dynamics(model, model_name):
@@ -112,6 +120,8 @@ class ModelGenerator:
         model.initSystem()
         model_name = f'{self.model_name}'
         tags = list()
+
+        self.set_base_model(model)
 
         if flags.get('ignore_activation_dynamics'):
             model_name, tag = self.ignore_activation_dynamics(model, model_name)

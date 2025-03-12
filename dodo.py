@@ -30,36 +30,49 @@ study = Study('opensim_benchmark')
 # Add study tasks.
 study.add_task(TaskInstallDependencies)
 
+# Create Rajagopal models.
+study.add_task(TaskCreateRajagopalModels)
+
 # Add models to the study.
 def add_model(model_file, label, flags):
 
+    # Add the model to the study.
     model = study.add_model(model_file, label)
     model.add_task(TaskGenerateModels, flags)
     times = [0.01, 0.1, 1.0]
 
+    # Benchmark tests.
     benchmark_forward = model.add_benchmark('benchmark_forward')
     for time in times:
-        benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': time})
+        benchmark_forward.add_task(TaskRunBenchmark, 
+                                   model.tasks[-1], exe_args={'time': time})
         benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
     benchmark_manager = model.add_benchmark('benchmark_manager')
     for time in times:
-        benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], exe_args={'time': time})
+        benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], 
+                                   exe_args={'time': time})
         benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])    
-
-    perf_forward = model.add_perf('perf_forward')
-    for time in times:
-        perf_forward.add_task(TaskRunPerf, model.tasks[-1], exe_args={'time': time})
-        perf_forward.add_task(TaskGenerateFlameGraph, perf_forward.tasks[-1])
-        perf_forward.add_task(TaskPlotPerf, perf_forward.tasks[-2])
 
     benchmark_realize = model.add_benchmark('benchmark_realize')
     benchmark_realize.add_task(TaskRunBenchmark, model.tasks[-1])
     benchmark_realize.add_task(TaskPlotBenchmark, benchmark_realize.tasks[-1])
 
+    # Linux 'perf' tests.
+    perf_forward = model.add_perf('perf_forward')
+    events = ['cycles', 'cache-misses']
+    for time in times:
+        for event in events:
+            perf_forward.add_task(TaskRunPerf, event, model.tasks[-1], 
+                                  exe_args={'time': time})
+            perf_forward.add_task(TaskGenerateFlameGraph, perf_forward.tasks[-1])
+            perf_forward.add_task(TaskPlotPerf, perf_forward.tasks[-2])
+
     perf_realize = model.add_perf('perf_realize')
-    perf_realize.add_task(TaskRunPerf, model.tasks[-1])
-    perf_realize.add_task(TaskGenerateFlameGraph, perf_realize.tasks[-1])
+    for event in events:
+        perf_realize.add_task(TaskRunPerf, event, model.tasks[-1])
+        perf_realize.add_task(TaskGenerateFlameGraph, perf_realize.tasks[-1])
+        perf_realize.add_task(TaskPlotPerf, perf_realize.tasks[-2])
 
 
 add_model('Rajagopal', 'Rajagopal', 
@@ -83,12 +96,14 @@ add_model('RajagopalFunctionBasedPathActuators',
 
 add_model('RajagopalDGF', 'Rajagopal\nDeGroote-Fregly muscles', 
           flags=['ignore_activation_dynamics', 
+                 'ignore_tendon_compliance',
                  'disable_constraints', 
                  'remove_muscles'])  
 
 add_model('RajagopalFunctionBasedPathsDGF', 
           'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths', 
           flags=['ignore_activation_dynamics', 
+                 'ignore_tendon_compliance',
                  'disable_constraints', 
                  'remove_muscles'])  
 
@@ -96,47 +111,39 @@ add_model('RajagopalFunctionBasedPathsDGF',
 # --------------------------
 benchmark = 'benchmark_realize'
 model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators']
+               'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
+               'RajagopalFunctionBasedPathsDGF']
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_realize', 
                model_names, benchmark)
 
 model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators']
+               'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
+               'RajagopalFunctionBasedPathsDGF']
 model_suffix = '_noconstraints'
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_realize_noconstraints', 
                model_names, benchmark, model_suffix)
 
-model_names = ['Rajagopal', 'RajagopalFunctionBasedPaths']
-model_suffix = '_noactdyn_notendyn'
-study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_realize_noactdyn_notendyn', 
-               model_names, benchmark, model_suffix)
 
 # Benchmark 'forward' plots.
 # --------------------------
 benchmark = 'benchmark_forward'
 model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators']
+               'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
+               'RajagopalFunctionBasedPathsDGF']
 model_suffix = ''
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_time0.1', 
-               model_names, benchmark, model_suffix=model_suffix, exe_args={'time': 0.1})
+               model_names, benchmark, model_suffix=model_suffix, 
+               exe_args={'time': 0.1})
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_time1.0', 
-               model_names, benchmark, model_suffix=model_suffix, exe_args={'time': 1.0})
+               model_names, benchmark, model_suffix=model_suffix, 
+               exe_args={'time': 1.0})
 
 model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators']
+               'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
+               'RajagopalFunctionBasedPathsDGF']
 model_suffix = '_noconstraints'
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_noconstraints_time0.1', 
                model_names, benchmark, model_suffix, exe_args={'time': 0.1})
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_noconstraints_time1.0',
                model_names, benchmark, model_suffix, exe_args={'time': 1.0})
-
-model_names = ['Rajagopal', 'RajagopalFunctionBasedPaths']
-model_suffix = '_noactdyn_notendyn'
-study.add_task(TaskPlotBenchmarkComparison, 
-               'Rajagopal_forward_noactdyn_notendyn_time0.1', 
-               model_names, benchmark, model_suffix, exe_args={'time': 0.1})
-study.add_task(TaskPlotBenchmarkComparison,
-               'Rajagopal_forward_noactdyn_notendyn_time1.0', 
-               model_names, benchmark, model_suffix, exe_args={'time': 1.0})
-
 
