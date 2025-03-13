@@ -16,9 +16,15 @@ public:
         q_bounds.reserve(coordinates.size());
         u_bounds.reserve(coordinates.size());
         for (int i = 0; i < coordinates.size(); ++i) {
-            q_bounds.emplace_back(0.1*coordinates[i]->getRangeMin(), 
-                                  0.1*coordinates[i]->getRangeMax());
-            u_bounds.emplace_back(-0.1, 0.1);      
+            q_bounds.emplace_back(coordinates[i]->getRangeMin(), 
+                                  coordinates[i]->getRangeMax());
+            if (coordinates[i]->getMotionType() == 
+                    Coordinate::MotionType::Translational) {
+                u_bounds.emplace_back(-1.0, 1.0);
+            } else {    
+                u_bounds.emplace_back(-10.0, 10.0);
+            }
+
         }
     }
 

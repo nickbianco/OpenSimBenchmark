@@ -8,6 +8,7 @@ class ModelGenerator:
     all_flags = [
         'ignore_activation_dynamics',
         'ignore_tendon_compliance',
+        'ignore_passive_fiber_force',
         'remove_wrap_objects',
         'disable_constraints',
         'remove_muscles'
@@ -62,6 +63,34 @@ class ModelGenerator:
 
         model_name += '_notendyn'
         tag = 'no ten. dyn.'
+
+        return model_name, tag
+    
+    @staticmethod
+    def ignore_passive_fiber_force(model, model_name):
+        muscles = model.updMuscles()
+        for i in range(muscles.getSize()):
+            muscle = muscles.get(i)
+
+            dgfMuscle = osim.DeGrooteFregly2016Muscle.safeDownCast(muscle)
+            if dgfMuscle:
+                dgfMuscle.set_ignore_passive_fiber_force(True)
+            
+            # strainAtZeroForce < strainAtOneNormForce
+            # stiffnessAtOneNormForce > 1/(strainAtOneNormForce-strainAtZeroForce)
+            # 0 < stiffnessAtLowForce < stiffnessAtOneNormForce
+            # 0 <= curviness <= 1
+            millardMuscle = osim.Millard2012EquilibriumMuscle.safeDownCast(muscle)
+            if millardMuscle:
+                fflc = millardMuscle.upd_FiberForceLengthCurve()
+                fflc.set_strain_at_zero_force(0.01)
+                fflc.set_strain_at_one_norm_force(10.0)
+                fflc.set_stiffness_at_one_norm_force(0.2)
+                fflc.set_stiffness_at_low_force(0.01)
+                fflc.set_curviness(0.0)
+
+        model_name += '_nopassive'
+        tag = 'no passive force'
 
         return model_name, tag
 
@@ -130,6 +159,10 @@ class ModelGenerator:
         if flags.get('ignore_tendon_compliance'):
             model_name, tag = self.ignore_tendon_compliance(model, model_name)
             tags.append(tag)
+
+        if flags.get('ignore_passive_fiber_force'):
+            model_name, tag = self.ignore_passive_fiber_force(model, model_name)
+            tags.append(tag)
         
         if flags.get('remove_wrap_objects'):
             model_name, tag = self.remove_wrap_objects(model, model_name)
@@ -170,6 +203,9 @@ class ModelGenerator:
                 return False
             
             if 'remove_wrap_objects' in flags and flags['remove_wrap_objects']:
+                return False
+            
+            if 'ignore_passive_fiber_force' in flags and flags['ignore_passive_fiber_force']:
                 return False
             
         return True

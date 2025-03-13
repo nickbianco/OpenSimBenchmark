@@ -36,6 +36,9 @@ study.add_task(TaskCreateRajagopalModels)
 # Add models to the study.
 def add_model(model_file, label, flags):
 
+    if not os.path.exists(os.path.join(config['models_path'], f'{model_file}.osim')):
+        return
+
     # Add the model to the study.
     model = study.add_model(model_file, label)
     model.add_task(TaskGenerateModels, flags)
@@ -44,15 +47,12 @@ def add_model(model_file, label, flags):
     # Benchmark tests.
     benchmark_forward = model.add_benchmark('benchmark_forward')
     for time in times:
-        benchmark_forward.add_task(TaskRunBenchmark, 
-                                   model.tasks[-1], exe_args={'time': time})
-        benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
-
-    benchmark_manager = model.add_benchmark('benchmark_manager')
-    for time in times:
-        benchmark_manager.add_task(TaskRunBenchmark, model.tasks[-1], 
+        benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
                                    exe_args={'time': time})
-        benchmark_manager.add_task(TaskPlotBenchmark, benchmark_manager.tasks[-1])    
+        benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
+        benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
+                                   exe_args={'time': time, 'step': 0.001})
+        benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1]) 
 
     benchmark_realize = model.add_benchmark('benchmark_realize')
     benchmark_realize.add_task(TaskRunBenchmark, model.tasks[-1])
@@ -78,6 +78,7 @@ def add_model(model_file, label, flags):
 add_model('Rajagopal', 'Rajagopal', 
           flags=['ignore_activation_dynamics', 
                  'ignore_tendon_compliance', 
+                 'ignore_passive_fiber_force',
                  'disable_constraints', 
                  'remove_muscles'])
 
@@ -87,6 +88,7 @@ add_model('RajagopalPathActuators', 'Rajagopal\npath actuators',
 add_model('RajagopalFunctionBasedPaths', 'Rajagopal\nfunction based paths', 
           flags=['ignore_activation_dynamics', 
                  'ignore_tendon_compliance', 
+                 'ignore_passive_fiber_force',
                  'disable_constraints', 
                  'remove_muscles'])  
 
@@ -97,6 +99,7 @@ add_model('RajagopalFunctionBasedPathActuators',
 add_model('RajagopalDGF', 'Rajagopal\nDeGroote-Fregly muscles', 
           flags=['ignore_activation_dynamics', 
                  'ignore_tendon_compliance',
+                 'ignore_passive_fiber_force',
                  'disable_constraints', 
                  'remove_muscles'])  
 
@@ -104,6 +107,7 @@ add_model('RajagopalFunctionBasedPathsDGF',
           'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths', 
           flags=['ignore_activation_dynamics', 
                  'ignore_tendon_compliance',
+                'ignore_passive_fiber_force',
                  'disable_constraints', 
                  'remove_muscles'])  
 
@@ -115,6 +119,12 @@ model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPat
                'RajagopalFunctionBasedPathsDGF']
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_realize', 
                model_names, benchmark)
+
+model_names = ['Rajagopal', 'RajagopalFunctionBasedPaths', 
+               'RajagopalDGF','RajagopalFunctionBasedPathsDGF']
+model_suffix = '_notendyn'
+study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_realize_notendyn', 
+               model_names, benchmark, model_suffix=model_suffix)
 
 model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
                'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
@@ -128,8 +138,7 @@ study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_realize_noconstraints',
 # --------------------------
 benchmark = 'benchmark_forward'
 model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
-               'RajagopalFunctionBasedPathsDGF']
+               'RajagopalFunctionBasedPathActuators']
 model_suffix = ''
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_time0.1', 
                model_names, benchmark, model_suffix=model_suffix, 
@@ -138,12 +147,64 @@ study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_time1.0',
                model_names, benchmark, model_suffix=model_suffix, 
                exe_args={'time': 1.0})
 
+model_names = ['Rajagopal', 'RajagopalFunctionBasedPaths', 
+               'RajagopalDGF','RajagopalFunctionBasedPathsDGF']
+model_suffix = '_notendyn'
+study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_notendyn_time0.1', 
+               model_names, benchmark, model_suffix=model_suffix, 
+               exe_args={'time': 0.1})
+study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_notendyn_time1.0', 
+               model_names, benchmark, model_suffix=model_suffix, 
+               exe_args={'time': 1.0})
+
 model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
-               'RajagopalFunctionBasedPathsDGF']
+               'RajagopalFunctionBasedPathActuators']
 model_suffix = '_noconstraints'
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_noconstraints_time0.1', 
                model_names, benchmark, model_suffix, exe_args={'time': 0.1})
 study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_noconstraints_time1.0',
                model_names, benchmark, model_suffix, exe_args={'time': 1.0})
+
+
+# Pendulum models.
+links = [1, 2, 5, 10, 20, 50, 100]
+study.add_task(TaskCreatePendulumModels, links)
+
+flags = []
+for link in links:
+    model_file = f'Pendulum_{link}'
+    add_model(f'{link}link_pendulum', f'{link} link pendulum', flags)
+
+model_names = [f'{link}link_pendulum' for link in links]
+study.add_task(TaskPlotBenchmarkComparison, 'pendulum_realize', 
+               model_names, 'benchmark_realize')
+
+model_suffix = ''
+study.add_task(TaskPlotBenchmarkComparison, 'pendulum_forward_time0.1', 
+               model_names, 'benchmark_forward', model_suffix=model_suffix,
+               exe_args={'time': 0.1})
+study.add_task(TaskPlotBenchmarkComparison, 'pendulum_forward_time1.0', 
+               model_names, 'benchmark_forward', model_suffix=model_suffix,
+               exe_args={'time': 1.0})
+
+
+# Frames per second
+model_names = [f'{link}link_pendulum' for link in links]
+model_names += ['Rajagopal', 
+                'RajagopalDGF', 
+                'RajagopalFunctionBasedPaths',
+                'RajagopalFunctionBasedPathsDGF',
+                'RajagopalPathActuators', 
+                'RajagopalFunctionBasedPathActuators']
+model_suffix = ''
+study.add_task(TaskPlotFramesPerSecond, 'all', model_names)
+
+model_names = ['Rajagopal', 
+               'RajagopalDGF', 
+               'RajagopalFunctionBasedPaths',
+               'RajagopalFunctionBasedPathsDGF',
+               'RajagopalPathActuators', 
+               'RajagopalFunctionBasedPathActuators']
+model_suffix = ''
+study.add_task(TaskPlotFramesPerSecond, 'Rajagopal', model_names)
 

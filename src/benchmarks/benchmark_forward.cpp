@@ -17,9 +17,14 @@ Options:
 
 static void BM_Forward(benchmark::State& st,
         OpenSim::Model& model, SimTK::State& state,
+        StateGenerator& stateGenerator,
         double time, double step) {
 
-
+    SimTK::Vector controls = stateGenerator.getRandomControls();
+    model.realizeVelocity(state);
+    model.setControls(state, controls);
+    state.updY() = stateGenerator.getRandomY();
+    
     SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
     if (step > 0) {
         integrator.setFixedStepSize(step);
@@ -66,6 +71,9 @@ int main(int argc, char** argv) {
                 "Step size must be positive.");
     }
 
+    // State generator.
+    StateGenerator stateGenerator(model);
+
     // Run test integration. This allows us to fail early, preventing a
     // half-written JSON file from benchmark.    
     SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
@@ -81,6 +89,7 @@ int main(int argc, char** argv) {
     benchmark::RegisterBenchmark("forward", BM_Forward, 
             std::ref(model), 
             std::ref(state),
+            std::ref(stateGenerator),
             time, step)->Unit(benchmark::kMillisecond);
 
     // Run the benchmarks.

@@ -14,10 +14,14 @@ Options:
 )";
 
 static void realize(const SimTK::Stage& stage,
-        benchmark::State& st, OpenSim::Model& model, SimTK::State& state) {
+        benchmark::State& st, OpenSim::Model& model, 
+        StateGenerator& stateGenerator,
+        SimTK::State& state) {
 
-    state = model.initSystem();
-    SimTK::Vector y = state.getY();
+    SimTK::Vector controls = stateGenerator.getRandomControls();
+    model.realizeVelocity(state);
+    model.setControls(state, controls);
+    SimTK::Vector y = stateGenerator.getRandomY();
 
     // Run the benchmark.
     for (auto _ : st) {
@@ -27,23 +31,23 @@ static void realize(const SimTK::Stage& stage,
 }
 
 static void BM_RealizePosition(benchmark::State& st, OpenSim::Model& model, 
-        SimTK::State& state) {
-    realize(SimTK::Stage::Position, st, model, state);
+        StateGenerator& stateGenerator, SimTK::State& state) {
+    realize(SimTK::Stage::Position, st, model, stateGenerator, state);
 }
 
-static void BM_RealizeVelocity(benchmark::State& st, 
-        OpenSim::Model& model, SimTK::State& state) {
-    realize(SimTK::Stage::Velocity, st, model, state);
+static void BM_RealizeVelocity(benchmark::State& st, OpenSim::Model& model, 
+        StateGenerator& stateGenerator, SimTK::State& state) {
+    realize(SimTK::Stage::Velocity, st, model, stateGenerator, state);
 }
 
-static void BM_RealizeDynamics(benchmark::State& st, 
-        OpenSim::Model& model, SimTK::State& state) {
-    realize(SimTK::Stage::Dynamics, st, model, state);
+static void BM_RealizeDynamics(benchmark::State& st, OpenSim::Model& model, 
+        StateGenerator& stateGenerator, SimTK::State& state) {
+    realize(SimTK::Stage::Dynamics, st, model, stateGenerator, state);
 }
 
-static void BM_RealizeAcceleration(benchmark::State& st, 
-        OpenSim::Model& model, SimTK::State& state) {
-    realize(SimTK::Stage::Acceleration, st, model, state);
+static void BM_RealizeAcceleration(benchmark::State& st, OpenSim::Model& model, 
+        StateGenerator& stateGenerator, SimTK::State& state) {
+    realize(SimTK::Stage::Acceleration, st, model, stateGenerator, state);
 }
 
 int main(int argc, char** argv) {
@@ -62,21 +66,28 @@ int main(int argc, char** argv) {
     OpenSim::Model model(args["<model>"].asString());
     SimTK::State state = model.initSystem();
 
+    // State generator.
+    StateGenerator stateGenerator(model);
+
     // Register the benchmarks.
     benchmark::RegisterBenchmark("realizePosition", BM_RealizePosition, 
             std::ref(model), 
+            std::ref(stateGenerator),   
             std::ref(state))->Unit(benchmark::kMillisecond);
 
     benchmark::RegisterBenchmark("realizeVelocity", BM_RealizeVelocity,
-            std::ref(model), 
+            std::ref(model),
+            std::ref(stateGenerator), 
             std::ref(state))->Unit(benchmark::kMillisecond);
 
     benchmark::RegisterBenchmark("realizeDynamics", BM_RealizeDynamics,
             std::ref(model), 
+            std::ref(stateGenerator), 
             std::ref(state))->Unit(benchmark::kMillisecond);
 
     benchmark::RegisterBenchmark("realizeAcceleration", BM_RealizeAcceleration,
             std::ref(model), 
+            std::ref(stateGenerator), 
             std::ref(state))->Unit(benchmark::kMillisecond);
 
     // Run the benchmarks.

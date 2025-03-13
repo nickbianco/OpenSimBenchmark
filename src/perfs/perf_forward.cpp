@@ -57,7 +57,6 @@ int main(int argc, char** argv) {
 
     // Run the forward integration simulation.
     state.setTime(0);
-
     SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
     SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
     timeStepper.initialize(state);

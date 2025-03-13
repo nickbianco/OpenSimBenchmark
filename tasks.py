@@ -136,6 +136,7 @@ def get_sub_directory(exe_args):
 
     return subdir
 
+
 class TaskInstallDependencies(StudyTask):
     REGISTRY = []
     def __init__(self, study):
@@ -158,6 +159,7 @@ class TaskInstallDependencies(StudyTask):
         if p.returncode != 0:
             raise Exception('Non-zero exit status: code %s.' % p.returncode)
         
+
 class TaskCreateRajagopalModels(StudyTask):
     REGISTRY = []
     def __init__(self, study):
@@ -237,6 +239,32 @@ class TaskCreateRajagopalModels(StudyTask):
         model.printToXML(target[5])
         print(f' --> Created {target[5]}')
 
+
+class TaskCreatePendulumModels(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, links):
+        super(TaskCreatePendulumModels, self).__init__(study)
+        self.name = 'create_pendulum_models'
+        self.links = links
+        self.model_names = list()
+        for link in self.links:
+            self.model_names.append(f'{link}link_pendulum')
+
+        self.model_paths = list()
+        for model_name in self.model_names:
+            self.model_paths.append(os.path.join(self.study.config['models_path'], 
+                                                 f'{model_name}.osim'))
+        self.add_action([], 
+                        self.model_paths, 
+                        self.create_pendulum_models)
+        
+    def create_pendulum_models(self, file_dep, target):
+        for link, model_path in zip(self.links, target):
+            model = osim.ModelFactory.createNLinkPendulum(link)
+            model.initSystem()
+            model.printToXML(model_path)
+            print(f' --> Created {model_path}')
+
         
 class TaskGenerateModels(ModelTask):
     REGISTRY = []
@@ -255,6 +283,7 @@ class TaskGenerateModels(ModelTask):
         
     def generate_models(self, file_dep, target):
         self.generator.generate_models()
+
 
 class TaskRunBenchmark(BenchmarkTask):
     REGISTRY = []
@@ -325,9 +354,10 @@ class TaskPlotBenchmark(BenchmarkTask):
         self.out_paths = run_task.out_paths
         self.result_path = run_task.result_path
         self.cpu_times_path = os.path.join(self.result_path, 'cpu_times.png')
+        self.fps_path = os.path.join(self.result_path, 'frames_per_second.png')
 
         self.add_action(self.out_paths, 
-                        [self.cpu_times_path],
+                        [self.cpu_times_path, self.fps_path],
                         self.plot_benchmark)
         
     def plot_benchmark(self, file_dep, target):
@@ -572,8 +602,8 @@ class TaskPlotPerf(PerfTask):
         num_realizations = list()
         num_steps_attempted = list()
         num_error_test_failures = list()
-        for out_path in file_dep:
-            with open(out_path) as f:
+        for json_path in json_paths:
+            with open(json_path) as f:
                 data = json.load(f)
                 num_steps_taken.append(data['num_steps_taken'])
                 num_iterations.append(data['num_iterations'])
@@ -655,8 +685,8 @@ class TaskPlotPerf(PerfTask):
         initial_step_size = list()
         final_step_size = list()
         time_per_realization = list()
-        for out_path in file_dep:
-            with open(out_path) as f:
+        for json_path in json_paths:
+            with open(json_path) as f:
                 data = json.load(f)
                 initial_step_size.append(1000.0 * data['initial_step_size'])
                 final_step_size.append(1000.0 * data['final_step_size'])
@@ -932,3 +962,94 @@ class TaskPlotBenchmarkComparison(StudyTask):
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
+
+
+class TaskPlotFramesPerSecond(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, tag, model_names):
+        super(TaskPlotFramesPerSecond, self).__init__(study)
+        self.name = f'plot_frames_per_second_{tag}'
+        self.tag = tag
+        self.study = study
+        self.model_names = model_names
+        self.models = list()
+        for model_name in model_names:
+            model = self.study.get_model(model_name)
+            if model is None:
+                print(f' --> {self.name}: Model {model_name} not found.')
+            else:
+                self.models.append(model)
+        self.results_path = self.study.config['results_path']
+        self.figures_path = self.study.config['figures_path']
+        
+        self.plot_labels = list()
+        self.json_paths = list()
+        for model in self.models:
+            self.json_paths.append(
+                    os.path.join(self.results_path, model.name, 'benchmark_realize',
+                                 'default', f'{model.name}.json'))
+            self.plot_labels.append(model.label)
+            
+        if not os.path.exists(self.figures_path):
+            os.makedirs(self.figures_path)
+        
+        self.figure_path = os.path.join(self.figures_path, 
+                                       f'frames_per_second_{tag}.png')
+
+        self.add_action(self.json_paths, 
+                        [self.figure_path], 
+                        self.plot_frames_per_second)
+
+    def plot_frames_per_second(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+        
+        # Compute max FPS based on realize times.
+        frames_per_second = list()
+        for json_path in file_dep:
+            with open(json_path) as f:
+                data = json.load(f)
+                for benchmark in data['benchmarks']:
+                    if benchmark['name'] == 'realizeAcceleration':
+                        cpu_time_seconds = benchmark['cpu_time'] / 1e3
+                        frames_per_second.append(1.0 / cpu_time_seconds)
+
+        # Plot the CPU times.
+        y = np.arange(len(self.plot_labels))
+        width = 0.5
+
+        # Create the figure and axis.
+        height = 0.5 * len(self.plot_labels)
+        fig, ax = plt.subplots(figsize=(5, height))
+        
+        # Plot the CPU times.
+        ax.barh(y, frames_per_second, width, label='frames_per_second')
+
+        # Set the x-axis labels based on max CPU time.
+        # all_xticks = [1, 10, 100, 1000, 10000, 100000]
+        # max_value = max(frames_per_second)
+
+        # xticks = list()
+        # for xtick in all_xticks:
+        #     if xtick < 100 * max_value:
+                # xticks.append(xtick)
+
+        # Set the plot parameters.
+        # plt.xscale('log')
+        # plt.xticks(xticks)
+        plt.yticks(y, self.plot_labels, fontsize=6)
+        ax = plt.gca()
+        for label in ax.get_yticklabels():
+            label.set_va('center')
+        plt.xlabel(f'Frames Per Second')
+        plt.grid(axis='x', linestyle='--')
+        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
+        ax.set_axisbelow(True)
+        # plt.title(self.benchmark)
+        plt.legend(loc='lower right', fontsize=6)
+
+        # Save the plot.
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
+
