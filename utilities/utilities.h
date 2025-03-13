@@ -16,13 +16,13 @@ public:
         q_bounds.reserve(coordinates.size());
         u_bounds.reserve(coordinates.size());
         for (int i = 0; i < coordinates.size(); ++i) {
-            q_bounds.emplace_back(coordinates[i]->getRangeMin(), 
-                                  coordinates[i]->getRangeMax());
+            q_bounds.emplace_back(-0.1*coordinates[i]->getRangeMin(), 
+                                  0.1*coordinates[i]->getRangeMax());
             if (coordinates[i]->getMotionType() == 
                     Coordinate::MotionType::Translational) {
-                u_bounds.emplace_back(-1.0, 1.0);
+                u_bounds.emplace_back(-0.1, 0.1);
             } else {    
-                u_bounds.emplace_back(-10.0, 10.0);
+                u_bounds.emplace_back(-1.0, 1.0);
             }
 
         }
@@ -73,6 +73,10 @@ public:
         for (const auto& actu : m_model.getComponentList<ScalarActuator>()) {
             SimTK::Real minControl = actu.getMinControl();
             SimTK::Real maxControl = actu.getMaxControl();
+            SimTK::Real range = maxControl - minControl;
+            SimTK::Real buffer = 0.2 * range;
+            minControl += buffer;
+            maxControl -= buffer;
             SimTK::Random::Uniform random(minControl, maxControl);
             control[0] = random.getValue();
             actu.setControls(control, controls);

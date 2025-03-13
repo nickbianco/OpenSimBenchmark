@@ -254,16 +254,20 @@ class TaskCreatePendulumModels(StudyTask):
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'], 
                                                  f'{model_name}.osim'))
-        self.add_action([], 
+            
+        # A dummy file dependency to satisify doit's dependency tree.
+        self.dummy_path = os.path.join(self.study.config['data_path'], 'pendulum', 
+                                       'dummy.txt')
+        self.add_action([self.dummy_path], 
                         self.model_paths, 
                         self.create_pendulum_models)
         
     def create_pendulum_models(self, file_dep, target):
-        for link, model_path in zip(self.links, target):
+        for i, link in enumerate(self.links):
             model = osim.ModelFactory.createNLinkPendulum(link)
             model.initSystem()
-            model.printToXML(model_path)
-            print(f' --> Created {model_path}')
+            model.printToXML(target[i])
+            print(f' --> Created {target[i]}')
 
         
 class TaskGenerateModels(ModelTask):
@@ -354,10 +358,9 @@ class TaskPlotBenchmark(BenchmarkTask):
         self.out_paths = run_task.out_paths
         self.result_path = run_task.result_path
         self.cpu_times_path = os.path.join(self.result_path, 'cpu_times.png')
-        self.fps_path = os.path.join(self.result_path, 'frames_per_second.png')
 
         self.add_action(self.out_paths, 
-                        [self.cpu_times_path, self.fps_path],
+                        [self.cpu_times_path],
                         self.plot_benchmark)
         
     def plot_benchmark(self, file_dep, target):
@@ -774,7 +777,11 @@ class TaskGenerateFlameGraph(PerfTask):
         for out_path, html_path, json_path in zip(file_dep, target, self.json_paths):
             with open(json_path) as f:
                 data = json.load(f)
-                if 'failed' not in data:
+                if 'failed' in data:
+                    # Create an empty file to satisfy the doit task.
+                    with open(html_path, 'w') as f:
+                        f.write('')
+                else:
                     out_paths.append(out_path)
                     html_paths.append(html_path)
 
@@ -964,38 +971,42 @@ class TaskPlotBenchmarkComparison(StudyTask):
         plt.close()
 
 
-class TaskPlotFramesPerSecond(StudyTask):
+class TaskPlotFramesPerSecondRealize(StudyTask):
     REGISTRY = []
-    def __init__(self, study, tag, model_names):
-        super(TaskPlotFramesPerSecond, self).__init__(study)
-        self.name = f'plot_frames_per_second_{tag}'
+    def __init__(self, study, tag, model_tuples):
+        super(TaskPlotFramesPerSecondRealize, self).__init__(study)
+        self.name = f'plot_frames_per_second_realize_{tag}'
         self.tag = tag
         self.study = study
-        self.model_names = model_names
         self.models = list()
-        for model_name in model_names:
-            model = self.study.get_model(model_name)
+        self.model_names = list()
+        self.model_labels = list()
+        for model_tuple in model_tuples:
+            name = model_tuple[0]
+            flags = model_tuple[1]
+            model = self.study.get_model(name)
             if model is None:
-                print(f' --> {self.name}: Model {model_name} not found.')
+                print(f' --> {self.name}: Model {name} not found.')
             else:
                 self.models.append(model)
-        self.results_path = self.study.config['results_path']
-        self.figures_path = self.study.config['figures_path']
+                model_name, model_tag = ModelGenerator.get_name_and_tag(
+                    model.name, flags)
+                self.model_names.append(model_name)
+                self.model_labels.append(f'{model.label}\n{model_tag}')
         
-        self.plot_labels = list()
+        self.results_path = self.study.config['results_path']
         self.json_paths = list()
-        for model in self.models:
+        for model, model_name in zip(self.models, self.model_names):
             self.json_paths.append(
                     os.path.join(self.results_path, model.name, 'benchmark_realize',
-                                 'default', f'{model.name}.json'))
-            self.plot_labels.append(model.label)
+                                 'default', f'{model_name}.json'))
             
+        self.figures_path = self.study.config['figures_path']
         if not os.path.exists(self.figures_path):
             os.makedirs(self.figures_path)
         
         self.figure_path = os.path.join(self.figures_path, 
-                                       f'frames_per_second_{tag}.png')
-
+                                       f'frames_per_second_realize_{tag}.png')
         self.add_action(self.json_paths, 
                         [self.figure_path], 
                         self.plot_frames_per_second)
@@ -1015,38 +1026,120 @@ class TaskPlotFramesPerSecond(StudyTask):
                         frames_per_second.append(1.0 / cpu_time_seconds)
 
         # Plot the CPU times.
-        y = np.arange(len(self.plot_labels))
+        x = np.arange(len(self.model_labels))
         width = 0.5
 
         # Create the figure and axis.
-        height = 0.5 * len(self.plot_labels)
-        fig, ax = plt.subplots(figsize=(5, height))
+        length = 0.7 * len(self.model_labels)
+        fig, ax = plt.subplots(figsize=(length, 5))
         
         # Plot the CPU times.
-        ax.barh(y, frames_per_second, width, label='frames_per_second')
-
-        # Set the x-axis labels based on max CPU time.
-        # all_xticks = [1, 10, 100, 1000, 10000, 100000]
-        # max_value = max(frames_per_second)
-
-        # xticks = list()
-        # for xtick in all_xticks:
-        #     if xtick < 100 * max_value:
-                # xticks.append(xtick)
+        ax.bar(x, frames_per_second, width, label='frames_per_second')
+        # Print values on top of bars, rounded to the nearest integer.
+        for i, v in enumerate(frames_per_second):
+            ax.text(i, v + 0.1, f'{int(round(v))}', ha='center', va='bottom')
 
         # Set the plot parameters.
-        # plt.xscale('log')
-        # plt.xticks(xticks)
-        plt.yticks(y, self.plot_labels, fontsize=6)
+        plt.xticks(x, self.model_labels, fontsize=6)
+        plt.xticks(rotation=45)
+        # Shift xticklabels to the left
         ax = plt.gca()
-        for label in ax.get_yticklabels():
-            label.set_va('center')
-        plt.xlabel(f'Frames Per Second')
-        plt.grid(axis='x', linestyle='--')
-        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
+        for label in ax.get_xticklabels():
+            label.set_horizontalalignment('right')
+        plt.ylabel(f'Frames Per Second')
+        plt.grid(axis='y', linestyle='--')
+        plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
         ax.set_axisbelow(True)
-        # plt.title(self.benchmark)
-        plt.legend(loc='lower right', fontsize=6)
+        plt.title('FPS based on model.realizeAcceleration(state)')
+        plt.legend(fontsize=6)
+
+        # Save the plot.
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
+
+
+class TaskPlotFramesPerSecondForwardFixedStep(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, tag, model_tuples):
+        super(TaskPlotFramesPerSecondForwardFixedStep, self).__init__(study)
+        self.name = f'plot_frames_per_second_forward_fixed_step_{tag}'
+        self.tag = tag
+        self.study = study
+        self.models = list()
+        self.model_names = list()
+        self.model_labels = list()
+        for model_tuple in model_tuples:
+            name = model_tuple[0]
+            flags = model_tuple[1]
+            model = self.study.get_model(name)
+            if model is None:
+                print(f' --> {self.name}: Model {name} not found.')
+            else:
+                self.models.append(model)
+                model_name, model_tag = ModelGenerator.get_name_and_tag(
+                    model.name, flags)
+                self.model_names.append(model_name)
+                self.model_labels.append(f'{model.label}\n{model_tag}')
+        
+        self.results_path = self.study.config['results_path']
+        self.json_paths = list()
+        for model, model_name in zip(self.models, self.model_names):
+            self.json_paths.append(
+                    os.path.join(self.results_path, model.name, 'benchmark_forward',
+                                 'time0.1_step0.001', f'{model_name}.json'))
+            
+        self.figures_path = self.study.config['figures_path']
+        if not os.path.exists(self.figures_path):
+            os.makedirs(self.figures_path)
+        
+        self.figure_path = os.path.join(self.figures_path, 
+                f'frames_per_second_forward_fixed_step_{tag}.png')
+        self.add_action(self.json_paths, 
+                        [self.figure_path], 
+                        self.plot_frames_per_second)
+
+    def plot_frames_per_second(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+
+        # Compute max FPS based on fixed-step forward integration.
+        num_steps = 0.1 / 0.001
+        frames_per_second = list()
+        for json_path in file_dep:
+            print(json_path)
+            with open(json_path) as f:
+                data = json.load(f)
+                cpu_time_seconds = data['benchmarks'][0]['cpu_time'] / 1e3
+                frames_per_second.append(num_steps / cpu_time_seconds)
+
+        # Plot the CPU times.
+        x = np.arange(len(self.model_labels))
+        width = 0.5
+
+        # Create the figure and axis.
+        length = 0.7 * len(self.model_labels)
+        fig, ax = plt.subplots(figsize=(length, 5))
+        
+        # Plot the CPU times.
+        ax.bar(x, frames_per_second, width, label='frames_per_second')
+        # Print values on top of bars, rounded to the nearest integer.
+        for i, v in enumerate(frames_per_second):
+            ax.text(i, v + 0.1, f'{int(round(v))}', ha='center', va='bottom')
+
+        # Set the plot parameters.
+        plt.xticks(x, self.model_labels, fontsize=6)
+        plt.xticks(rotation=45)
+        # Shift xticklabels to the left
+        ax = plt.gca()
+        for label in ax.get_xticklabels():
+            label.set_horizontalalignment('right')
+        plt.ylabel(f'Frames Per Second')
+        plt.grid(axis='y', linestyle='--')
+        plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
+        ax.set_axisbelow(True)
+        plt.title('FPS based on forward integration')
+        plt.legend(fontsize=6)
 
         # Save the plot.
         plt.tight_layout()
