@@ -800,62 +800,6 @@ class TaskGenerateFlameGraph(PerfTask):
                 with open(html_path, 'w') as f:
                     f.write('')
                 print(f'Error generating flamegraph: {e}')
-
-
-class TaskGenerateDifferentialFlameGraph(PerfTask):
-    REGISTRY = []
-    def __init__(self, perf, run_task, model1, model2, negated=False):
-        super(TaskGenerateDifferentialFlameGraph, self).__init__(perf)
-        self.negated = negated
-        self.negated_name = '_negated' if negated else ''
-        self.negated_flag = '--negate' if negated else ''
-
-        self.name = f'generate{self.negated_name}_differential_flamegraph_' \
-                    f'{run_task.perf_name}_{model1}_vs_{model2}'
-        
-        
-        self.result_path = run_task.result_path
-        self.out_paths = [os.path.join(self.result_path, f'{model_name}.data') 
-                          for model_name in [model1, model2]]
-
-        self.html_path = os.path.join(self.result_path,
-                                      f'{model1}_vs_{model2}{self.negated_name}.html')
-
-        self.add_action(self.out_paths, 
-                        [self.html_path],
-                        self.generate_differential_flamegraph)
-        
-    def generate_differential_flamegraph(self, file_dep, target):
-        import subprocess
-
-        flamegraph = os.path.join(self.study.config['flamegraph_path'], 'flamegraph.pl')
-        stackcollapse = os.path.join(self.study.config['flamegraph_path'], 
-                                     'stackcollapse-perf.pl')
-        difffolded = os.path.join(self.study.config['flamegraph_path'], 'difffolded.pl')
-
-        if self.negated:
-            first = file_dep[1]
-            second = file_dep[0]
-        else:
-            first = file_dep[0]
-            second = file_dep[1]
-
-        command = f'perf script -i {first} > out.stacks1 && '
-        command += f'perf script -i {second} > out.stacks2 && '
-        command += f'{stackcollapse} out.stacks1 > out.folded1 && '
-        command += f'{stackcollapse} out.stacks2 > out.folded2 && '
-        command += f'{difffolded} -n out.folded1 out.folded2 | '
-        command += f'{flamegraph} {self.negated_flag} > {target[0]} && '
-        command += f'rm out.stacks1 out.stacks2 out.folded1 out.folded2'
-        try:
-            p = subprocess.run(command, check=True, shell=True,
-                            cwd=self.perf.results_path)
-            if p.returncode != 0:
-                raise Exception('Non-zero exit status: code %s.' % p.returncode)
-        except Exception as e:
-            with open(target[0], 'w') as f:
-                f.write('')
-            print(f'Error generating differential flamegraph: {e}')
         
 
 class TaskPlotBenchmarkComparison(StudyTask):
@@ -1030,7 +974,10 @@ class TaskPlotFramesPerSecondRealize(StudyTask):
         width = 0.5
 
         # Create the figure and axis.
+        minimum_length = 4
         length = 0.7 * len(self.model_labels)
+        if length < minimum_length:
+            length = minimum_length
         fig, ax = plt.subplots(figsize=(length, 5))
         
         # Plot the CPU times.
@@ -1050,8 +997,8 @@ class TaskPlotFramesPerSecondRealize(StudyTask):
         plt.grid(axis='y', linestyle='--')
         plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
         ax.set_axisbelow(True)
-        plt.title('FPS based on model.realizeAcceleration(state)')
-        plt.legend(fontsize=6)
+        plt.title('FPS based on "model.realizeAcceleration(state)"')
+        # plt.legend(fontsize=6)
 
         # Save the plot.
         plt.tight_layout()
@@ -1059,11 +1006,11 @@ class TaskPlotFramesPerSecondRealize(StudyTask):
         plt.close()
 
 
-class TaskPlotFramesPerSecondForwardFixedStep(StudyTask):
+class TaskPlotSimulationTimeForward(StudyTask):
     REGISTRY = []
-    def __init__(self, study, tag, model_tuples):
-        super(TaskPlotFramesPerSecondForwardFixedStep, self).__init__(study)
-        self.name = f'plot_frames_per_second_forward_fixed_step_{tag}'
+    def __init__(self, study, tag, model_tuples, exe_args=None):
+        super(TaskPlotSimulationTimeForward, self).__init__(study)
+        self.name = f'plot_simulation_time_forward_{tag}'
         self.tag = tag
         self.study = study
         self.models = list()
@@ -1081,20 +1028,23 @@ class TaskPlotFramesPerSecondForwardFixedStep(StudyTask):
                     model.name, flags)
                 self.model_names.append(model_name)
                 self.model_labels.append(f'{model.label}\n{model_tag}')
+
+        self.exe_args = exe_args
+        self.subdir = get_sub_directory(self.exe_args)
         
         self.results_path = self.study.config['results_path']
         self.json_paths = list()
         for model, model_name in zip(self.models, self.model_names):
             self.json_paths.append(
                     os.path.join(self.results_path, model.name, 'benchmark_forward',
-                                 'time0.1_step0.001', f'{model_name}.json'))
+                                 self.subdir, f'{model_name}.json'))
             
         self.figures_path = self.study.config['figures_path']
         if not os.path.exists(self.figures_path):
             os.makedirs(self.figures_path)
         
         self.figure_path = os.path.join(self.figures_path, 
-                f'frames_per_second_forward_fixed_step_{tag}.png')
+                f'simulation_time_forward_fixed_step_{tag}.png')
         self.add_action(self.json_paths, 
                         [self.figure_path], 
                         self.plot_frames_per_second)
@@ -1104,45 +1054,127 @@ class TaskPlotFramesPerSecondForwardFixedStep(StudyTask):
         import json
 
         # Compute max FPS based on fixed-step forward integration.
-        num_steps = 0.1 / 0.001
-        frames_per_second = list()
+        simulation_times = list()
         for json_path in file_dep:
-            print(json_path)
             with open(json_path) as f:
                 data = json.load(f)
                 cpu_time_seconds = data['benchmarks'][0]['cpu_time'] / 1e3
-                frames_per_second.append(num_steps / cpu_time_seconds)
-
+                simulation_times.append(cpu_time_seconds)
+                
         # Plot the CPU times.
         x = np.arange(len(self.model_labels))
         width = 0.5
 
         # Create the figure and axis.
+        minimum_length = 4
         length = 0.7 * len(self.model_labels)
+        if length < minimum_length:
+            length = minimum_length
         fig, ax = plt.subplots(figsize=(length, 5))
         
         # Plot the CPU times.
-        ax.bar(x, frames_per_second, width, label='frames_per_second')
-        # Print values on top of bars, rounded to the nearest integer.
-        for i, v in enumerate(frames_per_second):
-            ax.text(i, v + 0.1, f'{int(round(v))}', ha='center', va='bottom')
+        ax.bar(x, simulation_times, width)
 
         # Set the plot parameters.
         plt.xticks(x, self.model_labels, fontsize=6)
         plt.xticks(rotation=45)
+        plt.yscale('log')
         # Shift xticklabels to the left
         ax = plt.gca()
         for label in ax.get_xticklabels():
             label.set_horizontalalignment('right')
-        plt.ylabel(f'Frames Per Second')
+        plt.ylabel(f'time (s)')
         plt.grid(axis='y', linestyle='--')
         plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
         ax.set_axisbelow(True)
-        plt.title('FPS based on forward integration')
-        plt.legend(fontsize=6)
-
-        # Save the plot.
+        plt.title('forward integration time\n(1 second simulation)')
+    
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
 
+
+class TaskGenerateDifferentialFlameGraph(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, tag, model_tuples, event, exe_args=None):
+        super(TaskGenerateDifferentialFlameGraph, self).__init__(study)
+        self.name = f'generate_differential_flamegraph_{tag}'
+        self.tag = tag
+        self.study = study
+        self.negated = False
+        self.negated_flag = ''
+
+        if len(model_tuples) != 2:
+            raise ValueError('TaskGenerateDifferentialFlameGraph requires exactly '
+                             'two models.')
+
+        self.models = list()
+        self.model_names = list()
+        self.model_labels = list()
+        for model_tuple in model_tuples:
+            name = model_tuple[0]
+            flags = model_tuple[1]
+            model = self.study.get_model(name)
+            if model is None:
+                print(f' --> {self.name}: Model {name} not found.')
+            else:
+                self.models.append(model)
+                model_name, model_tag = ModelGenerator.get_name_and_tag(
+                    model.name, flags)
+                self.model_names.append(model_name)
+                self.model_labels.append(f'{model.label}\n{model_tag}')
+        self.exe_args = exe_args
+        self.subdir = get_sub_directory(self.exe_args)
+        
+        self.results_path = self.study.config['results_path']
+        self.data_paths = list()
+        for model, model_name in zip(self.models, self.model_names):
+            print(f' --> {self.name}: model {model.name} with event {event}')
+            self.data_paths.append(
+                    os.path.join(self.results_path, model.name, 'perf_realize',
+                                 self.subdir, event, f'{model_name}.data'))
+            
+        self.figures_path = self.study.config['figures_path']
+        if not os.path.exists(self.figures_path):
+            os.makedirs(self.figures_path)
+        
+        self.flamegraph_path = os.path.join(self.figures_path, 
+                f'differential_flamegraph_{tag}.html')
+        self.add_action(self.data_paths, 
+                        [self.flamegraph_path], 
+                        self.generate_differential_flamegraph)
+
+    def generate_differential_flamegraph(self, file_dep, target):
+        import subprocess
+
+        flamegraph = os.path.join(self.study.config['flamegraph_path'], 'flamegraph.pl')
+        stackcollapse = os.path.join(self.study.config['flamegraph_path'], 
+                                     'stackcollapse-perf.pl')
+        difffolded = os.path.join(self.study.config['flamegraph_path'], 'difffolded.pl')
+
+        if self.negated:
+            first = file_dep[1]
+            second = file_dep[0]
+        else:
+            first = file_dep[0]
+            second = file_dep[1]
+
+        print(first)
+        print(second)
+
+        command = f'perf script -i {first} > out.stacks1 && '
+        command += f'perf script -i {second} > out.stacks2 && '
+        command += f'{stackcollapse} out.stacks1 > out.folded1 && '
+        command += f'{stackcollapse} out.stacks2 > out.folded2 && '
+        command += f'{difffolded} -n out.folded1 out.folded2 | '
+        command += f'{flamegraph} {self.negated_flag} > {target[0]} && '
+        command += f'rm out.stacks1 out.stacks2 out.folded1 out.folded2'
+        try:
+            p = subprocess.run(command, check=True, shell=True,
+                                cwd=self.study.config['figures_path'])
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+        except Exception as e:
+            with open(target[0], 'w') as f:
+                f.write('')
+            print(f'Error generating differential flamegraph: {e}')
