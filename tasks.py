@@ -356,14 +356,22 @@ class TaskPlotBenchmark(BenchmarkTask):
         self.model_names = run_task.model_names
         self.model_tags = run_task.model_tags
         self.out_paths = run_task.out_paths
+        self.time = run_task.exe_args['time'] if 'time' in run_task.exe_args else None
         self.result_path = run_task.result_path
         self.cpu_times_path = os.path.join(self.result_path, 'cpu_times.png')
-
+        
         self.add_action(self.out_paths, 
                         [self.cpu_times_path],
-                        self.plot_benchmark)
+                        self.plot_cpu_times)
         
-    def plot_benchmark(self, file_dep, target):
+        if self.time:
+            self.real_time_factor_path = os.path.join(self.result_path, 
+                                                  'real_time_factor.png')
+            self.add_action(self.out_paths,
+                            [self.real_time_factor_path],
+                            self.plot_real_time_factor)
+        
+    def plot_cpu_times(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
 
@@ -440,6 +448,82 @@ class TaskPlotBenchmark(BenchmarkTask):
         plt.savefig(target[0], dpi=600)
         plt.close()
 
+    def plot_real_time_factor(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+
+        # Filter out failed benchmark tests.
+        model_tags = list()
+        out_paths = list()
+        for model_tag, out_path in zip(self.model_tags, file_dep):
+            with open(out_path) as f:
+                data = json.load(f)
+                if 'failed' not in data:
+                    model_tags.append(model_tag)
+                    out_paths.append(out_path)
+        
+        # Initialize the dictionary of CPU times.
+        real_time_factors = dict()
+        num_benchmarks = 0
+        with open(out_paths[0]) as f:
+            data = json.load(f)
+            for benchmark in data['benchmarks']:
+                real_time_factors[benchmark['name']] = list()
+            num_benchmarks = len(data['benchmarks'])
+
+        # Fill the dictionary with CPU times.
+        for out_path in out_paths:
+            with open(out_path) as f:
+                data = json.load(f)
+                for benchmark in data['benchmarks']:
+                    real_time_factors[benchmark['name']].append(
+                        self.time / (0.001*benchmark['cpu_time']))
+
+        # Plot the real time factor.
+        y = np.arange(len(model_tags))
+        width = 0.6 / num_benchmarks
+        multiplier = 0
+        if num_benchmarks > 1:
+            multiplier = -num_benchmarks // 2
+
+        # Create the figure and axis.
+        fig, ax = plt.subplots(figsize=(5, 8))
+        
+        # Plot the real time factors.
+        for benchmark, rt_factor in real_time_factors.items():
+            offset = width * multiplier
+            ax.barh(y + offset, rt_factor, width, label=benchmark)
+            multiplier += 1
+
+        # Set the x-axis labels based on max CPU time.
+        all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
+        all_xticklabels = ['0.01', '0.1', '1', '10', '100', '1000', '10000', '100000']
+        max_value = 0
+        for key, value in real_time_factors.items():
+            max_value = max(max_value, max(value))
+
+        xticks = list()
+        xticklabels = list()
+        for xtick, xticklabel in zip(all_xticks, all_xticklabels):
+            if xtick < 100 * max_value:
+                xticks.append(xtick)
+                xticklabels.append(xticklabel)
+
+        # Set the plot parameters.
+        plt.xscale('log')
+        plt.xticks(xticks, xticklabels)
+        plt.yticks(y, model_tags, fontsize=6)
+        plt.xlabel(f'Real Time Factor')
+        plt.grid(axis='x', linestyle='--')
+        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
+        ax.set_axisbelow(True)
+        plt.title(self.benchmark_name)
+        plt.legend(loc='lower right', fontsize=6)
+
+        # Save the plot.
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
 
 class TaskRunPerf(PerfTask):
     REGISTRY = []
@@ -1088,6 +1172,110 @@ class TaskPlotSimulationTimeForward(StudyTask):
         plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
         ax.set_axisbelow(True)
         plt.title('forward integration time\n(1 second simulation)')
+    
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
+
+
+class TaskPlotRealTimeFactor(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, tag, model_tuples, exe_args=None, 
+                 log_scale=False):
+        super(TaskPlotRealTimeFactor, self).__init__(study)
+        self.name = f'plot_real_time_factor_{tag}'
+        self.tag = tag
+        self.study = study
+        self.models = list()
+        self.model_names = list()
+        self.model_labels = list()
+        for model_tuple in model_tuples:
+            name = model_tuple[0]
+            flags = model_tuple[1]
+            model = self.study.get_model(name)
+            if model is None:
+                print(f' --> {self.name}: Model {name} not found.')
+            else:
+                self.models.append(model)
+                model_name, model_tag = ModelGenerator.get_name_and_tag(
+                    model.name, flags)
+                self.model_names.append(model_name)
+                self.model_labels.append(f'{model.label}\n{model_tag}')
+
+        self.log_scale = log_scale
+        self.exe_args = exe_args
+        if 'time' not in self.exe_args:
+            raise ValueError('TaskPlotRealTimeFactor requires the "time" argument.')
+        self.time = self.exe_args['time']
+
+        self.step_size = None
+        self.step_type = 'adaptive'
+        if 'step' in self.exe_args:
+            self.step_size = self.exe_args['step']
+            self.step_type = 'fixed'
+
+        self.subdir = get_sub_directory(self.exe_args)
+        
+        self.results_path = self.study.config['results_path']
+        self.json_paths = list()
+        for model, model_name in zip(self.models, self.model_names):
+            self.json_paths.append(
+                    os.path.join(self.results_path, model.name, 'benchmark_forward',
+                                 self.subdir, f'{model_name}.json'))
+            
+        self.figures_path = self.study.config['figures_path']
+        if not os.path.exists(self.figures_path):
+            os.makedirs(self.figures_path)
+        
+        self.figure_path = os.path.join(self.figures_path, 
+                f'real_time_factor_{tag}.png')
+        self.add_action(self.json_paths, 
+                        [self.figure_path], 
+                        self.plot_frames_per_second)
+
+    def plot_frames_per_second(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+
+        # Compute max FPS based on fixed-step forward integration.
+        real_time_factors = list()
+        for json_path in file_dep:
+            with open(json_path) as f:
+                data = json.load(f)
+                cpu_time_seconds = 0.001 * data['benchmarks'][0]['cpu_time']
+                real_time_factors.append(self.time / cpu_time_seconds)
+                
+        # Plot the CPU times.
+        x = np.arange(len(self.model_labels))
+        width = 0.5
+
+        # Create the figure and axis.
+        minimum_length = 4
+        length = 0.85 * len(self.model_labels)
+        if length < minimum_length:
+            length = minimum_length
+        fig, ax = plt.subplots(figsize=(length, 5))
+        
+        # Plot the real time factors.
+        ax.bar(x, real_time_factors, width)
+
+        # Draw a red horizontal line at 1.0 in the background.
+        plt.axhline(y=1.0, color='r', linestyle='-', linewidth=2.0, zorder=0)   
+
+        # Set the plot parameters.
+        plt.xticks(x, self.model_labels, fontsize=6)
+        plt.xticks(rotation=45)
+        if self.log_scale:
+            plt.yscale('log')
+        # Shift xticklabels to the left
+        ax = plt.gca()
+        for label in ax.get_xticklabels():
+            label.set_horizontalalignment('right')
+        plt.ylabel(f'real time factor')
+        plt.grid(axis='y', linestyle='--')
+        plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
+        ax.set_axisbelow(True)
+        plt.title(f'{self.step_type}-step forward integration time\n({self.time} second simulation)')
     
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)

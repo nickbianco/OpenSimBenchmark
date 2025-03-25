@@ -25,19 +25,30 @@ static void BM_Forward(benchmark::State& st,
     model.setControls(state, controls);
     state.updY() = stateGenerator.getRandomY();
     
-    SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
     if (step > 0) {
-        integrator.setFixedStepSize(step);
+        SimTK::SemiExplicitEulerIntegrator integrator(
+            model.getMultibodySystem(), step);
+        SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
+        state.setTime(0);
+        timeStepper.initialize(state);
+        
+        // Run the benchmark.
+        for (auto _ : st) {
+            timeStepper.stepTo(time);
+        }
+    } else {
+        SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
+        SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
+        state.setTime(0);
+        timeStepper.initialize(state);
+        
+        // Run the benchmark.
+        for (auto _ : st) {
+            timeStepper.stepTo(time);
+        }
     }
 
-    SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
-    state.setTime(0);
-    timeStepper.initialize(state);
     
-    // Run the benchmark.
-    for (auto _ : st) {
-        timeStepper.stepTo(time);
-    }
 }
 
 int main(int argc, char** argv) {
