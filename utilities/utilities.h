@@ -1,7 +1,9 @@
 #include <OpenSim/OpenSim.h>
+#include <Simbody.h>
 #include <docopt/docopt.h>
 
 using namespace OpenSim;
+using namespace SimTK;
 
 class StateGenerator {
 public:
@@ -9,7 +11,8 @@ public:
         m_state = m_model.initSystem();
 
         auto coordinates = m_model.getCoordinatesInMultibodyTreeOrder();
-        OPENSIM_THROW_IF(coordinates.size() != m_state.getNQ(), Exception, 
+        OPENSIM_THROW_IF(coordinates.size() != m_state.getNQ(), 
+                OpenSim::Exception, 
                 "The number of coordinates does not match the number of "
                 "generalized coordinates in the state.");
 
@@ -113,7 +116,7 @@ private:
 // This implementation was copied from docopt.cpp; the only difference is that
 // this function can throw exceptions (whereas `docopt::docopt()` is
 // `noexcept`).
-std::map<std::string, docopt::value>
+inline std::map<std::string, docopt::value>
 parse_arguments(std::string const& doc,
             std::vector<std::string> const& argv,
             bool help = true,
@@ -140,3 +143,50 @@ parse_arguments(std::string const& doc,
     }
 }
 
+struct PendulumSystem {
+    PendulumSystem(int numLinks) : m_system(), m_matter(m_system), 
+                m_forces(m_system), m_gravity(m_forces, m_matter, -YAxis, 9.81) {        
+        SimTK::Body::Rigid bodyInfo(MassProperties(1.0, Vec3(0), UnitInertia(1)));
+        MobilizedBody::Pin pendulum0(m_matter.Ground(), Transform(Vec3(0)),
+                bodyInfo, Transform(Vec3(0, 1, 0)));
+        for (int i = 1; i < numLinks; ++i) {
+            pendulum0 = MobilizedBody::Pin(pendulum0, Transform(Vec3(0)),
+                    bodyInfo, Transform(Vec3(0, 1, 0)));
+        }
+        m_system.realizeTopology();
+    }
+
+    const MultibodySystem& getMultibodySystem() const { return m_system; }
+
+    MultibodySystem                 m_system;
+    GeneralForceSubsystem           m_forces;
+    SimbodyMatterSubsystem          m_matter;
+    SimTK::Force::Gravity           m_gravity;
+};
+
+
+inline Model createOpenSimPendulum(int numLinks) {
+    OpenSim::Model model;
+    model.setName(std::to_string(numLinks) + "_link_pendulum");
+    model.setGravity(Vec3(0, -9.81, 0));
+    const auto& ground = model.getGround();
+
+    const OpenSim::PhysicalFrame* prevBody = &ground;
+    for (int i = 0; i < numLinks; ++i) {
+        const std::string istr = std::to_string(i);
+        auto* bi = new OpenSim::Body("b" + istr, 1, Vec3(0), Inertia(1));
+        model.addBody(bi);
+
+        // Assume each body is 1 m long.
+        auto* ji = new OpenSim::PinJoint("j" + istr, *prevBody, Vec3(0), 
+                Vec3(0), *bi, Vec3(0, 1, 0), Vec3(0));
+        auto& qi = ji->updCoordinate();
+        qi.setName("q" + istr);
+        model.addJoint(ji);
+
+        prevBody = bi;
+    }
+
+    model.finalizeConnections();
+    return model;
+}

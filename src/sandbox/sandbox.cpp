@@ -1,43 +1,40 @@
 #include <OpenSim/OpenSim.h>
+#include <Simbody.h>
 #include <OpenSim/Moco/osimMoco.h>
 #include "../../utilities/utilities.h"
 
+using namespace SimTK;
+
 int main() {
 
-    std::string models_path = "../../../models/";
-    std::string model_name = "RajagopalFunctionBasedPaths";
-    ModelProcessor modelProcessor = 
-            ModelProcessor(models_path + model_name + ".osim") |
-            ModOpReplaceMusclesWithDeGrooteFregly2016() |
-            // ModOpIgnorePassiveFiberForcesDGF() |
-            // ModOpPassiveFiberStrainAtOneNormForceDGF(0.6) |
-            // ModOpIgnoreTendonCompliance() |
-            // ModOpIgnoreActivationDynamics() |
-            ModOpScaleActiveFiberForceCurveWidthDGF(1.0);
+    MultibodySystem system;
+    SimbodyMatterSubsystem matter(system);
+    GeneralForceSubsystem forces(system);
+    SimTK::Force::Gravity gravity(forces, matter, -YAxis, 9.8);
 
-    Model model = modelProcessor.process();
-    SimTK::State state = model.initSystem();
+    SimTK::Body::Rigid bodyInfo(MassProperties(1.0, Vec3(0), UnitInertia(1)));
+    MobilizedBody::Pin pendulum0(matter.Ground(), Transform(Vec3(0)),
+            bodyInfo, Transform(Vec3(-1, 0, 0)));
+    for (int i = 1; i < 5; ++i) {
+        pendulum0 = MobilizedBody::Pin(pendulum0, Transform(Vec3(0)),
+                bodyInfo, Transform(Vec3(-1, 0, 0)));
+    }
 
+    // Set up visualization.
+    system.setUseUniformBackground(true);
+    Visualizer viz(system);
+    system.addEventReporter(new Visualizer::Reporter(viz, 0.01));
+
+    // Initialize the system and state.
+    State state = system.realizeTopology();
+    pendulum0.setRate(state, 5.0);
+
+    // Initialize the system and state.
+    RungeKuttaMersonIntegrator integ(system);
+    TimeStepper ts(system, integ);
     state.setTime(0);
-    SimTK::RungeKuttaMersonIntegrator integrator(model.getMultibodySystem());
-    SimTK::TimeStepper timeStepper(model.getMultibodySystem(), integrator);
-    timeStepper.initialize(state);
-
-    auto start = std::chrono::high_resolution_clock::now();
-    timeStepper.stepTo(1.0);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    // Convert to milliseconds
-    time /= 1e3;
-    std::cout << "Time: " << time  << " milliseconds" << std::endl;
-
-    std::cout << "num steps attempted: " << integrator.getNumStepsAttempted() << std::endl;
-    std::cout << "num steps taken: " << integrator.getNumStepsTaken() << std::endl;
-    std::cout << "num realizations: " << integrator.getNumRealizations() << std::endl;
-    std::cout << "initial step size: " << integrator.getActualInitialStepSizeTaken() << std::endl;
-    std::cout << "final step size: " << integrator.getPreviousStepSizeTaken() << std::endl;
-    std::cout << "time per realization: " << time / integrator.getNumRealizations() << " milliseconds" << std::endl;
-
+    ts.initialize(state);
+    ts.stepTo(10.0);
 
     return 0;
 } 
