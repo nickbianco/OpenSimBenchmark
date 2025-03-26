@@ -10,7 +10,7 @@ class ModelGenerator:
         # 'ignore_tendon_compliance',
         'ignore_passive_fiber_force',
         'remove_wrap_objects',
-        'disable_constraints',
+        # 'disable_constraints',
         'remove_muscles'
     ]
 
@@ -133,16 +133,16 @@ class ModelGenerator:
 
         return model_name, tag
     
-    @staticmethod
-    def disable_constraints(model, model_name):
-        constraints = model.updConstraintSet()
-        constraints.clearAndDestroy()
+    # @staticmethod
+    # def disable_constraints(model, model_name):
+    #     constraints = model.updConstraintSet()
+    #     constraints.clearAndDestroy()
 
-        model.finalizeConnections()
-        model_name += '_noconstraints'
-        tag = 'no constraints'
+    #     model.finalizeConnections()
+    #     model_name += '_noconstraints'
+    #     tag = 'no constraints'
 
-        return model_name, tag
+    #     return model_name, tag
 
     def generate_model(self, flags, print_model=True):
         model = osim.Model(self.model_path)
@@ -168,9 +168,9 @@ class ModelGenerator:
             model_name, tag = self.remove_wrap_objects(model, model_name)
             tags.append(tag)
 
-        if flags.get('disable_constraints'):
-            model_name, tag = self.disable_constraints(model, model_name)
-            tags.append(tag)
+        # if flags.get('disable_constraints'):
+        #     model_name, tag = self.disable_constraints(model, model_name)
+        #     tags.append(tag)
 
         if flags.get('remove_muscles'):
             model_name, tag = self.remove_muscles(model, model_name)
@@ -213,9 +213,9 @@ class ModelGenerator:
             model_name, tag = ModelGenerator.remove_wrap_objects(model, model_name)
             tags.append(tag)
 
-        if 'disable_constraints' in flags:
-            model_name, tag = ModelGenerator.disable_constraints(model, model_name)
-            tags.append(tag)
+        # if 'disable_constraints' in flags:
+        #     model_name, tag = ModelGenerator.disable_constraints(model, model_name)
+        #     tags.append(tag)
 
         if 'remove_muscles' in flags:
             model_name, tag = ModelGenerator.remove_muscles(model, model_name)

@@ -34,7 +34,7 @@ study.add_task(TaskInstallDependencies)
 study.add_task(TaskCreateRajagopalModels)
 
 # Add models to the study.
-def add_model(model_file, label, flags):
+def add_model(model_file, label, flags=[]):
 
     if not os.path.exists(os.path.join(config['models_path'], f'{model_file}.osim')):
         return
@@ -52,102 +52,53 @@ def add_model(model_file, label, flags):
                                    exe_args={'time': time})
         benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1])
 
-    if 'RajagopalFunctionBasedPathsDGF' in model_file:
+    if ('RajagopalFunctionBasedPathsDGF' in model_file or 
+        'pendulum' in model_file):
         benchmark_forward.add_task(TaskRunBenchmark, model.tasks[-1], 
                                     exe_args={'time': 1.0, 'step': step_size})
         benchmark_forward.add_task(TaskPlotBenchmark, benchmark_forward.tasks[-1]) 
-
-    benchmark_realize = model.add_benchmark('benchmark_realize')
-    benchmark_realize.add_task(TaskRunBenchmark, model.tasks[-1])
-    benchmark_realize.add_task(TaskPlotBenchmark, benchmark_realize.tasks[-1])
-
-    # Linux 'perf' tests.
-    # perf_forward = model.add_perf('perf_forward')
-    # events = ['cycles', 'cache-misses']
-    # for time in times:
-    #     for event in events:
-    #         perf_forward.add_task(TaskRunPerf, event, model.tasks[-1], 
-    #                               exe_args={'time': time})
-    #         perf_forward.add_task(TaskGenerateFlameGraph, perf_forward.tasks[-1])
-    #         perf_forward.add_task(TaskPlotPerf, perf_forward.tasks[-2])
-
-    # perf_realize = model.add_perf('perf_realize')
-    # for event in events:
-    #     perf_realize.add_task(TaskRunPerf, event, model.tasks[-1])
-    #     perf_realize.add_task(TaskGenerateFlameGraph, perf_realize.tasks[-1])
-    #     perf_realize.add_task(TaskPlotPerf, perf_realize.tasks[-2])
 
 
 add_model('Rajagopal', 'Rajagopal', 
           flags=['ignore_activation_dynamics', 
                  'ignore_passive_fiber_force',
-                 'disable_constraints', 
                  'remove_muscles'])
 
-add_model('RajagopalPathActuators', 'Rajagopal\npath actuators',
-          flags=['disable_constraints'])
+add_model('RajagopalPathActuators', 'Rajagopal\npath actuators')
 
 add_model('RajagopalFunctionBasedPaths', 'Rajagopal\nfunction based paths', 
           flags=['ignore_activation_dynamics', 
                  'ignore_passive_fiber_force',
-                 'disable_constraints', 
+                 'remove_muscles'])  
+
+add_model('RajagopalFunctionBasedPathsNoConstraints', 
+          'Rajagopal\nfunction based paths\nno constraints', 
+          flags=['ignore_activation_dynamics', 
+                 'ignore_passive_fiber_force',
                  'remove_muscles'])  
 
 add_model('RajagopalFunctionBasedPathActuators', 
-          'Rajagopal\npath actuators\nfunction based paths',
-          flags=['disable_constraints'])
+          'Rajagopal\npath actuators\nfunction based paths')
 
+add_model('RajagopalFunctionBasedPathActuatorsNoConstraints',
+          'Rajagopal\npath actuators\nfunction based paths\nno constraints',)
+          
 add_model('RajagopalDGF', 'Rajagopal\nDeGroote-Fregly muscles', 
           flags=['ignore_activation_dynamics', 
                  'ignore_passive_fiber_force',
-                 'disable_constraints', 
                  'remove_muscles'])  
 
 add_model('RajagopalFunctionBasedPathsDGF', 
           'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths', 
           flags=['ignore_activation_dynamics', 
                  'ignore_passive_fiber_force',
-                 'disable_constraints', 
                  'remove_muscles'])  
 
-# Benchmark 'realize' plots.
-# --------------------------
-benchmark = 'benchmark_realize'
-model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
-               'RajagopalFunctionBasedPathsDGF']
-study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_realize', 
-               model_names, benchmark)
-
-model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators', 'RajagopalDGF',
-               'RajagopalFunctionBasedPathsDGF']
-model_suffix = '_noconstraints'
-study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_realize_noconstraints', 
-               model_names, benchmark, model_suffix)
-
-
-# Benchmark 'forward' plots.
-# --------------------------
-benchmark = 'benchmark_forward'
-model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators']
-model_suffix = ''
-study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_time0.1', 
-               model_names, benchmark, model_suffix=model_suffix, 
-               exe_args={'time': 0.1})
-study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_time1.0', 
-               model_names, benchmark, model_suffix=model_suffix, 
-               exe_args={'time': 1.0})
-
-model_names = ['Rajagopal', 'RajagopalPathActuators', 'RajagopalFunctionBasedPaths', 
-               'RajagopalFunctionBasedPathActuators']
-model_suffix = '_noconstraints'
-study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_noconstraints_time0.1', 
-               model_names, benchmark, model_suffix, exe_args={'time': 0.1})
-study.add_task(TaskPlotBenchmarkComparison, 'Rajagopal_forward_noconstraints_time1.0',
-               model_names, benchmark, model_suffix, exe_args={'time': 1.0})
-
+add_model('RajagopalFunctionBasedPathsDGFNoConstraints', 
+          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\nno constraints', 
+          flags=['ignore_activation_dynamics', 
+                 'ignore_passive_fiber_force',
+                 'remove_muscles']) 
 
 # Pendulum models.
 links = [1, 2, 5, 10, 20, 50, 100]
@@ -155,42 +106,17 @@ study.add_task(TaskCreatePendulumModels, links)
 
 flags = []
 for link in links:
-    model_file = f'Pendulum_{link}'
     add_model(f'{link}link_pendulum', f'{link} link pendulum', flags)
 
-model_names = [f'{link}link_pendulum' for link in links]
-study.add_task(TaskPlotBenchmarkComparison, 'pendulum_realize', 
-               model_names, 'benchmark_realize')
-
-model_suffix = ''
-study.add_task(TaskPlotBenchmarkComparison, 'pendulum_forward_time0.1', 
-               model_names, 'benchmark_forward', model_suffix=model_suffix,
-               exe_args={'time': 0.1})
-study.add_task(TaskPlotBenchmarkComparison, 'pendulum_forward_time1.0', 
-               model_names, 'benchmark_forward', model_suffix=model_suffix,
-               exe_args={'time': 1.0})
-
-
-# Frames per second
+# Plots
 empty_flags = ['']
 model_tuples = []
 for link in links:
     model_tuples.append((f'{link}link_pendulum', empty_flags))
-study.add_task(TaskPlotFramesPerSecondRealize, 'pendulum', model_tuples)
 study.add_task(TaskPlotRealTimeFactor, 'pendulum_time5.0', model_tuples, 
                exe_args={'time': 5.0}, log_scale=True)
-
-model_tuples = []
-empty_flags = ['']
-model_tuples.append(('Rajagopal', ['remove_muscles']))
-model_tuples.append(('Rajagopal', flags))
-model_tuples.append(('RajagopalDGF', flags))
-model_tuples.append(('RajagopalFunctionBasedPaths', flags))
-model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
-model_tuples.append(('RajagopalPathActuators', flags))
-model_tuples.append(('RajagopalFunctionBasedPathActuators', flags))
-study.add_task(TaskPlotFramesPerSecondRealize, 'Rajagopal', model_tuples)
-
+study.add_task(TaskPlotRealTimeFactor, 'pendulum_time1.0_step0.001', model_tuples, 
+               exe_args={'time': 1.0, 'step': 1e-3}, log_scale=True)
 
 model_tuples = []
 empty_flags = ['']
@@ -208,6 +134,18 @@ model_tuples.append(('Rajagopal', ['remove_muscles']))
 study.add_task(TaskPlotRealTimeFactor, 'Rajagopal_noactdyn_nopassive_time5.0', 
                model_tuples, exe_args={'time': 5.0})
 
+model_tuples = []
+empty_flags = ['']
+flags = ['ignore_activation_dynamics',
+         'ignore_passive_fiber_force']
+model_tuples.append(('RajagopalFunctionBasedPaths', flags))
+model_tuples.append(('RajagopalFunctionBasedPathsNoConstraints', flags))
+model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
+model_tuples.append(('RajagopalFunctionBasedPathsDGFNoConstraints', flags))
+model_tuples.append(('RajagopalFunctionBasedPathActuators', empty_flags))
+model_tuples.append(('RajagopalFunctionBasedPathActuatorsNoConstraints', empty_flags))
+study.add_task(TaskPlotRealTimeFactor, 'Rajagopal_noconstraints_time5.0', 
+               model_tuples, exe_args={'time': 5.0}, log_scale=True)
 
 model_tuples = []
 empty_flags = ['']
@@ -228,36 +166,7 @@ study.add_task(TaskPlotRealTimeFactor,
                'Rajagopal_noactdyn_nopassive_time1.0_step0.001', 
                model_tuples, exe_args={'time': 1.0, 'step': 1e-3})
 
-model_tuples = []
-empty_flags = ['']
-flags = ['disable_constraints']
-model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
-model_tuples.append(('RajagopalFunctionBasedPathsDGF', 
-                     flags + ['ignore_passive_fiber_force', 
-                              'ignore_activation_dynamics']))
-model_tuples.append(('RajagopalPathActuators', flags))
-model_tuples.append(('RajagopalFunctionBasedPathActuators', flags))
-study.add_task(TaskPlotFramesPerSecondRealize, 'Rajagopal_noconstraints', model_tuples)
-study.add_task(TaskPlotSimulationTimeForward, 'Rajagopal_noconstraints', 
-               model_tuples, exe_args={'time': 1.0})
 
-model_tuples = []
-empty_flags = ['']
-model_tuples.append(('Rajagopal', empty_flags))
-model_tuples.append(('Rajagopal', ['remove_muscles']))
-model_tuples.append(('Rajagopal', ['remove_muscles', 'disable_constraints']))
-study.add_task(TaskPlotFramesPerSecondRealize, 'Rajagopal_nomuscles_noconstraints', 
-               model_tuples)
-study.add_task(TaskPlotSimulationTimeForward, 'Rajagopal_nomuscles_noconstraints', 
-               model_tuples, exe_args={'time': 1.0})
-
-
-model_tuples = []
-empty_flags = ['']
-model_tuples.append(('1link_pendulum', empty_flags))
-model_tuples.append(('100link_pendulum', empty_flags))
-study.add_task(TaskGenerateDifferentialFlameGraph, '1v100link_pendulum', 
-               model_tuples, 'cycles')
 
 
 

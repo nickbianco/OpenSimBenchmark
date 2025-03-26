@@ -171,11 +171,15 @@ class TaskCreateRajagopalModels(StudyTask):
                 self.study.config['data_path'], 'Rajagopal', 
                 'subject_walk_scaled_FunctionBasedPathSet.xml')
         
-        self.model_names = ['Rajagopal', 'RajagopalPathActuators',
-                            'RajagopalFunctionBasedPaths', 
+        self.model_names = ['Rajagopal', 
+                            'RajagopalPathActuators',
+                            'RajagopalFunctionBasedPaths',
+                            'RajagopalFunctionBasedPathsNoConstraints', 
                             'RajagopalFunctionBasedPathActuators',
+                            'RajagopalFunctionBasedPathActuatorsNoConstraints', 
                             'RajagopalDGF',
-                            'RajagopalFunctionBasedPathsDGF']
+                            'RajagopalFunctionBasedPathsDGF',
+                            'RajagopalFunctionBasedPathsDGFNoConstraints']
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'], 
@@ -211,6 +215,26 @@ class TaskCreateRajagopalModels(StudyTask):
         model.printToXML(target[2])
         print(f' --> Created {target[2]}')
 
+        # Function-based path model without constraints.
+        constraints = model.updConstraintSet()
+        constraints.clearAndDestroy()
+
+        bodyset = model.updBodySet()
+        patella_l = bodyset.get('patella_l')
+        patella_r = bodyset.get('patella_r')
+        bodyset.remove(patella_l)
+        bodyset.remove(patella_r)
+
+        jointset = model.updJointSet()
+        patellofemoral_l = jointset.get('patellofemoral_l')
+        patellofemoral_r = jointset.get('patellofemoral_r')
+        jointset.remove(patellofemoral_l)
+        jointset.remove(patellofemoral_r)
+
+        model.finalizeConnections()
+        model.printToXML(target[3])
+        print(f' --> Created {target[3]}')
+
         # Function-based PathActuators model.
         modelProcessor = osim.ModelProcessor(file_dep[0])
         modelProcessor.append(osim.ModOpReplaceMusclesWithPathActuators())
@@ -218,8 +242,28 @@ class TaskCreateRajagopalModels(StudyTask):
         model = modelProcessor.process()
         model.finalizeConnections()
         model.initSystem()
-        model.printToXML(target[3])
-        print(f' --> Created {target[3]}')
+        model.printToXML(target[4])
+        print(f' --> Created {target[4]}')
+
+        # Function-based PathActuators model without constraints.
+        constraints = model.updConstraintSet()
+        constraints.clearAndDestroy()
+
+        bodyset = model.updBodySet()
+        patella_l = bodyset.get('patella_l')
+        patella_r = bodyset.get('patella_r')
+        bodyset.remove(patella_l)
+        bodyset.remove(patella_r)
+
+        jointset = model.updJointSet()
+        patellofemoral_l = jointset.get('patellofemoral_l')
+        patellofemoral_r = jointset.get('patellofemoral_r')
+        jointset.remove(patellofemoral_l)
+        jointset.remove(patellofemoral_r)
+
+        model.finalizeConnections()
+        model.printToXML(target[5])
+        print(f' --> Created {target[5]}')
 
         # DeGrooteFregly2016Muscle model.
         modelProcessor = osim.ModelProcessor(file_dep[0])
@@ -227,7 +271,7 @@ class TaskCreateRajagopalModels(StudyTask):
         model = modelProcessor.process()
         model.finalizeConnections()
         model.initSystem()
-        model.printToXML(target[4])
+        model.printToXML(target[6])
 
         # Function-based DeGrooteFregly2016Muscle model.
         modelProcessor = osim.ModelProcessor(file_dep[0])
@@ -236,8 +280,28 @@ class TaskCreateRajagopalModels(StudyTask):
         model = modelProcessor.process()
         model.finalizeConnections()
         model.initSystem()
-        model.printToXML(target[5])
-        print(f' --> Created {target[5]}')
+        model.printToXML(target[7])
+        print(f' --> Created {target[7]}')
+
+        # Function-based DeGrooteFregly2016Muscle model without constraints.
+        constraints = model.updConstraintSet()
+        constraints.clearAndDestroy()
+
+        bodyset = model.updBodySet()
+        patella_l = bodyset.get('patella_l')
+        patella_r = bodyset.get('patella_r')
+        bodyset.remove(patella_l)
+        bodyset.remove(patella_r)
+
+        jointset = model.updJointSet()
+        patellofemoral_l = jointset.get('patellofemoral_l')
+        patellofemoral_r = jointset.get('patellofemoral_r')
+        jointset.remove(patellofemoral_l)
+        jointset.remove(patellofemoral_r)
+
+        model.finalizeConnections()
+        model.printToXML(target[8])
+        print(f' --> Created {target[8]}')
 
 
 class TaskCreatePendulumModels(StudyTask):
@@ -1231,9 +1295,9 @@ class TaskPlotRealTimeFactor(StudyTask):
                 f'real_time_factor_{tag}.png')
         self.add_action(self.json_paths, 
                         [self.figure_path], 
-                        self.plot_frames_per_second)
+                        self.plot_real_time_factors)
 
-    def plot_frames_per_second(self, file_dep, target):
+    def plot_real_time_factors(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
 
