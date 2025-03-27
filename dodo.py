@@ -30,14 +30,32 @@ study = Study('opensim_benchmark')
 # Add study tasks.
 study.add_task(TaskInstallDependencies)
 
-# MuJoCo tests.
+# MuJoCo pendulum tests.
 integrators = ['Euler', 'implicit', 'implicitfast', 'RK4']
 steps = [0.01, 0.001, 0.0001]
 nlinks = [1, 2, 5, 10, 20, 50, 100]
+time = 5.0
 for integrator in integrators:
     for step in steps:
         for nlink in nlinks:
-            study.add_task(TaskMuJoCoPendulumBenchmark, nlink, step, integrator)
+            study.add_task(TaskMuJoCoPendulumBenchmark, nlink, step, time, integrator)
+study.add_task(TaskAggregatePendulumResults, 'MuJoCo', nlinks, steps, time, integrators)
+
+# Simbody pendulum tests.
+integrators = ['euler', 'rk4']
+steps = [0.01, 0.001, 0.0001]
+nlinks = [1, 2, 5, 10, 20, 50, 100]
+time = 5.0
+for integrator in integrators:
+    for step in steps:
+        for nlink in nlinks:
+            study.add_task(TaskSimbodyPendulumBenchmark, nlink, step, time, integrator)
+study.add_task(TaskAggregatePendulumResults, 'Simbody', nlinks, steps, time, integrators)
+
+study.add_task(TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff, nlinks, steps, time, 
+               'Euler')
+study.add_task(TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff, nlinks, steps, time, 
+               'RK4')
 
 # Create Rajagopal models.
 study.add_task(TaskCreateRajagopalModels)

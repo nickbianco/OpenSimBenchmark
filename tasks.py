@@ -159,24 +159,27 @@ class TaskInstallDependencies(StudyTask):
         if p.returncode != 0:
             raise Exception('Non-zero exit status: code %s.' % p.returncode)
 
+
 class TaskMuJoCoPendulumBenchmark(StudyTask):
     REGISTRY = []
-    def __init__(self, study, nlinks, step, integrator):
+    def __init__(self, study, nlinks, step, time, integrator):
         super(TaskMuJoCoPendulumBenchmark, self).__init__(study)
-        self.name = f'run_mujoco_{nlinks}link_pendulum_benchmark_step{step}_{integrator}'
+        self.name = (f'run_mujoco_{nlinks}link_pendulum_benchmark'
+                     f'_step{step}_time{time}_{integrator}')
         self.nlinks = nlinks
         self.step = step
+        self.time = time
         self.integrator = integrator
 
         # A dummy file dependency to satisify doit's dependency tree.
         self.dummy_path = os.path.join(self.study.config['mujoco_path'], 'dummy.txt')
-        self.result_path = os.path.join(self.study.config['results_path'],
+        self.result_path = os.path.join(self.study.config['results_path'], 'pendulums',
                 'MuJoCo', f'{nlinks}link_pendulum')
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
         self.result_file = os.path.join(self.result_path, 
-                f'{nlinks}link_pendulum_step{step}_integator{integrator}.json')
+                f'{nlinks}link_pendulum_step{step}_time{time}_{integrator}.json')
         
         self.add_action([self.dummy_path], 
                         [self.result_file], 
@@ -190,7 +193,7 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
 
         def reset_qpos(data):
             data.qpos[:] = 0
-            data.qpos[0] = 1.0
+            data.qpos[0] = np.pi / 4.0
 
         def create_n_link_pendulum(n_links):
             """
@@ -262,24 +265,232 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
 
         # Benchmark 3: Forward simulation for `sim_time` seconds
         reset_qpos(data)
+        mujoco.mj_energyPos(model, data)
+        mujoco.mj_energyVel(model, data)
+        initial_energy = data.energy[0] + data.energy[1]
         start_time = time.time()
-        final_time = 5.0
-        total_steps = int(final_time / model.opt.timestep)
+        total_steps = int(self.time / model.opt.timestep)
         for _ in range(total_steps):
             mujoco.mj_step(model, data)
-        forward_sim_time = time.time() - start_time
-
-        real_time_factor = final_time / forward_sim_time
+        forward_integration_time = time.time() - start_time
+        real_time_factor = self.time / forward_integration_time
+        mujoco.mj_energyPos(model, data)
+        mujoco.mj_energyVel(model, data)
+        final_energy = data.energy[0] + data.energy[1]
+        energy_conservation = final_energy - initial_energy
 
         # Save the results to a JSON file.
         results = {
             'acceleration_compute_time': acceleration_compute_time,
             'single_step_time': single_step_time,
-            'forward_sim_time': forward_sim_time,
-            'real_time_factor': real_time_factor
+            'forward_integration_time': forward_integration_time,
+            'real_time_factor': real_time_factor,
+            'energy_conservation': energy_conservation
         }
         with open(target[0], 'w') as f:
             json.dump(results, f, indent=4)
+
+
+class TaskSimbodyPendulumBenchmark(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, nlinks, step, time, integrator):
+        super(TaskSimbodyPendulumBenchmark, self).__init__(study)
+        self.name = (f'run_simbody_{nlinks}link_pendulum_benchmark'
+                     f'_step{step}_time{time}_{integrator}')
+        self.nlinks = nlinks
+        self.step = step
+        self.time = time
+        self.integrator = integrator
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+                f'benchmark_simbody_pendulum_{integrator}')
+
+        # A dummy file dependency to satisify doit's dependency tree.
+        self.dummy_path = os.path.join(self.study.config['data_path'], 'pendulum',
+                                       'dummy.txt')
+        self.result_path = os.path.join(self.study.config['results_path'], 'pendulums',
+                'Simbody', f'{nlinks}link_pendulum')
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+
+        self.result_file = os.path.join(self.result_path, 
+                f'{nlinks}link_pendulum_step{step}_time{time}_{integrator}.json')
+        
+        self.add_action([self.dummy_path], 
+                        [self.result_file], 
+                        self.run_pendulum_benchmark)        
+
+    def run_pendulum_benchmark(self, file_dep, target):
+        import subprocess
+        command = f'{self.exe_path} {self.nlinks} {target[0]}'
+        command += f' --time {self.time} --step {self.step}'
+        try:
+            p = subprocess.run(command, check=True, shell=True,
+                            cwd=self.result_path)
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+        except Exception as e:
+            import json
+            output = dict()
+            output['failed'] = True
+            output['error'] = str(e)
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4)
+
+        if not os.path.exists(target[0]):
+            output = dict()
+            output['failed'] = True
+            output['error'] = 'No output file was created.'
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4) 
+        
+
+class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, nlinks, steps, time, integrator):
+        super(TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff, self).__init__(study)
+        self.name = f'plot_simbody_vs_mujoco_speed_accuracy_tradeoff_time{time}_{integrator}'
+        self.nlinks = nlinks
+        self.steps = steps
+        self.time = time
+        self.integrator = integrator
+
+        self.mujoco_result_files = list()
+        self.simbody_result_files = list()
+        for nlink in self.nlinks:
+            for step in self.steps:
+                self.mujoco_result_files.append(
+                        os.path.join(self.study.config['results_path'], 
+                        'pendulums', 'MuJoCo', f'{nlink}link_pendulum',
+                        f'{nlink}link_pendulum_step{step}_time{time}_{integrator}.json'))
+                self.simbody_result_files.append(
+                        os.path.join(self.study.config['results_path'], 
+                        'pendulums', 'Simbody', f'{nlink}link_pendulum',
+                        f'{nlink}link_pendulum_step{step}_time{time}_{integrator.lower()}.json'))
+                
+        self.figure_path = os.path.join(self.study.config['figures_path'],
+                f'speed_accuracy_tradeoff_time{time}_{integrator}.png')
+        
+        self.add_action(self.mujoco_result_files + self.simbody_result_files, 
+                        [self.figure_path],
+                        self.plot_speed_accuracy_tradeoff)
+
+    def plot_speed_accuracy_tradeoff(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+
+        mujoco_energies = list()
+        mujoco_real_time_factors = list()
+        simbody_energies = list()
+        simbody_real_time_factors = list()
+
+        for mujoco_file, simbody_file in zip(self.mujoco_result_files, 
+                                             self.simbody_result_files):
+            with open(mujoco_file) as f:
+                data = json.load(f)
+                mujoco_energies.append(abs(data['energy_conservation']))
+                mujoco_real_time_factors.append(data['real_time_factor'])
+
+            with open(simbody_file) as f:
+                data = json.load(f)
+                simbody_energies.append(abs(data['energy_conservation']))
+                simbody_real_time_factors.append(data['real_time_factor'])
+
+        # Create the figure and axis.
+        fig, ax = plt.subplots(figsize=(5, 8))
+
+        # Plot a scatter plot of the speed-accuracy tradeoff. MuJoCo is in red,
+        # and Simbody is in blue.
+        ax.scatter(mujoco_energies, mujoco_real_time_factors, color='red',
+                   label='MuJoCo')
+        ax.scatter(simbody_energies, simbody_real_time_factors, color='blue',
+                   label='Simbody')
+        
+        # Set the plot parameters.
+        plt.xscale('log')
+        plt.yscale('log')
+        plt.xlabel('Energy Conservation')
+        plt.ylabel('Real Time Factor')
+        plt.legend()
+        plt.grid()
+
+        # Save the figure.
+        plt.savefig(target[0])
+        plt.close()
+
+
+class TaskAggregatePendulumResults(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, engine, nlinks, steps, time, integrators):
+        super(TaskAggregatePendulumResults, self).__init__(study)
+        self.name = f'aggregate_{engine.lower()}_pendulum_results_time{time}'
+        self.engine = engine
+        self.nlinks = nlinks
+        self.steps = steps
+        self.time = time
+        self.integrators = integrators
+        self.result_types = ['acceleration_compute_time', 'single_step_time',
+                             'forward_integration_time', 'real_time_factor',
+                             'energy_conservation']
+
+        for integrator in self.integrators:
+            result_files = list()
+            for nlink in self.nlinks:
+                for step in self.steps:
+                    result_files.append(os.path.join(self.study.config['results_path'], 
+                        'pendulums', engine, f'{nlink}link_pendulum',
+                        f'{nlink}link_pendulum_step{step}_time{time}_{integrator}.json'))
+                
+            csv_paths = list()
+            for result_type in self.result_types:
+                csv_path = os.path.join(self.study.config['results_path'], 'pendulums',
+                        engine, f'pendulum_{result_type}_time{time}_{integrator}.csv')
+                csv_paths.append(csv_path)
+        
+            self.add_action(result_files, 
+                            csv_paths,
+                            self.aggregate_pendulum_results, integrator)
+
+    def aggregate_pendulum_results(self, file_dep, target, integrator):
+        import matplotlib.pyplot as plt
+        import json
+        import csv
+        
+        # Create CSV files for each result type where the number of pendulum links
+        # are along the rows and the performance results are columns. Use different columns
+        # for different step sizes.
+
+        # Initialize the dictionary of results.
+        results = dict()
+        for result_type in self.result_types:
+            results[result_type] = dict()
+            for nlink in self.nlinks:
+                results[result_type][nlink] = dict()
+                for step in self.steps:
+                    results[result_type][nlink] = list()
+        
+        # Read the JSON files and fill the results dictionary.
+        result_idx = 0
+        for nlink in self.nlinks:
+            for step in self.steps:
+                with open(file_dep[result_idx]) as f:
+                    data = json.load(f)
+                    for result_type in self.result_types:
+                        if result_type in data:
+                            results[result_type][nlink].append(data[result_type])
+                result_idx += 1
+       
+        # Create the CSV files.
+        for result_type in self.result_types:
+            csv_path = target[self.result_types.index(result_type)]
+            with open(csv_path, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                # Write the header row.
+                header = ['nlinks'] + [f'step{step}' for step in self.steps]
+                writer.writerow(header)
+                # Write the data rows.
+                for nlink in self.nlinks:
+                    row = [nlink] + results[result_type][nlink]
+                    writer.writerow(row)
 
 
 class TaskCreateRajagopalModels(StudyTask):
@@ -307,7 +518,6 @@ class TaskCreateRajagopalModels(StudyTask):
             self.model_paths.append(os.path.join(self.study.config['models_path'], 
                                                  f'{model_name}.osim'))
     
-        
         self.add_action([self.base_model_path, self.function_based_paths], 
                         self.model_paths, 
                         self.create_rajagopal_models)

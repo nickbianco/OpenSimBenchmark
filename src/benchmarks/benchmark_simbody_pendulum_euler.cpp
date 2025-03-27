@@ -9,8 +9,8 @@ static const char HELP[] =
 R"(Benchmark a simulation of an N-link pendulum in Simbody.
 
 Usage:
-  perf_forward <nlinks> <output> [--time <time>] [--step <step>]
-  perf_forward -h | --help
+  benchmark_simbody_pendulum_euler <nlinks> <output> [--time <time>] [--step <step>]
+  benchmark_simbody_pendulum_euler -h | --help
 
 Options:
   -t <time>, --time <time>        Set the final time.
@@ -21,7 +21,7 @@ void resetState(SimTK::State& state) {
     // Reset the state to the initial state.
     state.setTime(0);
     state.updQ() = SimTK::Vector(state.getNQ(), 0.0);
-    state.updQ()[0] = 1.0;
+    state.updQ()[0] = SimTK::Pi / 4.0;
 }
 
 int main(int argc, char** argv) {
@@ -94,6 +94,12 @@ int main(int argc, char** argv) {
     time_elapsed /= 1.0e6;
     j["single_step_time"] = time_elapsed;
 
+    // Initial energy
+    // --------------
+    resetState(state);
+    system.realize(state, SimTK::Stage::Dynamics);
+    double initial_energy = system.calcEnergy(state);
+
     // Forward integration.
     // --------------------
     resetState(state);
@@ -106,6 +112,13 @@ int main(int argc, char** argv) {
     time_elapsed /= 1.0e6;
     j["forward_integration_time"] = time_elapsed;
     j["real_time_factor"] = time / time_elapsed;
+
+    // Final energy
+    // ------------
+    const auto& finalState = timeStepper.getState();
+    system.realize(finalState, SimTK::Stage::Dynamics);
+    double final_energy = system.calcEnergy(finalState);
+    j["energy_conservation"] = final_energy - initial_energy;
 
     std::ofstream file(output_file, std::ios::out | std::ios::binary);
     if (file) {
