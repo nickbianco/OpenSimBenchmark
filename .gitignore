@@ -22,3 +22,6 @@ models/*/
 # Results
 /results
 /figures
+
+# MuJoCo
+MUJOCO_LOG.txt

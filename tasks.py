@@ -158,7 +158,129 @@ class TaskInstallDependencies(StudyTask):
                            cwd=os.path.dirname(file_dep[0]))
         if p.returncode != 0:
             raise Exception('Non-zero exit status: code %s.' % p.returncode)
+
+class TaskMuJoCoPendulumBenchmark(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, nlinks, step, integrator):
+        super(TaskMuJoCoPendulumBenchmark, self).__init__(study)
+        self.name = f'run_mujoco_{nlinks}link_pendulum_benchmark_step{step}_{integrator}'
+        self.nlinks = nlinks
+        self.step = step
+        self.integrator = integrator
+
+        # A dummy file dependency to satisify doit's dependency tree.
+        self.dummy_path = os.path.join(self.study.config['mujoco_path'], 'dummy.txt')
+        self.result_path = os.path.join(self.study.config['results_path'],
+                'MuJoCo', f'{nlinks}link_pendulum')
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+
+        self.result_file = os.path.join(self.result_path, 
+                f'{nlinks}link_pendulum_step{step}_integator{integrator}.json')
         
+        self.add_action([self.dummy_path], 
+                        [self.result_file], 
+                        self.run_pendulum_benchmark)        
+
+    def run_pendulum_benchmark(self, file_dep, target):
+        import mujoco
+        import numpy as np
+        import time
+        import json
+
+        def reset_qpos(data):
+            data.qpos[:] = 0
+            data.qpos[0] = 1.0
+
+        def create_n_link_pendulum(n_links):
+            """
+            Create an XML string for an N-link pendulum in MuJoCo.
+
+            Args:
+                n_links (int): Number of pendulum links.
+
+            Returns:
+                str: MuJoCo XML string for the N-link pendulum.
+            """
+            # XML header and simulation options
+            xml = """<mujoco model="n_link_pendulum">
+
+        <worldbody>
+            <light pos="0 0 2"/>
+            <body pos="0 0 0">
+            <joint type="hinge" axis="0 1 0"/>
+            <geom type="cylinder" size="0.02" fromto="0 -.02 0 0 .02 0"/>
+            <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>
+            <inertial pos="0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>
+            """
+
+            # Add links iteratively
+            for i in range(1, n_links + 1):
+                xml += f"""
+            <body pos="1.0 0 0">
+                <joint type="hinge" axis="0 1 0"/>
+                <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>"""
+
+            # Close all <body> tags
+            xml += "\n" + "      </body>" * n_links
+
+            # Close the worldbody and mujoco tags
+            xml += """
+            </body>
+        </worldbody>
+        </mujoco>"""
+
+            model = mujoco.MjModel.from_xml_string(xml)
+            model.opt.gravity = [0.0, 0.0, -9.81]
+            return model
+
+        model = create_n_link_pendulum(self.nlinks)
+        data = mujoco.MjData(model)
+        model.opt.timestep = self.step
+        if self.integrator == 'Euler':
+            model.opt.integrator = mujoco.mjtIntegrator.mjINT_EULER
+        elif self.integrator == 'implicit':
+            model.opt.integrator = mujoco.mjtIntegrator.mjINT_IMPLICIT
+        elif self.integrator == 'implicitfast':
+            model.opt.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
+        elif self.integrator == 'RK4':
+            model.opt.integrator = mujoco.mjtIntegrator.mjINT_RK4
+        else:
+            raise ValueError(f'Invalid integrator: {self.integrator}')
+
+        # Benchmark 1: Joint acceleration computation
+        reset_qpos(data)
+        start_time = time.time()
+        mujoco.mj_forward(model, data)
+        acceleration_compute_time = time.time() - start_time
+
+        # Benchmark 2: Single simulation step
+        reset_qpos(data)
+        start_time = time.time()
+        mujoco.mj_step(model, data)
+        single_step_time = time.time() - start_time
+
+        # Benchmark 3: Forward simulation for `sim_time` seconds
+        reset_qpos(data)
+        start_time = time.time()
+        final_time = 5.0
+        total_steps = int(final_time / model.opt.timestep)
+        for _ in range(total_steps):
+            mujoco.mj_step(model, data)
+        forward_sim_time = time.time() - start_time
+
+        real_time_factor = final_time / forward_sim_time
+
+        # Save the results to a JSON file.
+        results = {
+            'acceleration_compute_time': acceleration_compute_time,
+            'single_step_time': single_step_time,
+            'forward_sim_time': forward_sim_time,
+            'real_time_factor': real_time_factor
+        }
+        with open(target[0], 'w') as f:
+            json.dump(results, f, indent=4)
+
 
 class TaskCreateRajagopalModels(StudyTask):
     REGISTRY = []
@@ -588,6 +710,7 @@ class TaskPlotBenchmark(BenchmarkTask):
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
+
 
 class TaskRunPerf(PerfTask):
     REGISTRY = []
