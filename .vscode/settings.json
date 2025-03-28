@@ -1,9 +1,0 @@
-{
-    "cmake.configureSettings": {
-        "OpenSim_DIR": "/Users/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_core_install/cmake",
-        "Simbody_DIR": "/Users/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/simbody/lib/cmake/simbody",
-        "benchmark_DIR": "/Users/nbianco/Developer/perf/OpenSimBenchmark/dependencies/benchmark/benchmark_install/lib/cmake/benchmark",
-        "docopt_DIR": "/Users/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/docopt/lib/cmake/docopt",
-        "docopt_INCLUDE_DIRS": "/Users/nbianco/Developer/perf/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/docopt/include",
-    },
-}
