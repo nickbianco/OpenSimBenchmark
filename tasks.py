@@ -252,16 +252,22 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
             raise ValueError(f'Invalid integrator: {self.integrator}')
 
         # Benchmark 1: Joint acceleration computation
-        reset_qpos(data)
-        start_time = time.time()
-        mujoco.mj_forward(model, data)
-        acceleration_compute_time = time.time() - start_time
+        acceleration_compute_times = list()
+        for i in range(100):
+            reset_qpos(data)
+            start_time = time.time()
+            mujoco.mj_forward(model, data)
+            acceleration_compute_times.append(time.time() - start_time)
+        acceleration_compute_time = np.mean(acceleration_compute_times)
 
         # Benchmark 2: Single simulation step
-        reset_qpos(data)
-        start_time = time.time()
-        mujoco.mj_step(model, data)
-        single_step_time = time.time() - start_time
+        single_step_times = list()
+        for i in range(100):
+            reset_qpos(data)
+            start_time = time.time()
+            mujoco.mj_step(model, data)
+            single_step_times.append(time.time() - start_time)
+        single_step_time = np.mean(single_step_times)
 
         # Benchmark 3: Forward simulation for `sim_time` seconds
         reset_qpos(data)
@@ -396,11 +402,10 @@ class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
                 simbody_real_time_factors.append(data['real_time_factor'])
 
         # Create the figure and axis.
-        fig, ax = plt.subplots(figsize=(5, 8))
+        fig, ax = plt.subplots(figsize=(5, 5))
 
-        # Plot a scatter plot of the speed-accuracy tradeoff. MuJoCo is in red,
-        # and Simbody is in blue.
-        ax.scatter(mujoco_energies, mujoco_real_time_factors, color='red',
+        # Plot a scatter plot of the speed-accuracy tradeoff.
+        ax.scatter(mujoco_energies, mujoco_real_time_factors, color='darkorange',
                    label='MuJoCo')
         ax.scatter(simbody_energies, simbody_real_time_factors, color='blue',
                    label='Simbody')
@@ -408,13 +413,16 @@ class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
         # Set the plot parameters.
         plt.xscale('log')
         plt.yscale('log')
-        plt.xlabel('Energy Conservation')
-        plt.ylabel('Real Time Factor')
-        plt.legend()
-        plt.grid()
+        plt.xlabel('energy conservation (J)')
+        plt.ylabel('real time factor')
+        plt.title(f'integrator: {self.integrator}')
+        plt.legend(fontsize=10)
+        plt.grid(zorder=0)
+        ax = plt.gca()
+        ax.set_axisbelow(True)
 
         # Save the figure.
-        plt.savefig(target[0])
+        plt.savefig(target[0], dpi=600)
         plt.close()
 
 
@@ -491,6 +499,101 @@ class TaskAggregatePendulumResults(StudyTask):
                 for nlink in self.nlinks:
                     row = [nlink] + results[result_type][nlink]
                     writer.writerow(row)
+
+
+class TaskPlotPendulumComparison(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, engines, result, nlinks, step, time, integrator):
+        super(TaskPlotPendulumComparison, self).__init__(study)
+        self.name = f'plot_pendulum_comparison_{result}_time{time}_step{step}_{integrator}'
+        self.result = result
+        self.engines = engines
+        self.nlinks = nlinks
+        self.step = step
+        self.time = time
+        self.integrator = integrator
+
+        self.result_name = ''
+        self.units = ''
+        if self.result == 'acceleration_compute_time':
+            self.result_name = 'acceleration compute time'
+            self.units = '(s)'
+        elif self.result == 'single_step_time':
+            self.result_name = 'single step time'
+            self.units = '(s)'
+        elif self.result == 'forward_integration_time':
+            self.result_name = 'forward integration time'
+            self.units = '(s)'
+        elif self.result == 'real_time_factor':
+            self.result_name = 'real time factor'
+            self.units = ''
+        elif self.result == 'energy_conservation':
+            self.result_name = 'energy conservation'
+            self.units = '(J)'
+
+        self.aggregate_files = list()
+        for engine in engines:
+            self.aggregate_files.append(
+                    os.path.join(self.study.config['results_path'],
+                    'pendulums', engine, 
+                    f'pendulum_{result}_time{time}_{integrator}.csv'))
+            
+        self.figure_path = os.path.join(self.study.config['figures_path'],
+                f'pendulum_{result}_comparison_time{time}_step{step}_{integrator}.png')
+        
+        self.add_action(self.aggregate_files, 
+                        [self.figure_path],
+                        self.plot_pendulum_comparison)
+
+    def plot_pendulum_comparison(self, file_dep, target):
+        import matplotlib.pyplot as plt
+
+        import pandas as pd
+        # Read the CSV files into dataframes.
+        dataframes = []
+        for file in file_dep:
+            df = pd.read_csv(file)
+            dataframes.append(df)
+
+        # Create a grouped bar chart, where the bars are along the 
+        # x-axis and the performance results are along the y-axis.
+        # Group by 'engine'. Select the data column based on 'step'.
+
+        fig, ax = plt.subplots(figsize=(5, 5))
+        bar_width = 0.35
+        bar_positions = np.arange(len(self.nlinks))
+        for i, df in enumerate(dataframes):
+            # Select the data column based on 'step'.
+            step_idx = df.columns.get_loc(f'step{self.step}')
+            data = abs(df.iloc[:, step_idx])
+            ax.bar(bar_positions + i * bar_width, data, 
+                   width=bar_width, label=df.columns[0])    
+            
+        # Plot the y-axis on a log scale
+        ax.set_yscale('log')
+
+        # Set the x-ticks and labels.
+        ax.set_xticks(bar_positions + bar_width / 2)
+        ax.set_xticklabels(self.nlinks)
+
+        # Set the y-label and title.
+        ax.set_xlabel('# of pendulum links')
+        ax.set_ylabel(f'{self.result_name} {self.units}')
+        ax.set_title(f'{self.integrator} with h = {self.step} s')
+
+        # Set the legend based on the engine names in self.engines  
+        ax.legend(self.engines, fontsize=8)
+
+        # Set the grid include minor ticks.
+        ax.grid(which='major', linestyle='-', linewidth=0.5)
+        ax.grid(which='minor', linestyle='-', linewidth=0.2, alpha=0.5)
+
+
+        ax = plt.gca()
+        ax.set_axisbelow(True)
+        # Save the figure.
+        plt.savefig(target[0], dpi=600)
+        plt.close()
 
 
 class TaskCreateRajagopalModels(StudyTask):

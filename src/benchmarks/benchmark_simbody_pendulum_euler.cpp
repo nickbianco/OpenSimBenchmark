@@ -71,28 +71,36 @@ int main(int argc, char** argv) {
     const SimTK::MultibodySystem& system = pendulum.m_system;
     SimTK::State state = system.realizeTopology();
 
-    // Realize acceleration.
+        // Realize acceleration.
     // ---------------------
-    resetState(state);
-    auto start = high_resolution_clock::now();
-    system.realize(state, SimTK::Stage::Acceleration);
-    auto end = high_resolution_clock::now();
-    double time_elapsed = duration_cast<microseconds>(end - start).count();
-    time_elapsed /= 1.0e6;
-    j["acceleration_compute_time"] = time_elapsed;
+    SimTK::Vector acceleration_times(100, 0.0);
+    for (int i = 0; i < 100; ++i) {
+        resetState(state);
+        auto start = high_resolution_clock::now();
+        system.realize(state, SimTK::Stage::Acceleration);
+        auto end = high_resolution_clock::now();
+        double time_elapsed = duration_cast<microseconds>(end - start).count();
+        time_elapsed /= 1.0e6;
+        acceleration_times[i] = time_elapsed;
+    }
+    j["acceleration_compute_time"] = SimTK::mean(acceleration_times);
 
     // One simulation step.
     // --------------------
-    resetState(state);
     SimTK::SemiExplicitEulerIntegrator integrator(system, step);
     SimTK::TimeStepper timeStepper(system, integrator);
-    timeStepper.initialize(state);
-    start = high_resolution_clock::now();
-    timeStepper.stepTo(step);
-    end = high_resolution_clock::now();
-    time_elapsed = duration_cast<microseconds>(end - start).count();
-    time_elapsed /= 1.0e6;
-    j["single_step_time"] = time_elapsed;
+    SimTK::Vector step_times(100, 0.0);
+    for (int i = 0; i < 100; ++i) {
+        resetState(state);
+        timeStepper.initialize(state);
+        auto start = high_resolution_clock::now();
+        timeStepper.stepTo(0.1);
+        auto end = high_resolution_clock::now();
+        double time_elapsed = duration_cast<microseconds>(end - start).count();
+        time_elapsed /= 1.0e6;
+        step_times[i] = time_elapsed;
+    }
+    j["single_step_time"] = SimTK::mean(step_times);
 
     // Initial energy
     // --------------
@@ -105,10 +113,10 @@ int main(int argc, char** argv) {
     resetState(state);
     integrator.resetAllStatistics();
     timeStepper.initialize(state);
-    start = high_resolution_clock::now();
+    auto start = high_resolution_clock::now();
     timeStepper.stepTo(time);
-    end = high_resolution_clock::now();
-    time_elapsed = duration_cast<microseconds>(end - start).count();
+    auto end = high_resolution_clock::now();
+    double time_elapsed = duration_cast<microseconds>(end - start).count();
     time_elapsed /= 1.0e6;
     j["forward_integration_time"] = time_elapsed;
     j["real_time_factor"] = time / time_elapsed;
