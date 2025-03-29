@@ -136,6 +136,26 @@ def get_sub_directory(exe_args):
 
     return subdir
 
+def get_result_name(result):
+    result_name = ''
+    units = ''
+    if result == 'acceleration_compute_time':
+        result_name = 'acceleration compute time'
+        units = '(s)'
+    elif result == 'single_step_time':
+        result_name = 'single step time'
+        units = '(s)'
+    elif result == 'forward_integration_time':
+        result_name = 'forward integration time'
+        units = '(s)'
+    elif result == 'real_time_factor':
+        result_name = 'real time factor'
+        units = ''
+    elif result == 'energy_conservation':
+        result_name = '$\\Delta$ total energy'
+        units = '(J)'
+
+    return result_name, units
 
 class TaskInstallDependencies(StudyTask):
     REGISTRY = []
@@ -359,6 +379,11 @@ class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
         self.steps = steps
         self.time = time
         self.integrator = integrator
+        self.integrator_name = ''
+        if self.integrator.lower() == 'euler':
+            self.integrator_name = 'semi-explicit Euler'
+        elif self.integrator.lower() == 'rk4':
+            self.integrator_name = 'Runge-Kutta 4th order'
 
         self.mujoco_result_files = list()
         self.simbody_result_files = list()
@@ -402,7 +427,7 @@ class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
                 simbody_real_time_factors.append(data['real_time_factor'])
 
         # Create the figure and axis.
-        fig, ax = plt.subplots(figsize=(5, 5))
+        fig, ax = plt.subplots(figsize=(4, 4))
 
         # Plot a scatter plot of the speed-accuracy tradeoff.
         ax.scatter(mujoco_energies, mujoco_real_time_factors, color='darkorange',
@@ -413,15 +438,16 @@ class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
         # Set the plot parameters.
         plt.xscale('log')
         plt.yscale('log')
-        plt.xlabel('energy conservation (J)')
+        plt.xlabel('$\\Delta$ total energy (J)')
         plt.ylabel('real time factor')
-        plt.title(f'integrator: {self.integrator}')
-        plt.legend(fontsize=10)
+        plt.title(f'{self.integrator_name}')
+        plt.legend(fontsize=8)
         plt.grid(zorder=0)
         ax = plt.gca()
         ax.set_axisbelow(True)
 
         # Save the figure.
+        plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
 
@@ -512,24 +538,13 @@ class TaskPlotPendulumComparison(StudyTask):
         self.step = step
         self.time = time
         self.integrator = integrator
+        self.integrator_name = ''
+        if self.integrator.lower() == 'euler':
+            self.integrator_name = 'semi-explicit Euler'
+        elif self.integrator.lower() == 'rk4':
+            self.integrator_name = 'Runge-Kutta 4th order'
 
-        self.result_name = ''
-        self.units = ''
-        if self.result == 'acceleration_compute_time':
-            self.result_name = 'acceleration compute time'
-            self.units = '(s)'
-        elif self.result == 'single_step_time':
-            self.result_name = 'single step time'
-            self.units = '(s)'
-        elif self.result == 'forward_integration_time':
-            self.result_name = 'forward integration time'
-            self.units = '(s)'
-        elif self.result == 'real_time_factor':
-            self.result_name = 'real time factor'
-            self.units = ''
-        elif self.result == 'energy_conservation':
-            self.result_name = 'energy conservation'
-            self.units = '(J)'
+        self.result_name, self.units = get_result_name(self.result)
 
         self.aggregate_files = list()
         for engine in engines:
@@ -559,8 +574,8 @@ class TaskPlotPendulumComparison(StudyTask):
         # x-axis and the performance results are along the y-axis.
         # Group by 'engine'. Select the data column based on 'step'.
 
-        fig, ax = plt.subplots(figsize=(5, 5))
-        bar_width = 0.35
+        fig, ax = plt.subplots(figsize=(4, 4))
+        bar_width = 0.25
         bar_positions = np.arange(len(self.nlinks))
         for i, df in enumerate(dataframes):
             # Select the data column based on 'step'.
@@ -579,7 +594,8 @@ class TaskPlotPendulumComparison(StudyTask):
         # Set the y-label and title.
         ax.set_xlabel('# of pendulum links')
         ax.set_ylabel(f'{self.result_name} {self.units}')
-        ax.set_title(f'{self.integrator} with h = {self.step} s')
+        if 'acceleration_compute_time' not in self.result:
+            ax.set_title(f'{self.integrator_name} with $\\Delta t$ = {self.step} s')
 
         # Set the legend based on the engine names in self.engines  
         ax.legend(self.engines, fontsize=8)
@@ -592,6 +608,7 @@ class TaskPlotPendulumComparison(StudyTask):
         ax = plt.gca()
         ax.set_axisbelow(True)
         # Save the figure.
+        plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
 
@@ -606,6 +623,9 @@ class TaskCreateRajagopalModels(StudyTask):
         self.function_based_paths = os.path.join(
                 self.study.config['data_path'], 'Rajagopal', 
                 'subject_walk_scaled_FunctionBasedPathSet.xml')
+        
+        if not os.path.exists(self.study.config['models_path']):
+            os.makedirs(self.study.config['models_path'])
         
         self.model_names = ['Rajagopal', 
                             'RajagopalPathActuators',
@@ -738,36 +758,6 @@ class TaskCreateRajagopalModels(StudyTask):
         model.printToXML(target[8])
         print(f' --> Created {target[8]}')
 
-
-class TaskCreatePendulumModels(StudyTask):
-    REGISTRY = []
-    def __init__(self, study, links):
-        super(TaskCreatePendulumModels, self).__init__(study)
-        self.name = 'create_pendulum_models'
-        self.links = links
-        self.model_names = list()
-        for link in self.links:
-            self.model_names.append(f'{link}link_pendulum')
-
-        self.model_paths = list()
-        for model_name in self.model_names:
-            self.model_paths.append(os.path.join(self.study.config['models_path'], 
-                                                 f'{model_name}.osim'))
-            
-        # A dummy file dependency to satisify doit's dependency tree.
-        self.dummy_path = os.path.join(self.study.config['data_path'], 'pendulum', 
-                                       'dummy.txt')
-        self.add_action([self.dummy_path], 
-                        self.model_paths, 
-                        self.create_pendulum_models)
-        
-    def create_pendulum_models(self, file_dep, target):
-        for i, link in enumerate(self.links):
-            model = osim.ModelFactory.createNLinkPendulum(link)
-            model.initSystem()
-            model.printToXML(target[i])
-            print(f' --> Created {target[i]}')
-
         
 class TaskGenerateModels(ModelTask):
     REGISTRY = []
@@ -820,10 +810,9 @@ class TaskRunBenchmark(BenchmarkTask):
         import subprocess
         import json
         for model_path, out_path in zip(file_dep, target):
-            command = f'{self.exe_path} {model_path}'
+            command = f'{self.exe_path} {model_path} {out_path}'
             for arg in self.exe_args:
                 command += f' --{arg} {self.exe_args[arg]}'
-            command += f' --benchmark_out={out_path}'
             try:
                 p = subprocess.run(command, check=True, shell=True,
                                     cwd=self.benchmark.results_path)
@@ -857,95 +846,73 @@ class TaskPlotBenchmark(BenchmarkTask):
         self.out_paths = run_task.out_paths
         self.time = run_task.exe_args['time'] if 'time' in run_task.exe_args else None
         self.result_path = run_task.result_path
-        self.cpu_times_path = os.path.join(self.result_path, 'cpu_times.png')
+        self.results = ['acceleration_compute_time', 'single_step_time',
+                        'forward_integration_time', 'real_time_factor',
+                        'energy_conservation']
+        self.result_names = list()
+        self.units_list = list()
+        for result in self.results:
+            result_name, units = get_result_name(result)
+            self.result_names.append(result_name)
+            self.units_list.append(units)
+
+        self.result_paths = list()
+        for result in self.results:
+            result_path = os.path.join(self.result_path, f'{result}.png')
+            self.result_paths.append(result_path)
         
         self.add_action(self.out_paths, 
-                        [self.cpu_times_path],
-                        self.plot_cpu_times)
+                        self.result_paths,
+                        self.plot_benchmark)
+
         
-        if self.time:
-            self.real_time_factor_path = os.path.join(self.result_path, 
-                                                  'real_time_factor.png')
-            self.add_action(self.out_paths,
-                            [self.real_time_factor_path],
-                            self.plot_real_time_factor)
-        
-    def plot_cpu_times(self, file_dep, target):
+    def plot_benchmark(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
-
-        # Filter out failed benchmark tests.
-        model_tags = list()
-        out_paths = list()
-        for model_tag, out_path in zip(self.model_tags, file_dep):
-            with open(out_path) as f:
-                data = json.load(f)
-                if 'failed' not in data:
-                    model_tags.append(model_tag)
-                    out_paths.append(out_path)
         
         # Initialize the dictionary of CPU times.
-        cpu_times = dict()
-        num_benchmarks = 0
-        with open(out_paths[0]) as f:
-            data = json.load(f)
-            for benchmark in data['benchmarks']:
-                cpu_times[benchmark['name']] = list()
-            num_benchmarks = len(data['benchmarks'])
-
-        # Fill the dictionary with CPU times.
-        for out_path in out_paths:
+        results_dict = dict()
+        for result in self.results:
+            results_dict[result] = np.zeros(len(self.model_tags))
+        for i, out_path in enumerate(file_dep):
             with open(out_path) as f:
                 data = json.load(f)
-                for benchmark in data['benchmarks']:
-                    cpu_times[benchmark['name']].append(benchmark['cpu_time'])
+                for result in self.results:
+                    if result in data:
+                        results_dict[result][i] = data[result]
 
-        # Plot the CPU times.
-        y = np.arange(len(model_tags))
-        width = 0.6 / num_benchmarks
-        multiplier = 0
-        if num_benchmarks > 1:
-            multiplier = -num_benchmarks // 2
+        zipped = zip(self.results, self.result_names, self.units_list, target)
+        for i, (result, result_name, units, result_path) in enumerate(zipped):
+            
+            fig, ax = plt.subplots(figsize=(4, 4))
+            bar_width = 0.25
+            x = np.arange(len(self.model_tags))
+            ax.bar(x, abs(results_dict[result]), width=bar_width)    
+                
+            # Plot the y-axis on a log scale
+            ax.set_yscale('log')
 
-        # Create the figure and axis.
-        fig, ax = plt.subplots(figsize=(5, 8))
-        
-        # Plot the CPU times.
-        for benchmark, cpu_time in cpu_times.items():
-            offset = width * multiplier
-            ax.barh(y + offset, cpu_time, width, label=benchmark)
-            multiplier += 1
+            # Set the x-ticks and labels. Use 45 degree rotation for the labels.
+            ax.set_xticks(x)
+            ax.set_xticklabels(self.model_tags, rotation=45, ha='right')
+            
+            # Set the y-label and title.
+            ax.set_ylabel(f'{result_name} {units}')
 
-        # Set the x-axis labels based on max CPU time.
-        all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
-        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', 
-                           '1 s', '10 s', '100 s']
-        max_value = 0
-        for key, value in cpu_times.items():
-            max_value = max(max_value, max(value))
+            # Set the grid include minor ticks.
+            ax.grid(which='major', linestyle='-', linewidth=0.5)
+            ax.grid(which='minor', linestyle='-', linewidth=0.2, alpha=0.5)
 
-        xticks = list()
-        xticklabels = list()
-        for xtick, xticklabel in zip(all_xticks, all_xticklabels):
-            if xtick < 100 * max_value:
-                xticks.append(xtick)
-                xticklabels.append(xticklabel)
+            if 'real_time_factor' in result:
+                ax.axhline(y=1, color='red', linestyle='-', lw=2, zorder=0)
 
-        # Set the plot parameters.
-        plt.xscale('log')
-        plt.xticks(xticks, xticklabels)
-        plt.yticks(y, model_tags, fontsize=6)
-        plt.xlabel(f'CPU Time')
-        plt.grid(axis='x', linestyle='--')
-        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
-        ax.set_axisbelow(True)
-        plt.title(self.benchmark_name)
-        plt.legend(loc='lower right', fontsize=6)
+            ax = plt.gca()
+            ax.set_axisbelow(True)
+            # Save the figure.
+            plt.tight_layout()
+            plt.savefig(result_path, dpi=600)
+            plt.close()
 
-        # Save the plot.
-        plt.tight_layout()
-        plt.savefig(target[0], dpi=600)
-        plt.close()
 
     def plot_real_time_factor(self, file_dep, target):
         import matplotlib.pyplot as plt
@@ -1017,6 +984,119 @@ class TaskPlotBenchmark(BenchmarkTask):
         plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
         ax.set_axisbelow(True)
         plt.title(self.benchmark_name)
+        plt.legend(loc='lower right', fontsize=6)
+
+        # Save the plot.
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
+
+
+class TaskPlotBenchmarkComparison(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, tag, model_names, benchmark, 
+                 model_suffix='', exe_args=None):
+        super(TaskPlotBenchmarkComparison, self).__init__(study)
+        self.name = f'plot_benchmark_comparison_{tag}'
+        self.tag = tag
+        self.study = study
+        self.model_names = model_names
+        self.models = list()
+        for model_name in model_names:
+            model = self.study.get_model(model_name)
+            if model is None:
+                print(f' --> {self.name}: Model {model_name} not found.')
+            else:
+                self.models.append(model)
+        self.model_suffix = model_suffix
+        self.benchmark = benchmark
+        self.exe_args = exe_args
+        self.subdir = get_sub_directory(self.exe_args)
+        self.results_path = self.study.config['results_path']
+        self.figures_path = self.study.config['figures_path']
+        
+        self.plot_labels = list()
+        self.json_paths = list()
+        for model in self.models:
+            self.json_paths.append(
+                    os.path.join(self.results_path, model.name, self.benchmark,
+                                 self.subdir, f'{model.name}{self.model_suffix}.json'))
+            self.plot_labels.append(model.label)
+            
+        if not os.path.exists(self.figures_path):
+            os.makedirs(self.figures_path)
+        
+        self.figure_path = os.path.join(self.figures_path, 
+                                       f'benchmark_comparison_{tag}.png')
+
+        self.add_action(self.json_paths, 
+                        [self.figure_path], 
+                        self.plot_benchmark_comparison)
+
+    def plot_benchmark_comparison(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+        
+        # Initialize the dictionary of CPU times.
+        cpu_times = dict()
+        num_benchmarks = 0
+        with open(file_dep[0]) as f:
+            data = json.load(f)
+            for benchmark in data['benchmarks']:
+                cpu_times[benchmark['name']] = list()
+            num_benchmarks = len(data['benchmarks'])
+
+        # Fill the dictionary with CPU times.
+        for json_path in file_dep:
+            with open(json_path) as f:
+                data = json.load(f)
+                for benchmark in data['benchmarks']:
+                    cpu_times[benchmark['name']].append(benchmark['cpu_time'])
+
+        # Plot the CPU times.
+        y = np.arange(len(self.plot_labels))
+        width = 0.6 / num_benchmarks
+        multiplier = 0
+        if num_benchmarks > 1:
+            multiplier = -num_benchmarks // 2
+
+        # Create the figure and axis.
+        height = 1.0 * len(self.plot_labels)
+        fig, ax = plt.subplots(figsize=(5, height))
+        
+        # Plot the CPU times.
+        for benchmark, cpu_time in cpu_times.items():
+            offset = width * multiplier
+            ax.barh(y + offset, cpu_time, width, label=benchmark)
+            multiplier += 1
+
+        # Set the x-axis labels based on max CPU time.
+        all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
+        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', 
+                           '1 s', '10 s', '100 s']
+        max_value = 0
+        for key, value in cpu_times.items():
+            max_value = max(max_value, max(value))
+
+        xticks = list()
+        xticklabels = list()
+        for xtick, xticklabel in zip(all_xticks, all_xticklabels):
+            if xtick < 100 * max_value:
+                xticks.append(xtick)
+                xticklabels.append(xticklabel)
+
+        # Set the plot parameters.
+        plt.xscale('log')
+        plt.xticks(xticks, xticklabels)
+        plt.yticks(y, self.plot_labels, fontsize=6)
+        ax = plt.gca()
+        for label in ax.get_yticklabels():
+            label.set_va('center')
+        plt.xlabel(f'CPU Time')
+        plt.grid(axis='x', linestyle='--')
+        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
+        ax.set_axisbelow(True)
+        plt.title(self.benchmark)
         plt.legend(loc='lower right', fontsize=6)
 
         # Save the plot.
@@ -1385,402 +1465,6 @@ class TaskGenerateFlameGraph(PerfTask):
                     f.write('')
                 print(f'Error generating flamegraph: {e}')
         
-
-class TaskPlotBenchmarkComparison(StudyTask):
-    REGISTRY = []
-    def __init__(self, study, tag, model_names, benchmark, 
-                 model_suffix='', exe_args=None):
-        super(TaskPlotBenchmarkComparison, self).__init__(study)
-        self.name = f'plot_benchmark_comparison_{tag}'
-        self.tag = tag
-        self.study = study
-        self.model_names = model_names
-        self.models = list()
-        for model_name in model_names:
-            model = self.study.get_model(model_name)
-            if model is None:
-                print(f' --> {self.name}: Model {model_name} not found.')
-            else:
-                self.models.append(model)
-        self.model_suffix = model_suffix
-        self.benchmark = benchmark
-        self.exe_args = exe_args
-        self.subdir = get_sub_directory(self.exe_args)
-        self.results_path = self.study.config['results_path']
-        self.figures_path = self.study.config['figures_path']
-        
-        self.plot_labels = list()
-        self.json_paths = list()
-        for model in self.models:
-            self.json_paths.append(
-                    os.path.join(self.results_path, model.name, self.benchmark,
-                                 self.subdir, f'{model.name}{self.model_suffix}.json'))
-            self.plot_labels.append(model.label)
-            
-        if not os.path.exists(self.figures_path):
-            os.makedirs(self.figures_path)
-        
-        self.figure_path = os.path.join(self.figures_path, 
-                                       f'benchmark_comparison_{tag}.png')
-
-        self.add_action(self.json_paths, 
-                        [self.figure_path], 
-                        self.plot_benchmark_comparison)
-
-    def plot_benchmark_comparison(self, file_dep, target):
-        import matplotlib.pyplot as plt
-        import json
-        
-        # Initialize the dictionary of CPU times.
-        cpu_times = dict()
-        num_benchmarks = 0
-        with open(file_dep[0]) as f:
-            data = json.load(f)
-            for benchmark in data['benchmarks']:
-                cpu_times[benchmark['name']] = list()
-            num_benchmarks = len(data['benchmarks'])
-
-        # Fill the dictionary with CPU times.
-        for json_path in file_dep:
-            with open(json_path) as f:
-                data = json.load(f)
-                for benchmark in data['benchmarks']:
-                    cpu_times[benchmark['name']].append(benchmark['cpu_time'])
-
-        # Plot the CPU times.
-        y = np.arange(len(self.plot_labels))
-        width = 0.6 / num_benchmarks
-        multiplier = 0
-        if num_benchmarks > 1:
-            multiplier = -num_benchmarks // 2
-
-        # Create the figure and axis.
-        height = 1.0 * len(self.plot_labels)
-        fig, ax = plt.subplots(figsize=(5, height))
-        
-        # Plot the CPU times.
-        for benchmark, cpu_time in cpu_times.items():
-            offset = width * multiplier
-            ax.barh(y + offset, cpu_time, width, label=benchmark)
-            multiplier += 1
-
-        # Set the x-axis labels based on max CPU time.
-        all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
-        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', 
-                           '1 s', '10 s', '100 s']
-        max_value = 0
-        for key, value in cpu_times.items():
-            max_value = max(max_value, max(value))
-
-        xticks = list()
-        xticklabels = list()
-        for xtick, xticklabel in zip(all_xticks, all_xticklabels):
-            if xtick < 100 * max_value:
-                xticks.append(xtick)
-                xticklabels.append(xticklabel)
-
-        # Set the plot parameters.
-        plt.xscale('log')
-        plt.xticks(xticks, xticklabels)
-        plt.yticks(y, self.plot_labels, fontsize=6)
-        ax = plt.gca()
-        for label in ax.get_yticklabels():
-            label.set_va('center')
-        plt.xlabel(f'CPU Time')
-        plt.grid(axis='x', linestyle='--')
-        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
-        ax.set_axisbelow(True)
-        plt.title(self.benchmark)
-        plt.legend(loc='lower right', fontsize=6)
-
-        # Save the plot.
-        plt.tight_layout()
-        plt.savefig(target[0], dpi=600)
-        plt.close()
-
-
-class TaskPlotFramesPerSecondRealize(StudyTask):
-    REGISTRY = []
-    def __init__(self, study, tag, model_tuples):
-        super(TaskPlotFramesPerSecondRealize, self).__init__(study)
-        self.name = f'plot_frames_per_second_realize_{tag}'
-        self.tag = tag
-        self.study = study
-        self.models = list()
-        self.model_names = list()
-        self.model_labels = list()
-        for model_tuple in model_tuples:
-            name = model_tuple[0]
-            flags = model_tuple[1]
-            model = self.study.get_model(name)
-            if model is None:
-                print(f' --> {self.name}: Model {name} not found.')
-            else:
-                self.models.append(model)
-                model_name, model_tag = ModelGenerator.get_name_and_tag(
-                    model.name, flags)
-                self.model_names.append(model_name)
-                self.model_labels.append(f'{model.label}\n{model_tag}')
-        
-        self.results_path = self.study.config['results_path']
-        self.json_paths = list()
-        for model, model_name in zip(self.models, self.model_names):
-            self.json_paths.append(
-                    os.path.join(self.results_path, model.name, 'benchmark_realize',
-                                 'default', f'{model_name}.json'))
-            
-        self.figures_path = self.study.config['figures_path']
-        if not os.path.exists(self.figures_path):
-            os.makedirs(self.figures_path)
-        
-        self.figure_path = os.path.join(self.figures_path, 
-                                       f'frames_per_second_realize_{tag}.png')
-        self.add_action(self.json_paths, 
-                        [self.figure_path], 
-                        self.plot_frames_per_second)
-
-    def plot_frames_per_second(self, file_dep, target):
-        import matplotlib.pyplot as plt
-        import json
-        
-        # Compute max FPS based on realize times.
-        frames_per_second = list()
-        for json_path in file_dep:
-            with open(json_path) as f:
-                data = json.load(f)
-                for benchmark in data['benchmarks']:
-                    if benchmark['name'] == 'realizeAcceleration':
-                        cpu_time_seconds = benchmark['cpu_time'] / 1e3
-                        frames_per_second.append(1.0 / cpu_time_seconds)
-
-        # Plot the CPU times.
-        x = np.arange(len(self.model_labels))
-        width = 0.5
-
-        # Create the figure and axis.
-        minimum_length = 4
-        length = 0.7 * len(self.model_labels)
-        if length < minimum_length:
-            length = minimum_length
-        fig, ax = plt.subplots(figsize=(length, 5))
-        
-        # Plot the CPU times.
-        ax.bar(x, frames_per_second, width, label='frames_per_second')
-        # Print values on top of bars, rounded to the nearest integer.
-        for i, v in enumerate(frames_per_second):
-            ax.text(i, v + 0.1, f'{int(round(v))}', ha='center', va='bottom')
-
-        # Set the plot parameters.
-        plt.xticks(x, self.model_labels, fontsize=6)
-        plt.xticks(rotation=45)
-        # Shift xticklabels to the left
-        ax = plt.gca()
-        for label in ax.get_xticklabels():
-            label.set_horizontalalignment('right')
-        plt.ylabel(f'Frames Per Second')
-        plt.grid(axis='y', linestyle='--')
-        plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
-        ax.set_axisbelow(True)
-        plt.title('FPS based on "model.realizeAcceleration(state)"')
-        # plt.legend(fontsize=6)
-
-        # Save the plot.
-        plt.tight_layout()
-        plt.savefig(target[0], dpi=600)
-        plt.close()
-
-
-class TaskPlotSimulationTimeForward(StudyTask):
-    REGISTRY = []
-    def __init__(self, study, tag, model_tuples, exe_args=None):
-        super(TaskPlotSimulationTimeForward, self).__init__(study)
-        self.name = f'plot_simulation_time_forward_{tag}'
-        self.tag = tag
-        self.study = study
-        self.models = list()
-        self.model_names = list()
-        self.model_labels = list()
-        for model_tuple in model_tuples:
-            name = model_tuple[0]
-            flags = model_tuple[1]
-            model = self.study.get_model(name)
-            if model is None:
-                print(f' --> {self.name}: Model {name} not found.')
-            else:
-                self.models.append(model)
-                model_name, model_tag = ModelGenerator.get_name_and_tag(
-                    model.name, flags)
-                self.model_names.append(model_name)
-                self.model_labels.append(f'{model.label}\n{model_tag}')
-
-        self.exe_args = exe_args
-        self.subdir = get_sub_directory(self.exe_args)
-        
-        self.results_path = self.study.config['results_path']
-        self.json_paths = list()
-        for model, model_name in zip(self.models, self.model_names):
-            self.json_paths.append(
-                    os.path.join(self.results_path, model.name, 'benchmark_forward',
-                                 self.subdir, f'{model_name}.json'))
-            
-        self.figures_path = self.study.config['figures_path']
-        if not os.path.exists(self.figures_path):
-            os.makedirs(self.figures_path)
-        
-        self.figure_path = os.path.join(self.figures_path, 
-                f'simulation_time_forward_fixed_step_{tag}.png')
-        self.add_action(self.json_paths, 
-                        [self.figure_path], 
-                        self.plot_frames_per_second)
-
-    def plot_frames_per_second(self, file_dep, target):
-        import matplotlib.pyplot as plt
-        import json
-
-        # Compute max FPS based on fixed-step forward integration.
-        simulation_times = list()
-        for json_path in file_dep:
-            with open(json_path) as f:
-                data = json.load(f)
-                cpu_time_seconds = data['benchmarks'][0]['cpu_time'] / 1e3
-                simulation_times.append(cpu_time_seconds)
-                
-        # Plot the CPU times.
-        x = np.arange(len(self.model_labels))
-        width = 0.5
-
-        # Create the figure and axis.
-        minimum_length = 4
-        length = 0.7 * len(self.model_labels)
-        if length < minimum_length:
-            length = minimum_length
-        fig, ax = plt.subplots(figsize=(length, 5))
-        
-        # Plot the CPU times.
-        ax.bar(x, simulation_times, width)
-
-        # Set the plot parameters.
-        plt.xticks(x, self.model_labels, fontsize=6)
-        plt.xticks(rotation=45)
-        plt.yscale('log')
-        # Shift xticklabels to the left
-        ax = plt.gca()
-        for label in ax.get_xticklabels():
-            label.set_horizontalalignment('right')
-        plt.ylabel(f'time (s)')
-        plt.grid(axis='y', linestyle='--')
-        plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
-        ax.set_axisbelow(True)
-        plt.title('forward integration time\n(1 second simulation)')
-    
-        plt.tight_layout()
-        plt.savefig(target[0], dpi=600)
-        plt.close()
-
-
-class TaskPlotRealTimeFactor(StudyTask):
-    REGISTRY = []
-    def __init__(self, study, tag, model_tuples, exe_args=None, 
-                 log_scale=False):
-        super(TaskPlotRealTimeFactor, self).__init__(study)
-        self.name = f'plot_real_time_factor_{tag}'
-        self.tag = tag
-        self.study = study
-        self.models = list()
-        self.model_names = list()
-        self.model_labels = list()
-        for model_tuple in model_tuples:
-            name = model_tuple[0]
-            flags = model_tuple[1]
-            model = self.study.get_model(name)
-            if model is None:
-                print(f' --> {self.name}: Model {name} not found.')
-            else:
-                self.models.append(model)
-                model_name, model_tag = ModelGenerator.get_name_and_tag(
-                    model.name, flags)
-                self.model_names.append(model_name)
-                self.model_labels.append(f'{model.label}\n{model_tag}')
-
-        self.log_scale = log_scale
-        self.exe_args = exe_args
-        if 'time' not in self.exe_args:
-            raise ValueError('TaskPlotRealTimeFactor requires the "time" argument.')
-        self.time = self.exe_args['time']
-
-        self.step_size = None
-        self.step_type = 'adaptive'
-        if 'step' in self.exe_args:
-            self.step_size = self.exe_args['step']
-            self.step_type = 'fixed'
-
-        self.subdir = get_sub_directory(self.exe_args)
-        
-        self.results_path = self.study.config['results_path']
-        self.json_paths = list()
-        for model, model_name in zip(self.models, self.model_names):
-            self.json_paths.append(
-                    os.path.join(self.results_path, model.name, 'benchmark_forward',
-                                 self.subdir, f'{model_name}.json'))
-            
-        self.figures_path = self.study.config['figures_path']
-        if not os.path.exists(self.figures_path):
-            os.makedirs(self.figures_path)
-        
-        self.figure_path = os.path.join(self.figures_path, 
-                f'real_time_factor_{tag}.png')
-        self.add_action(self.json_paths, 
-                        [self.figure_path], 
-                        self.plot_real_time_factors)
-
-    def plot_real_time_factors(self, file_dep, target):
-        import matplotlib.pyplot as plt
-        import json
-
-        # Compute max FPS based on fixed-step forward integration.
-        real_time_factors = list()
-        for json_path in file_dep:
-            with open(json_path) as f:
-                data = json.load(f)
-                cpu_time_seconds = 0.001 * data['benchmarks'][0]['cpu_time']
-                real_time_factors.append(self.time / cpu_time_seconds)
-                
-        # Plot the CPU times.
-        x = np.arange(len(self.model_labels))
-        width = 0.5
-
-        # Create the figure and axis.
-        minimum_length = 4
-        length = 0.85 * len(self.model_labels)
-        if length < minimum_length:
-            length = minimum_length
-        fig, ax = plt.subplots(figsize=(length, 5))
-        
-        # Plot the real time factors.
-        ax.bar(x, real_time_factors, width)
-
-        # Draw a red horizontal line at 1.0 in the background.
-        plt.axhline(y=1.0, color='r', linestyle='-', linewidth=2.0, zorder=0)   
-
-        # Set the plot parameters.
-        plt.xticks(x, self.model_labels, fontsize=6)
-        plt.xticks(rotation=45)
-        if self.log_scale:
-            plt.yscale('log')
-        # Shift xticklabels to the left
-        ax = plt.gca()
-        for label in ax.get_xticklabels():
-            label.set_horizontalalignment('right')
-        plt.ylabel(f'real time factor')
-        plt.grid(axis='y', linestyle='--')
-        plt.grid(axis='y', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
-        ax.set_axisbelow(True)
-        plt.title(f'{self.step_type}-step forward integration time\n({self.time} second simulation)')
-    
-        plt.tight_layout()
-        plt.savefig(target[0], dpi=600)
-        plt.close()
-
 
 class TaskGenerateDifferentialFlameGraph(StudyTask):
     REGISTRY = []

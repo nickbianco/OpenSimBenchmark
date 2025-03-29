@@ -6,22 +6,22 @@
 using json = nlohmann::json;
 
 static const char HELP[] =
-R"(Benchmark a simulation of an N-link pendulum in Simbody.
+R"(Benchmark a forward simulation.
 
 Usage:
-  benchmark_simbody_pendulum_euler <nlinks> <output> [--time <time>] [--step <step>]
-  benchmark_simbody_pendulum_euler -h | --help
+  benchmark_forward_rk4 <model> <output> [--time <time>] [--step <step>]
+  benchmark_forward_rk4 -h | --help
 
 Options:
-  -t <time>, --time <time>        Set the final time.
-  -s <step>, --step <step>        Set the step size.
+  -t <time>, --time <time>  Set the final time.
+  -s <step>, --step <step>  Set the step size.
 )";
 
 void resetState(SimTK::State& state) {
     // Reset the state to the initial state.
     state.setTime(0);
     state.updQ() = SimTK::Vector(state.getNQ(), 0.0);
-    state.updQ()[0] = SimTK::Pi / 4.0;
+    state.updU() = SimTK::Vector(state.getNU(), 0.0);
 }
 
 int main(int argc, char** argv) {
@@ -39,11 +39,12 @@ int main(int argc, char** argv) {
         HELP, { argv + 1, argv + argc },
         true); // show help if requested
 
-    // Pendulum system.
-    int numLinks = std::stoi(args["<nlinks>"].asString());
-    OPENSIM_THROW_IF(numLinks <= 0, OpenSim::Exception, 
-            "Number of links must be positive.");
-    PendulumSystem pendulum(numLinks);
+    // Model.
+    OPENSIM_THROW_IF(!args["<model>"], OpenSim::Exception, 
+        "Model file must be provided.");
+    OpenSim::Model model(args["<model>"].asString());
+    SimTK::State state = model.initSystem();
+    const SimTK::MultibodySystem& system = model.getMultibodySystem();
 
     // Final time.
     double time = 5.0; // seconds
@@ -65,13 +66,9 @@ int main(int argc, char** argv) {
     std::string output_file = args["<output>"].asString();
 
     // Initialize the JSON object.
-    json j;
+    json j; 
 
-    // Create the initial state.
-    const SimTK::MultibodySystem& system = pendulum.m_system;
-    SimTK::State state = system.realizeTopology();
-
-        // Realize acceleration.
+    // Realize acceleration.
     // ---------------------
     SimTK::Vector acceleration_times(100, 0.0);
     for (int i = 0; i < 100; ++i) {
@@ -87,14 +84,15 @@ int main(int argc, char** argv) {
 
     // One simulation step.
     // --------------------
-    SimTK::SemiExplicitEulerIntegrator integrator(system, step);
+    SimTK::RungeKuttaMersonIntegrator integrator(system);
+    integrator.setFixedStepSize(step);
     SimTK::TimeStepper timeStepper(system, integrator);
     SimTK::Vector step_times(100, 0.0);
     for (int i = 0; i < 100; ++i) {
         resetState(state);
         timeStepper.initialize(state);
         auto start = high_resolution_clock::now();
-        timeStepper.stepTo(step);
+        timeStepper.stepTo(0.1);
         auto end = high_resolution_clock::now();
         double time_elapsed = duration_cast<microseconds>(end - start).count();
         time_elapsed /= 1.0e6;

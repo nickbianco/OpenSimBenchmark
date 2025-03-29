@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
         resetState(state);
         timeStepper.initialize(state);
         auto start = high_resolution_clock::now();
-        timeStepper.stepTo(0.1);
+        timeStepper.stepTo(step);
         auto end = high_resolution_clock::now();
         double time_elapsed = duration_cast<microseconds>(end - start).count();
         time_elapsed /= 1.0e6;

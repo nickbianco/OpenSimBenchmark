@@ -9,7 +9,7 @@ echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
 echo 0 | sudo tee /proc/sys/kernel/kptr_restrict
 
 
-### VSCode workspace settings
+### VSCode workspace settings example
 
 ```
 {
@@ -21,4 +21,16 @@ echo 0 | sudo tee /proc/sys/kernel/kptr_restrict
         "docopt_INCLUDE_DIRS": "<workspace>/OpenSimBenchmark/dependencies/opensim/opensim_dependencies_install/docopt/include",
     },
 }
+```
+
+### `config.yaml` example
+
+```
+results_path: <workspace>/OpenSimBenchmark/results
+figures_path: <workspace>/OpenSimBenchmark/figures
+data_path: <workspace>/OpenSimBenchmark/data
+mujoco_path: <workspace>/OpenSimBenchmark/mujoco
+dependencies_path: <workspace>/OpenSimBenchmark/dependencies
+benchmarks_path: <workspace>/OpenSimBenchmark/build/src/benchmarks
+models_path: <workspace>/OpenSimBenchmark/models
 ```

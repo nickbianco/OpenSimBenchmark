@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find OpenSim, Simbody, and Google Benchmark
 find_package(OpenSim REQUIRED CONFIG)
-find_package(benchmark REQUIRED)
 
 # Fetch nlohmann::json
 include(FetchContent)
