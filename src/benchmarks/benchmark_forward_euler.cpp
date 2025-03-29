@@ -107,22 +107,30 @@ int main(int argc, char** argv) {
 
     // Forward integration.
     // --------------------
-    resetState(state);
-    integrator.resetAllStatistics();
-    timeStepper.initialize(state);
-    auto start = high_resolution_clock::now();
-    timeStepper.stepTo(time);
-    auto end = high_resolution_clock::now();
-    double time_elapsed = duration_cast<microseconds>(end - start).count();
-    time_elapsed /= 1.0e6;
-    j["forward_integration_time"] = time_elapsed;
-    j["real_time_factor"] = time / time_elapsed;
+    SimTK::Vector integration_times(10, 0.0);
+    SimTK::Vector real_time_factors(10, 0.0);
+    SimTK::Vector final_energies(10, 0.0);
+    for (int i = 0; i < 10; ++i) {
+        resetState(state);
+        integrator.resetAllStatistics();
+        timeStepper.initialize(state);
+        auto start = high_resolution_clock::now();
+        timeStepper.stepTo(time);
+        auto end = high_resolution_clock::now();
+        double time_elapsed = duration_cast<microseconds>(end - start).count();
+        time_elapsed /= 1.0e6;
+        integration_times[i] = time_elapsed;
+        real_time_factors[i] = time / time_elapsed;
 
-    // Final energy
-    // ------------
-    const auto& finalState = timeStepper.getState();
-    system.realize(finalState, SimTK::Stage::Dynamics);
-    double final_energy = system.calcEnergy(finalState);
+        // Final energy
+        // ------------
+        const auto& finalState = timeStepper.getState();
+        system.realize(finalState, SimTK::Stage::Dynamics);
+        final_energies[i] = system.calcEnergy(finalState);
+    }
+    j["forward_integration_time"] = SimTK::mean(integration_times);
+    j["real_time_factor"] = SimTK::mean(real_time_factors);
+    double final_energy = SimTK::mean(final_energies);
     j["energy_conservation"] = final_energy - initial_energy;
 
     std::ofstream file(output_file, std::ios::out | std::ios::binary);

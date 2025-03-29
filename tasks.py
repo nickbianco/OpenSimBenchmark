@@ -294,23 +294,29 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
         mujoco.mj_energyPos(model, data)
         mujoco.mj_energyVel(model, data)
         initial_energy = data.energy[0] + data.energy[1]
-        start_time = time.time()
-        total_steps = int(self.time / model.opt.timestep)
-        for _ in range(total_steps):
-            mujoco.mj_step(model, data)
-        forward_integration_time = time.time() - start_time
-        real_time_factor = self.time / forward_integration_time
-        mujoco.mj_energyPos(model, data)
-        mujoco.mj_energyVel(model, data)
-        final_energy = data.energy[0] + data.energy[1]
-        energy_conservation = final_energy - initial_energy
+
+        forward_integration_times = list()
+        real_time_factors = list()
+        final_energies = list()
+        for i in range(10):
+            start_time = time.time()
+            total_steps = int(self.time / model.opt.timestep)
+            for _ in range(total_steps):
+                mujoco.mj_step(model, data)
+            forward_integration_time = time.time() - start_time
+            forward_integration_time.append(forward_integration_time)
+            real_time_factors.append(self.time / forward_integration_time)
+            mujoco.mj_energyPos(model, data)
+            mujoco.mj_energyVel(model, data)
+            final_energies.append(data.energy[0] + data.energy[1])
+        energy_conservation = np.mean(final_energies) - initial_energy
 
         # Save the results to a JSON file.
         results = {
             'acceleration_compute_time': acceleration_compute_time,
             'single_step_time': single_step_time,
-            'forward_integration_time': forward_integration_time,
-            'real_time_factor': real_time_factor,
+            'forward_integration_time': np.mean(forward_integration_times),
+            'real_time_factor': np.mean(real_time_factors),
             'energy_conservation': energy_conservation
         }
         with open(target[0], 'w') as f:
