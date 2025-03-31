@@ -27,7 +27,7 @@ def create_n_link_pendulum(n_links):
     <joint type="hinge" axis="0 1 0"/>
     <geom type="cylinder" size="0.02" fromto="0 -.02 0 0 .02 0"/>
     <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>
-    <inertial pos="0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>
+    <inertial pos="1.0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>
     """
 
     # Add links iteratively
@@ -35,7 +35,8 @@ def create_n_link_pendulum(n_links):
         xml += f"""
     <body pos="1.0 0 0">
         <joint type="hinge" axis="0 1 0"/>
-        <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>"""
+        <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>
+        <inertial pos="1.0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>"""
 
     # Close all <body> tags
     xml += "\n" + "      </body>" * (n_links-1)
@@ -96,7 +97,7 @@ def take_rk4_step(model, data):
     set_state_and_realize_derivatives(model, data, t0 + dt, y1)
     
 
-model = create_n_link_pendulum(100)
+model = create_n_link_pendulum(2)
 data = mujoco.MjData(model)
 model.opt.timestep = 0.001
 model.opt.integrator = mujoco.mjtIntegrator.mjINT_RK4
@@ -104,11 +105,13 @@ total_steps = 1000
 
 # Benchmark 3: Forward simulation for `sim_time` seconds
 reset_data(data)
-mujoco.mj_forward(model, data)
-mujoco.mj_energyPos(model, data)    
-mujoco.mj_energyVel(model, data)
-initial_energy = data.energy[0] + data.energy[1]
-print(f"Initial energy: {initial_energy:.6f} J")
+# mujoco.mj_forward(model, data)
+# mujoco.mj_energyPos(model, data)    
+# mujoco.mj_energyVel(model, data)
+# initial_energy = data.energy[0] + data.energy[1]
+# print(f"Initial energy: {initial_energy:.6f} J")
+
+viewer.launch(model, data)
 
 # # Create a viewer
 # with viewer.launch_passive(model, data) as v:
@@ -121,20 +124,20 @@ print(f"Initial energy: {initial_energy:.6f} J")
 #             v.sync()  
 #             step += 1
 
-reset_data(data)
-for _ in range(total_steps):
-    mujoco.mj_step(model, data)
+# reset_data(data)
+# for _ in range(total_steps):
+#     mujoco.mj_step(model, data)
 
-mujoco.mj_energyPos(model, data)
-mujoco.mj_energyVel(model, data)
-final_energy = data.energy[0] + data.energy[1]
-print(f"Final energy: {final_energy:.6f} J")
+# mujoco.mj_energyPos(model, data)
+# mujoco.mj_energyVel(model, data)
+# final_energy = data.energy[0] + data.energy[1]
+# print(f"Final energy: {final_energy:.6f} J")
 
-mujoco.mj_forward(model, data)
-mujoco.mj_energyPos(model, data)
-mujoco.mj_energyVel(model, data)
-final_energy = data.energy[0] + data.energy[1]
-print(f"Final energy: {final_energy:.6f} J")
+# mujoco.mj_forward(model, data)
+# mujoco.mj_energyPos(model, data)
+# mujoco.mj_energyVel(model, data)
+# final_energy = data.energy[0] + data.energy[1]
+# print(f"Final energy: {final_energy:.6f} J")
         
 
 # mujoco.mj_energyPos(model, data)

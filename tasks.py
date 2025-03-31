@@ -235,7 +235,7 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
             <joint type="hinge" axis="0 1 0"/>
             <geom type="cylinder" size="0.02" fromto="0 -.02 0 0 .02 0"/>
             <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>
-            <inertial pos="0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>
+            <inertial pos="1.0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>
             """
 
             # Add links iteratively
@@ -243,7 +243,8 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
                 xml += f"""
             <body pos="1.0 0 0">
                 <joint type="hinge" axis="0 1 0"/>
-                <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>"""
+                <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>
+                <inertial pos="1.0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>"""
 
             # Close all <body> tags
             xml += "\n" + "      </body>" *(n_links-1)
@@ -379,7 +380,7 @@ class TaskMuJoCoPendulumBenchmarkRK4Custom(StudyTask):
             <joint type="hinge" axis="0 1 0"/>
             <geom type="cylinder" size="0.02" fromto="0 -.02 0 0 .02 0"/>
             <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>
-            <inertial pos="0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>
+            <inertial pos="1.0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>
             """
 
             # Add links iteratively
@@ -387,7 +388,8 @@ class TaskMuJoCoPendulumBenchmarkRK4Custom(StudyTask):
                 xml += f"""
             <body pos="1.0 0 0">
                 <joint type="hinge" axis="0 1 0"/>
-                <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>"""
+                <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>
+                <inertial pos="1.0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>"""
 
             # Close all <body> tags
             xml += "\n" + "      </body>" * (n_links-1)
