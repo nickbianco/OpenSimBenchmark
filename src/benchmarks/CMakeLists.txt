@@ -23,3 +23,7 @@ target_include_directories(benchmark_simbody_pendulum_euler PRIVATE ${docopt_INC
 add_executable(benchmark_simbody_pendulum_rk4 benchmark_simbody_pendulum_rk4.cpp ../../utilities/utilities.h)
 target_link_libraries(benchmark_simbody_pendulum_rk4 ${OpenSim_LIBRARIES} docopt_s nlohmann_json::nlohmann_json)
 target_include_directories(benchmark_simbody_pendulum_rk4 PRIVATE ${docopt_INCLUDE_DIRS})
+
+add_executable(benchmark_simbody_pendulum_rk4_custom benchmark_simbody_pendulum_rk4_custom.cpp ../../utilities/utilities.h)
+target_link_libraries(benchmark_simbody_pendulum_rk4_custom ${OpenSim_LIBRARIES} docopt_s nlohmann_json::nlohmann_json)
+target_include_directories(benchmark_simbody_pendulum_rk4_custom PRIVATE ${docopt_INCLUDE_DIRS})

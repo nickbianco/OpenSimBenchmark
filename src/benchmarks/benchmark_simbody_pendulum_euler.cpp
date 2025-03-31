@@ -22,6 +22,7 @@ void resetState(SimTK::State& state) {
     state.setTime(0);
     state.updQ() = SimTK::Vector(state.getNQ(), 0.0);
     state.updQ()[0] = SimTK::Pi / 4.0;
+    state.updU() = SimTK::Vector(state.getNU(), 0.0);
 }
 
 int main(int argc, char** argv) {

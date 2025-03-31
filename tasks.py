@@ -211,9 +211,10 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
         import time
         import json
 
-        def reset_qpos(data):
+        def reset_data(data):
             data.qpos[:] = 0
             data.qpos[0] = np.pi / 4.0
+            data.qvel[:] = 0
 
         def create_n_link_pendulum(n_links):
             """
@@ -238,14 +239,14 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
             """
 
             # Add links iteratively
-            for i in range(1, n_links + 1):
+            for i in range(1, n_links):
                 xml += f"""
             <body pos="1.0 0 0">
                 <joint type="hinge" axis="0 1 0"/>
                 <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>"""
 
             # Close all <body> tags
-            xml += "\n" + "      </body>" * n_links
+            xml += "\n" + "      </body>" *(n_links-1)
 
             # Close the worldbody and mujoco tags
             xml += """
@@ -274,7 +275,7 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
         # Benchmark 1: Joint acceleration computation
         acceleration_compute_times = list()
         for i in range(100):
-            reset_qpos(data)
+            reset_data(data)
             start_time = time.time()
             mujoco.mj_forward(model, data)
             acceleration_compute_times.append(time.time() - start_time)
@@ -283,14 +284,15 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
         # Benchmark 2: Single simulation step
         single_step_times = list()
         for i in range(100):
-            reset_qpos(data)
+            reset_data(data)
             start_time = time.time()
             mujoco.mj_step(model, data)
             single_step_times.append(time.time() - start_time)
         single_step_time = np.mean(single_step_times)
 
-        # Benchmark 3: Forward simulation for `sim_time` seconds
-        reset_qpos(data)
+        # Benchmark 3: Forward simulation
+        reset_data(data)
+        mujoco.mj_forward(model, data)
         mujoco.mj_energyPos(model, data)
         mujoco.mj_energyVel(model, data)
         initial_energy = data.energy[0] + data.energy[1]
@@ -299,12 +301,13 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
         real_time_factors = list()
         final_energies = list()
         for i in range(10):
+            reset_data(data)
             start_time = time.time()
             total_steps = int(self.time / model.opt.timestep)
             for _ in range(total_steps):
                 mujoco.mj_step(model, data)
             forward_integration_time = time.time() - start_time
-            forward_integration_time.append(forward_integration_time)
+            forward_integration_times.append(forward_integration_time)
             real_time_factors.append(self.time / forward_integration_time)
             mujoco.mj_energyPos(model, data)
             mujoco.mj_energyVel(model, data)
@@ -322,6 +325,168 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
         with open(target[0], 'w') as f:
             json.dump(results, f, indent=4)
 
+class TaskMuJoCoPendulumBenchmarkRK4Custom(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, nlinks, step, time):
+        super(TaskMuJoCoPendulumBenchmarkRK4Custom, self).__init__(study)
+        self.name = (f'run_mujoco_{nlinks}link_pendulum_benchmark'
+                     f'_step{step}_time{time}_rk4_custom')
+        self.nlinks = nlinks
+        self.step = step
+        self.time = time
+
+        # A dummy file dependency to satisify doit's dependency tree.
+        self.dummy_path = os.path.join(self.study.config['mujoco_path'], 'dummy.txt')
+        self.result_path = os.path.join(self.study.config['results_path'], 'pendulums',
+                'MuJoCo', f'{nlinks}link_pendulum')
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+
+        self.result_file = os.path.join(self.result_path, 
+                f'{nlinks}link_pendulum_step{step}_time{time}_rk4_custom.json')
+        
+        self.add_action([self.dummy_path], 
+                        [self.result_file], 
+                        self.run_pendulum_benchmark)        
+
+    def run_pendulum_benchmark(self, file_dep, target):
+        import mujoco
+        import numpy as np
+        import time
+        import json
+
+        def reset_data(data):
+            data.qpos[:] = 0
+            data.qpos[0] = np.pi / 4.0
+            data.qvel[:] = 0
+
+        def create_n_link_pendulum(n_links):
+            """
+            Create an XML string for an N-link pendulum in MuJoCo.
+
+            Args:
+                n_links (int): Number of pendulum links.
+
+            Returns:
+                str: MuJoCo XML string for the N-link pendulum.
+            """
+            # XML header and simulation options
+            xml = """<mujoco model="n_link_pendulum">
+
+        <worldbody>
+            <light pos="0 0 2"/>
+            <body pos="0 0 0">
+            <joint type="hinge" axis="0 1 0"/>
+            <geom type="cylinder" size="0.02" fromto="0 -.02 0 0 .02 0"/>
+            <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>
+            <inertial pos="0 0 0" mass="1.0" diaginertia="1.0 1.0 1.0"/>
+            """
+
+            # Add links iteratively
+            for i in range(1, n_links):
+                xml += f"""
+            <body pos="1.0 0 0">
+                <joint type="hinge" axis="0 1 0"/>
+                <geom type="capsule" size="0.02" fromto="0 0 0 1.0 0 0"/>"""
+
+            # Close all <body> tags
+            xml += "\n" + "      </body>" * (n_links-1)
+
+            # Close the worldbody and mujoco tags
+            xml += """
+            </body>
+        </worldbody>
+        </mujoco>"""
+
+            model = mujoco.MjModel.from_xml_string(xml)
+            model.opt.gravity = [0.0, 0.0, -9.81]
+            return model
+        
+        def get_y(data):
+            return np.concatenate((data.qpos, data.qvel))
+
+        def set_y(model, data, y):
+            data.qpos[:] = y[:model.nq]
+            data.qvel[:] = y[model.nq:model.nq + model.nv]    
+
+        def get_ydot(data):
+            return np.concatenate((data.qvel, data.qacc))
+
+        def set_state_and_realize_derivatives(model, data, t, y):
+            data.time = t
+            data.qpos[:] = y[:model.nq]
+            data.qvel[:] = y[model.nq:model.nq + model.nv]
+            mujoco.mj_forward(model, data)
+
+        def take_rk4_step(model, data):
+            """
+            0  |
+            1/2 | 1/2
+            1/2 |  0  1/2
+            1  |  0   0   1
+            --------------------
+                | 1/6 2/6 2/6 1/6
+            """
+
+            dt = model.opt.timestep
+            t0 = data.time
+            y0 = get_y(data)
+            f0 = get_ydot(data)
+            k1 = f0
+
+            set_state_and_realize_derivatives(model, data, t0 + 0.5*dt, y0 + dt*0.5*k1)
+            k2 = get_ydot(data)
+
+            set_state_and_realize_derivatives(model, data, t0 + 0.5*dt, y0 + dt*0.5*k2)
+            k3 = get_ydot(data)
+
+            set_state_and_realize_derivatives(model, data, t0 + dt, y0 + dt*k3)
+            k4 = get_ydot(data)
+
+            y1 = y0 + dt*(1.0/6.0)*(k1 + 2*k2 + 2*k3 + k4)
+            set_y(model, data, y1)
+            set_state_and_realize_derivatives(model, data, t0 + dt, y1)
+
+        model = create_n_link_pendulum(self.nlinks)
+        data = mujoco.MjData(model)
+        model.opt.timestep = self.step
+
+        # Initial energy
+        reset_data(data)
+        mujoco.mj_forward(model, data)
+        mujoco.mj_energyPos(model, data)
+        mujoco.mj_energyVel(model, data)
+        initial_energy = data.energy[0] + data.energy[1]
+        print('Initial energy:', initial_energy)
+
+        final_energies = list()
+        for i in range(10):
+            reset_data(data)
+            total_steps = int(self.time / model.opt.timestep)
+            for _ in range(total_steps):
+                take_rk4_step(model, data)
+            mujoco.mj_forward(model, data)
+            mujoco.mj_energyPos(model, data)
+            mujoco.mj_energyVel(model, data)
+            final_energies.append(data.energy[0] + data.energy[1])
+        final_energy = np.mean(final_energies)
+        print('Final energy:', final_energy)
+        energy_conservation = final_energy - initial_energy
+        print('Energy conservation:', energy_conservation)
+        percent_change = 0
+        if initial_energy != 0:
+            percent_change = (energy_conservation / initial_energy) * 100
+        print('Percent change:', percent_change)
+
+        # Save the results to a JSON file.
+        results = {
+            'initial_energy': initial_energy,
+            'final_energy': final_energy,
+            'energy_conservation': energy_conservation,
+            'percent_change': percent_change
+        }
+        with open(target[0], 'w') as f:
+            json.dump(results, f, indent=4)
 
 class TaskSimbodyPendulumBenchmark(StudyTask):
     REGISTRY = []
@@ -346,6 +511,58 @@ class TaskSimbodyPendulumBenchmark(StudyTask):
 
         self.result_file = os.path.join(self.result_path, 
                 f'{nlinks}link_pendulum_step{step}_time{time}_{integrator}.json')
+        
+        self.add_action([self.dummy_path], 
+                        [self.result_file], 
+                        self.run_pendulum_benchmark)        
+
+    def run_pendulum_benchmark(self, file_dep, target):
+        import subprocess
+        command = f'{self.exe_path} {self.nlinks} {target[0]}'
+        command += f' --time {self.time} --step {self.step}'
+        try:
+            p = subprocess.run(command, check=True, shell=True,
+                            cwd=self.result_path)
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+        except Exception as e:
+            import json
+            output = dict()
+            output['failed'] = True
+            output['error'] = str(e)
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4)
+
+        if not os.path.exists(target[0]):
+            output = dict()
+            output['failed'] = True
+            output['error'] = 'No output file was created.'
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4) 
+
+
+class TaskSimbodyPendulumBenchmarkRK4Custom(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, nlinks, step, time):
+        super(TaskSimbodyPendulumBenchmarkRK4Custom, self).__init__(study)
+        self.name = (f'run_simbody_{nlinks}link_pendulum_benchmark'
+                     f'_step{step}_time{time}_rk4_custom')
+        self.nlinks = nlinks
+        self.step = step
+        self.time = time
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+                f'benchmark_simbody_pendulum_rk4_custom')
+
+        # A dummy file dependency to satisify doit's dependency tree.
+        self.dummy_path = os.path.join(self.study.config['data_path'], 'pendulum',
+                                       'dummy.txt')
+        self.result_path = os.path.join(self.study.config['results_path'], 'pendulums',
+                'Simbody', f'{nlinks}link_pendulum')
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+
+        self.result_file = os.path.join(self.result_path, 
+                f'{nlinks}link_pendulum_step{step}_time{time}_rk4_custom.json')
         
         self.add_action([self.dummy_path], 
                         [self.result_file], 

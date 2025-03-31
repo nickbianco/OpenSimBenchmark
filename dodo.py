@@ -35,22 +35,26 @@ integrators = ['Euler', 'RK4']
 steps = [0.01, 0.001, 0.0001]
 nlinks = [1, 2, 5, 10, 20, 50, 100]
 time = 5.0
-for integrator in integrators:
-    for step in steps:
-        for nlink in nlinks:
+for step in steps:
+    for nlink in nlinks:
+        study.add_task(TaskMuJoCoPendulumBenchmarkRK4Custom, nlink, step, time)
+        for integrator in integrators:
             study.add_task(TaskMuJoCoPendulumBenchmark, nlink, step, time, integrator)
-study.add_task(TaskAggregatePendulumResults, 'MuJoCo', nlinks, steps, time, integrators)
+study.add_task(TaskAggregatePendulumResults, 'MuJoCo', nlinks, steps, time,
+               integrators + ['rk4_custom'])
 
 # Simbody pendulum tests.
 integrators = ['euler', 'rk4']
 steps = [0.01, 0.001, 0.0001]
 nlinks = [1, 2, 5, 10, 20, 50, 100]
 time = 5.0
-for integrator in integrators:
-    for step in steps:
-        for nlink in nlinks:
+for step in steps:
+    for nlink in nlinks:
+        study.add_task(TaskSimbodyPendulumBenchmarkRK4Custom, nlink, step, time)
+        for integrator in integrators:
             study.add_task(TaskSimbodyPendulumBenchmark, nlink, step, time, integrator)
-study.add_task(TaskAggregatePendulumResults, 'Simbody', nlinks, steps, time, integrators)
+study.add_task(TaskAggregatePendulumResults, 'Simbody', nlinks, steps, time,
+               integrators + ['rk4_custom'])
 
 study.add_task(TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff, nlinks, steps, time, 
                'Euler')
@@ -65,6 +69,10 @@ for result_type in result_types:
         for integrator in integrators:
             study.add_task(TaskPlotPendulumComparison, ['Simbody', 'MuJoCo'],
                     result_type, nlinks, step, time, integrator)
+            
+for step in steps:
+        study.add_task(TaskPlotPendulumComparison, ['Simbody', 'MuJoCo'],
+                    result_type, nlinks, step, time, 'rk4_custom')
 
 
 # Create Rajagopal models.

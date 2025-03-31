@@ -1,10 +1,21 @@
 #include <OpenSim/OpenSim.h>
-#include <Simbody.h>
-#include <OpenSim/Moco/osimMoco.h>
+#include <string>
 #include "../../utilities/utilities.h"
+#include <nlohmann/json.hpp>
 
-using namespace SimTK;
+using json = nlohmann::json;
 
+static const char HELP[] =
+R"(Benchmark a simulation of an N-link pendulum in Simbody.
+
+Usage:
+  benchmark_simbody_pendulum_rk4 <nlinks> <output> [--time <time>] [--step <step>]
+  benchmark_simbody_pendulum_rk4 -h | --help
+
+Options:
+  -t <time>, --time <time>        Set the final time.
+  -s <step>, --step <step>        Set the step size.
+)";
 
 void resetState(SimTK::State& state) {
     // Reset the state to the initial state.
@@ -13,7 +24,6 @@ void resetState(SimTK::State& state) {
     state.updQ()[0] = SimTK::Pi / 4.0;
     state.updU() = SimTK::Vector(state.getNU(), 0.0);
 }
-
 
 class MyIntegrator {
 
@@ -68,13 +78,14 @@ public:
         setPreviousStateFromAdvancedState();
     }
 
+    // Standard Runge-Kutta 4th order method.
+    //
     //  0  |
     // 1/2 | 1/2
     // 1/2 |  0  1/2
     //  1  |  0   0   1
     // --------------------
     //     | 1/6 2/6 2/6 1/6
-    // 
     void takeOneRungeKutta4Step(Real h) {
         const Real t0 = getPreviousTime();
         const Vector& y0 = getPreviousY();
@@ -109,39 +120,82 @@ private:
     Vector k4;
 };
 
+int main(int argc, char** argv) {
 
-int main() {
-    // The number of links in the pendulum.
-    int numLinks = 100;
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::microseconds;
+    
+    // Disable logging.
+    OpenSim::Logger::setLevelString("error");
 
-    // N-link pendulum defined directly in Simbody.
-    PendulumSystem pendulumSystem(numLinks);
-    const MultibodySystem& system = pendulumSystem.getMultibodySystem();
-    State state = system.realizeTopology();
-    resetState(state);
+    // Parse the command line arguments.
+    std::map<std::string, docopt::value> args = parse_arguments(
+        HELP, { argv + 1, argv + argc },
+        true); // show help if requested
 
-    system.realize(state, Stage::Dynamics);
-    Real initialEnergy = system.calcEnergy(state);
+    // Pendulum system.
+    int numLinks = std::stoi(args["<nlinks>"].asString());
+    OPENSIM_THROW_IF(numLinks <= 0, OpenSim::Exception, 
+            "Number of links must be positive.");
+    PendulumSystem pendulum(numLinks);
 
-    resetState(state);
-    MyIntegrator integrator(system, state);
-    Real h = 0.001;
-    int steps = 1000;
-    for (int i = 0; i < steps; ++i) {
-        integrator.takeOneStep(h);
-        const State& advancedState = integrator.getAdvancedState();
-        const Real t = advancedState.getTime();
-        const Vector& y = advancedState.getY();
-        std::cout << "t: " << t << ", y: " << y << std::endl;
+    // Final time.
+    double time = 5.0; // seconds
+    if (args["--time"]) {
+        time = std::stod(args["--time"].asString());
+        OPENSIM_THROW_IF(time <= 0, OpenSim::Exception, 
+                "Final time must be positive.");
     }
 
-    const State& finalState = integrator.getAdvancedState();
-    system.realize(state, Stage::Dynamics);
-    Real finalEnergy = system.calcEnergy(state);
-    Real energyError = finalEnergy - initialEnergy;
-    std::cout << "Initial energy: " << initialEnergy << std::endl;
-    std::cout << "Final energy: " << finalEnergy << std::endl;
-    std::cout << "Energy error: " << energyError << std::endl;
+    // Step size.
+    double step = -1; // seconds
+    if (args["--step"]) {
+        step = std::stod(args["--step"].asString());
+        OPENSIM_THROW_IF(step <= 0, OpenSim::Exception, 
+                "Step size must be positive.");
+    }
 
-    return 0;
+    // Get the output file.
+    std::string output_file = args["<output>"].asString();
+
+    // Initialize the JSON object.
+    json j;
+
+    // Create the initial state.
+    const SimTK::MultibodySystem& system = pendulum.m_system;
+    SimTK::State state = system.realizeTopology();
+
+    // Initial energy
+    // --------------
+    resetState(state);
+    system.realize(state, SimTK::Stage::Dynamics);
+    double initial_energy = system.calcEnergy(state);
+
+    // Forward integration.
+    // --------------------
+    resetState(state);
+    MyIntegrator integrator(system, state);
+    SimTK::Vector final_energies(10, 0.0);
+    int numSteps = int(time / step);
+    for (int i = 0; i < 10; ++i) {
+        resetState(state);
+        for (int i = 0; i < numSteps; ++i) {
+            integrator.takeOneStep(step);
+        }
+
+        // Final energy
+        // ------------
+        const State& finalState = integrator.getAdvancedState();
+        system.realize(finalState, SimTK::Stage::Dynamics);
+        final_energies[i] = system.calcEnergy(finalState);;
+    }
+    double final_energy = SimTK::mean(final_energies);
+    j["energy_conservation"] = final_energy - initial_energy;
+
+    std::ofstream file(output_file, std::ios::out | std::ios::binary);
+    if (file) {
+        file << j.dump(4);
+    }
 }
