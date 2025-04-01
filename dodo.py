@@ -60,6 +60,8 @@ study.add_task(TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff, nlinks, steps, time
                'Euler')
 study.add_task(TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff, nlinks, steps, time, 
                'RK4')
+study.add_task(TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff, nlinks, steps, time, 
+               'rk4_custom')
 
 result_types = ['acceleration_compute_time', 'single_step_time', 
                 'forward_integration_time', 'real_time_factor',
@@ -168,62 +170,29 @@ add_model('RajagopalFunctionBasedPathsDGFNoConstraints',
                  'ignore_passive_fiber_force',
                  'remove_muscles']) 
 
-# # Plots
-# empty_flags = ['']
-# model_tuples = []
-# for link in links:
-#     model_tuples.append((f'{link}link_pendulum', empty_flags))
-# study.add_task(TaskPlotRealTimeFactor, 'pendulum_time1.0_step0.001_Euler', model_tuples, 
-#                exe_args={'time': 1.0, 'step': 1e-3, 'integrator': 'Euler'}, 
-#                log_scale=True)
-# study.add_task(TaskPlotRealTimeFactor, 'pendulum_time1.0_step0.001_RK4', model_tuples, 
-#                exe_args={'time': 1.0, 'step': 1e-3, 'integrator': 'RK4'}, 
-#                log_scale=True)
 
-# model_tuples = []
-# empty_flags = ['']
-# flags = ['ignore_activation_dynamics',
-#          'ignore_passive_fiber_force']
-# model_tuples.append(('Rajagopal', empty_flags))
-# model_tuples.append(('RajagopalFunctionBasedPaths', empty_flags))
-# model_tuples.append(('RajagopalFunctionBasedPathsDGF', empty_flags))
-# model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
-# model_tuples.append(('Rajagopal', ['remove_muscles']))
-# study.add_task(TaskPlotRealTimeFactor, 'Rajagopal_step0.001_RK4', 
-#                model_tuples, exe_args={'time': 1.0, 'step': 1e-3, 'integrator': 'RK4'},
-#                log_scale=True)
-# study.add_task(TaskPlotRealTimeFactor, 'Rajagopal_step0.001_Euler', 
-#                model_tuples, exe_args={'time': 1.0, 'step': 1e-3, 'integrator': 'Euler'},
-#                log_scale=True)
-# study.add_task(TaskPlotRealTimeFactor, 'Rajagopal_RK4', 
-#                model_tuples, exe_args={'time': 5.0, 'integrator': 'RK4'},
-#                log_scale=True)
-
-
-# model_tuples = []
-# empty_flags = ['']
-# flags = ['ignore_activation_dynamics',
-#          'ignore_passive_fiber_force']
-# model_tuples.append(('RajagopalFunctionBasedPaths', flags))
-# model_tuples.append(('RajagopalFunctionBasedPathsNoConstraints', flags))
-# model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
-# model_tuples.append(('RajagopalFunctionBasedPathsDGFNoConstraints', flags))
-# study.add_task(TaskPlotRealTimeFactor, 'Rajagopal_noconstraints_time5.0', 
-#                model_tuples, exe_args={'time': 5.0})
-
-# model_tuples = []
-# empty_flags = ['']
-# flags = ['ignore_activation_dynamics',
-#          'ignore_passive_fiber_force']
-# model_tuples.append(('RajagopalFunctionBasedPathsDGF', empty_flags))
-# model_tuples.append(('RajagopalFunctionBasedPathsDGF', ['ignore_activation_dynamics',
-#                                                         'ignore_passive_fiber_force']))
-# model_tuples.append(('RajagopalFunctionBasedPathsDGF', ['remove_muscles']))
-# study.add_task(TaskPlotRealTimeFactor, 
-#                'RajagopalDGF_time1.0_step0.001', 
-#                model_tuples, exe_args={'time': 1.0, 'step': 1e-3})
-
-
-
-
-
+model_tuples = []
+empty_flags = ['']
+flags = ['ignore_activation_dynamics',
+         'ignore_passive_fiber_force']
+model_tuples.append(('Rajagopal', empty_flags))
+model_tuples.append(('RajagopalFunctionBasedPaths', empty_flags))
+model_tuples.append(('RajagopalFunctionBasedPathsDGF', empty_flags))
+model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
+model_tuples.append(('Rajagopal', ['remove_muscles']))
+study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
+               model_tuples, 'real_time_factor', 1.0, step=0.001)
+study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
+               model_tuples, 'real_time_factor', 5.0)
+study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_euler', 
+               model_tuples, 'real_time_factor', 1.0, step=0.001)
+study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_euler', 
+               model_tuples, 'real_time_factor', 5.0)
+study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_rk4', 
+               model_tuples, 'real_time_factor', 1.0, step=0.001)
+study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_rk4', 
+               model_tuples, 'real_time_factor', 5.0)
+study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_euler', 
+               model_tuples, 'real_time_factor', 1.0, step=0.001)
+study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_euler', 
+               model_tuples, 'real_time_factor', 5.0)

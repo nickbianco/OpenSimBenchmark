@@ -326,6 +326,7 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
         with open(target[0], 'w') as f:
             json.dump(results, f, indent=4)
 
+
 class TaskMuJoCoPendulumBenchmarkRK4Custom(StudyTask):
     REGISTRY = []
     def __init__(self, study, nlinks, step, time):
@@ -459,36 +460,41 @@ class TaskMuJoCoPendulumBenchmarkRK4Custom(StudyTask):
         mujoco.mj_energyPos(model, data)
         mujoco.mj_energyVel(model, data)
         initial_energy = data.energy[0] + data.energy[1]
-        print('Initial energy:', initial_energy)
 
         final_energies = list()
+        forward_integration_times = list()
+        real_time_factors = list()
         for i in range(10):
             reset_data(data)
+            start_time = time.time()
             total_steps = int(self.time / model.opt.timestep)
             for _ in range(total_steps):
                 take_rk4_step(model, data)
             mujoco.mj_forward(model, data)
             mujoco.mj_energyPos(model, data)
             mujoco.mj_energyVel(model, data)
+            forward_integration_time = time.time() - start_time
+            forward_integration_times.append(forward_integration_time)
+            real_time_factors.append(self.time / forward_integration_time)
             final_energies.append(data.energy[0] + data.energy[1])
         final_energy = np.mean(final_energies)
-        print('Final energy:', final_energy)
         energy_conservation = final_energy - initial_energy
-        print('Energy conservation:', energy_conservation)
         percent_change = 0
         if initial_energy != 0:
             percent_change = (energy_conservation / initial_energy) * 100
-        print('Percent change:', percent_change)
 
         # Save the results to a JSON file.
         results = {
             'initial_energy': initial_energy,
             'final_energy': final_energy,
             'energy_conservation': energy_conservation,
-            'percent_change': percent_change
+            'percent_change': percent_change,
+            'forward_integration_time': np.mean(forward_integration_times),
+            'real_time_factor': np.mean(real_time_factors),
         }
         with open(target[0], 'w') as f:
             json.dump(results, f, indent=4)
+
 
 class TaskSimbodyPendulumBenchmark(StudyTask):
     REGISTRY = []
@@ -1219,115 +1225,108 @@ class TaskPlotBenchmark(BenchmarkTask):
 
 class TaskPlotBenchmarkComparison(StudyTask):
     REGISTRY = []
-    def __init__(self, study, tag, model_names, benchmark, 
-                 model_suffix='', exe_args=None):
+    def __init__(self, study, benchmark, model_tuples, result, time, step=None):
         super(TaskPlotBenchmarkComparison, self).__init__(study)
-        self.name = f'plot_benchmark_comparison_{tag}'
-        self.tag = tag
-        self.study = study
-        self.model_names = model_names
+        self.name = f'plot_{benchmark}_comparison_{result}_time{time}'
+        if not step is None:
+            self.name += f'_step{step}'
+        self.benchmark = benchmark
+        self.result = result
+        self.step = step
+        self.time = time
+        self.integrator_name = ''
+        if 'euler' in self.benchmark.lower():
+            self.integrator_name = 'semi-explicit Euler'
+        elif 'rk4' in self.benchmark.lower():
+            self.integrator_name = 'Runge-Kutta 4th order'
+
+        self.step_name = ''
+        if step is None:
+            self.step_name = f'adaptive $\\Delta t$'
+        else:
+            self.step_name = f'$\\Delta t$ = {self.step} s'
+
+        self.result_name, self.units = get_result_name(self.result)
+
         self.models = list()
-        for model_name in model_names:
-            model = self.study.get_model(model_name)
+        self.model_names = list()
+        self.model_labels = list()
+        for model_tuple in model_tuples:
+            name = model_tuple[0]
+            flags = model_tuple[1]
+            model = self.study.get_model(name)
             if model is None:
-                print(f' --> {self.name}: Model {model_name} not found.')
+                print(f' --> {self.name}: Model {name} not found.')
             else:
                 self.models.append(model)
-        self.model_suffix = model_suffix
-        self.benchmark = benchmark
-        self.exe_args = exe_args
-        self.subdir = get_sub_directory(self.exe_args)
-        self.results_path = self.study.config['results_path']
-        self.figures_path = self.study.config['figures_path']
-        
-        self.plot_labels = list()
-        self.json_paths = list()
-        for model in self.models:
-            self.json_paths.append(
-                    os.path.join(self.results_path, model.name, self.benchmark,
-                                 self.subdir, f'{model.name}{self.model_suffix}.json'))
-            self.plot_labels.append(model.label)
-            
-        if not os.path.exists(self.figures_path):
-            os.makedirs(self.figures_path)
-        
-        self.figure_path = os.path.join(self.figures_path, 
-                                       f'benchmark_comparison_{tag}.png')
+                model_name, model_tag = ModelGenerator.get_name_and_tag(
+                    model.name, flags)
+                self.model_names.append(model_name)
+                self.model_labels.append(f'{model.label}\n{model_tag}')
 
-        self.add_action(self.json_paths, 
-                        [self.figure_path], 
+        subdir = f'time{self.time}'
+        if not step is None:
+            subdir += f'_step{self.step}'
+
+        self.json_files = list()
+        for model, model_name in zip(self.models, self.model_names):
+            self.json_files.append(
+                    os.path.join(self.study.config['results_path'],
+                    f'{model.name}', self.benchmark, subdir, f'{model_name}.json'))
+            
+        self.figure_path = os.path.join(self.study.config['figures_path'],
+                f'{benchmark}_comparison_{result}_time{time}_step{step}.png')
+        
+        self.add_action(self.json_files, 
+                        [self.figure_path],
                         self.plot_benchmark_comparison)
 
     def plot_benchmark_comparison(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
-        
-        # Initialize the dictionary of CPU times.
-        cpu_times = dict()
-        num_benchmarks = 0
-        with open(file_dep[0]) as f:
-            data = json.load(f)
-            for benchmark in data['benchmarks']:
-                cpu_times[benchmark['name']] = list()
-            num_benchmarks = len(data['benchmarks'])
 
-        # Fill the dictionary with CPU times.
-        for json_path in file_dep:
-            with open(json_path) as f:
+        results = list()
+        for json_file in file_dep:
+            with open(json_file) as f:
                 data = json.load(f)
-                for benchmark in data['benchmarks']:
-                    cpu_times[benchmark['name']].append(benchmark['cpu_time'])
+                if self.result in data:
+                    results.append(abs(data[self.result]))
+                else:
+                    print(f' --> {self.name}: Result {self.result} not found.')
 
-        # Plot the CPU times.
-        y = np.arange(len(self.plot_labels))
-        width = 0.6 / num_benchmarks
-        multiplier = 0
-        if num_benchmarks > 1:
-            multiplier = -num_benchmarks // 2
+        fig, ax = plt.subplots(figsize=(5, 4))
+        bar_width = 0.35
+        x = np.arange(len(self.models))
+        ax.bar(x, results, width=bar_width)    
+            
+        # Plot the y-axis on a log scale
+        ax.set_yscale('log')
 
-        # Create the figure and axis.
-        height = 1.0 * len(self.plot_labels)
-        fig, ax = plt.subplots(figsize=(5, height))
-        
-        # Plot the CPU times.
-        for benchmark, cpu_time in cpu_times.items():
-            offset = width * multiplier
-            ax.barh(y + offset, cpu_time, width, label=benchmark)
-            multiplier += 1
+        # Set the x-ticks and labels.
+        ax.set_xticks(x)
+        ax.set_xticklabels(self.model_labels, fontsize=6)
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
 
-        # Set the x-axis labels based on max CPU time.
-        all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
-        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', 
-                           '1 s', '10 s', '100 s']
-        max_value = 0
-        for key, value in cpu_times.items():
-            max_value = max(max_value, max(value))
+        # Set the y-label and title.
+        ax.set_xlabel('model')
+        ax.set_ylabel(f'{self.result_name} {self.units}')
+        if 'acceleration_compute_time' not in self.result:
+            ax.set_title(f'{self.integrator_name} with {self.step_name}')
 
-        xticks = list()
-        xticklabels = list()
-        for xtick, xticklabel in zip(all_xticks, all_xticklabels):
-            if xtick < 100 * max_value:
-                xticks.append(xtick)
-                xticklabels.append(xticklabel)
+        if 'real_time_factor' in self.result:
+            ax.axhline(y=1, color='red', linestyle='-', lw=2, zorder=0)
 
-        # Set the plot parameters.
-        plt.xscale('log')
-        plt.xticks(xticks, xticklabels)
-        plt.yticks(y, self.plot_labels, fontsize=6)
+        # Set the grid include minor ticks.
+        ax.grid(which='major', linestyle='-', linewidth=0.5)
+        ax.grid(which='minor', linestyle='-', linewidth=0.2, alpha=0.5)
+
         ax = plt.gca()
-        for label in ax.get_yticklabels():
-            label.set_va('center')
-        plt.xlabel(f'CPU Time')
-        plt.grid(axis='x', linestyle='--')
-        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
         ax.set_axisbelow(True)
-        plt.title(self.benchmark)
-        plt.legend(loc='lower right', fontsize=6)
-
-        # Save the plot.
+        # Save the figure.
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
+
 
 
 class TaskRunPerf(PerfTask):
