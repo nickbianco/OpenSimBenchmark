@@ -30,6 +30,9 @@ study = Study('opensim_benchmark')
 # Add study tasks.
 study.add_task(TaskInstallDependencies)
 
+# MyoSuite tests.
+study.add_task(TaskBenchmarkMyoSuiteModels, 1.0, 0.001)
+
 # MuJoCo pendulum tests.
 integrators = ['Euler', 'RK4']
 steps = [0.01, 0.001, 0.0001]

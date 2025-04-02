@@ -180,6 +180,104 @@ class TaskInstallDependencies(StudyTask):
             raise Exception('Non-zero exit status: code %s.' % p.returncode)
 
 
+class TaskBenchmarkMyoSuiteModels(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, time, step):
+        super(TaskBenchmarkMyoSuiteModels, self).__init__(study)
+        self.name = f'run_benchmark_myosuite_models_time{time}_step{step}'
+        self.model_paths = list()
+        self.mujoco_path = self.study.config['mujoco_path']
+        self.model_names = list()
+        self.time = time
+        self.step = step
+
+        # Output directory
+        self.result_path = os.path.join(self.study.config['results_path'], 'MyoSuite')
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+
+        self.result_paths = list()
+
+        # Elbow model
+        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'elbow', 
+                                             'myoelbow_2dof6muscles.xml'))
+        self.model_names.append('myosuite_elbow')
+        self.result_paths.append(os.path.join(self.result_path, 'elbow.json'))
+
+        # Hand model
+        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'hand', 
+                                             'myohand.xml'))
+        self.model_names.append('myosuite_hand')
+        self.result_paths.append(os.path.join(self.result_path, 'hand.json'))
+
+        # Arm model
+        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'arm', 
+                                             'myoarm.xml'))
+        self.model_names.append('myosuite_arm')
+        self.result_paths.append(os.path.join(self.result_path, 'arm.json'))
+
+        # Legs model
+        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'leg', 
+                                             'myolegs.xml'))
+        self.model_names.append('myosuite_legs')
+        self.result_paths.append(os.path.join(self.result_path, 'legs.json'))
+
+        self.add_action(self.model_paths, 
+                        self.result_paths, 
+                        self.benchmark_myosuite_models)
+
+    def benchmark_myosuite_models(self, file_dep, target):
+        import mujoco
+        from time import time
+        import json
+
+        def load_model(model_path):
+            model_dir = os.path.dirname(model_path)
+            model_filename = os.path.basename(model_path)
+
+            old_dir = os.getcwd()  # Save current directory
+            try:
+                os.chdir(model_dir)  # Change to the model's directory
+                model = mujoco.MjModel.from_xml_path(model_filename)
+            finally:
+                os.chdir(old_dir)  # Restore original working directory
+
+            return model
+
+        for model_path, result_path in zip(file_dep, target):
+
+            model = load_model(model_path)
+            model.opt.timestep = self.step
+
+            # Disable contacts
+            for i in range(model.ngeom):
+                model.geom_contype[i] = 0
+                model.geom_conaffinity[i] = 0
+
+            # Disable collision detection            
+            data = mujoco.MjData(model)
+
+            forward_integration_times = list()
+            real_time_factors = list()
+            num_steps = int(self.time / model.opt.timestep)
+            for iteration in range(100):
+                t = time()
+                for _ in range(num_steps):
+                    mujoco.mj_step(model, data, )
+
+                forward_integration_time = time() - t
+                forward_integration_times.append(forward_integration_time)
+                real_time_factors.append(self.time / forward_integration_time)
+
+            # Save the results to a JSON file.
+            results = {
+                'forward_integration_time': np.mean(forward_integration_times),
+                'real_time_factor': np.mean(real_time_factors),
+            }
+            with open(result_path, 'w') as f:
+                json.dump(results, f, indent=4)
+
+
 class TaskMuJoCoPendulumBenchmark(StudyTask):
     REGISTRY = []
     def __init__(self, study, nlinks, step, time, integrator):
