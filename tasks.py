@@ -1323,7 +1323,7 @@ class TaskPlotBenchmark(BenchmarkTask):
 
 class TaskPlotBenchmarkComparison(StudyTask):
     REGISTRY = []
-    def __init__(self, study, benchmark, model_tuples, result, time, step=None):
+    def __init__(self, study, benchmark, model_tuples, labels, result, time, step=None):
         super(TaskPlotBenchmarkComparison, self).__init__(study)
         self.name = f'plot_{benchmark}_comparison_{result}_time{time}'
         if not step is None:
@@ -1336,19 +1336,20 @@ class TaskPlotBenchmarkComparison(StudyTask):
         if 'euler' in self.benchmark.lower():
             self.integrator_name = 'semi-explicit Euler'
         elif 'rk4' in self.benchmark.lower():
-            self.integrator_name = 'Runge-Kutta 4th order'
+            self.integrator_name = 'Runge-Kutta-Merson embedded 4th order'
 
         self.step_name = ''
         if step is None:
-            self.step_name = f'adaptive $\\Delta t$'
+            self.step_name = f'adaptive step size'
         else:
-            self.step_name = f'$\\Delta t$ = {self.step} s'
+            self.step_name = f'$h$ = {self.step} s'
 
         self.result_name, self.units = get_result_name(self.result)
 
         self.models = list()
         self.model_names = list()
-        self.model_labels = list()
+        self.labels = labels
+        assert(len(model_tuples) == len(labels))
         for model_tuple in model_tuples:
             name = model_tuple[0]
             flags = model_tuple[1]
@@ -1360,7 +1361,6 @@ class TaskPlotBenchmarkComparison(StudyTask):
                 model_name, model_tag = ModelGenerator.get_name_and_tag(
                     model.name, flags)
                 self.model_names.append(model_name)
-                self.model_labels.append(f'{model.label}\n{model_tag}')
 
         subdir = f'time{self.time}'
         if not step is None:
@@ -1402,11 +1402,11 @@ class TaskPlotBenchmarkComparison(StudyTask):
 
         # Set the x-ticks and labels.
         ax.set_xticks(x)
-        ax.set_xticklabels(self.model_labels, fontsize=6)
+        ax.set_xticklabels(self.labels, fontsize=6)
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
 
         # Set the y-label and title.
-        ax.set_xlabel('model')
+        ax.set_xlabel('Rajagopal model variant')
         ax.set_ylabel(f'{self.result_name} {self.units}')
         if 'acceleration_compute_time' not in self.result:
             ax.set_title(f'{self.integrator_name} with {self.step_name}')

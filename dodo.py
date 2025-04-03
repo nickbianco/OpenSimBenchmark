@@ -176,26 +176,34 @@ add_model('RajagopalFunctionBasedPathsDGFNoConstraints',
 
 model_tuples = []
 empty_flags = ['']
+labels = list()
 flags = ['ignore_activation_dynamics',
          'ignore_passive_fiber_force']
 model_tuples.append(('Rajagopal', empty_flags))
+labels.append('base model')
 model_tuples.append(('RajagopalFunctionBasedPaths', empty_flags))
+labels.append('function-based paths')
+model_tuples.append(('RajagopalFunctionBasedPaths', flags))
+labels.append('function-based paths\nno muscle dynamics')
 model_tuples.append(('RajagopalFunctionBasedPathsDGF', empty_flags))
+labels.append('function-based paths\nsmooth muscles')
 model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
+labels.append('function-based paths\nsmooth muscles\nno muscle dynamics')
 model_tuples.append(('Rajagopal', ['remove_muscles']))
+labels.append('no muscles')
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
-               model_tuples, 'real_time_factor', 1.0, step=0.001)
+               model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
-               model_tuples, 'real_time_factor', 5.0)
+               model_tuples, labels, 'real_time_factor', 5.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_euler', 
-               model_tuples, 'real_time_factor', 1.0, step=0.001)
+               model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_euler', 
-               model_tuples, 'real_time_factor', 5.0)
+               model_tuples, labels, 'real_time_factor', 5.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_rk4', 
-               model_tuples, 'real_time_factor', 1.0, step=0.001)
+               model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_rk4', 
-               model_tuples, 'real_time_factor', 5.0)
+               model_tuples, labels, 'real_time_factor', 5.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_euler', 
-               model_tuples, 'real_time_factor', 1.0, step=0.001)
+               model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_euler', 
-               model_tuples, 'real_time_factor', 5.0)
+               model_tuples, labels, 'real_time_factor', 5.0)
