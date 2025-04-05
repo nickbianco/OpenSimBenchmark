@@ -952,6 +952,15 @@ class TaskCreateRajagopalModels(StudyTask):
         self.function_based_paths = os.path.join(
                 self.study.config['data_path'], 'Rajagopal', 
                 'subject_walk_scaled_FunctionBasedPathSet.xml')
+        self.expression_based_coordinate_force_set = os.path.join(
+                self.study.config['data_path'], 'Rajagopal', 
+                'subject_walk_scaled_ExpressionBasedCoordinateForceSet.xml')
+        self.contact_geometry_set = os.path.join(
+                self.study.config['data_path'], 'Rajagopal', 
+                'subject_walk_scaled_ContactGeometrySet.xml')
+        self.contact_force_set = os.path.join(
+                self.study.config['data_path'], 'Rajagopal', 
+                'subject_walk_scaled_ContactForceSet.xml')
         
         if not os.path.exists(self.study.config['models_path']):
             os.makedirs(self.study.config['models_path'])
@@ -964,13 +973,17 @@ class TaskCreateRajagopalModels(StudyTask):
                             'RajagopalFunctionBasedPathActuatorsNoConstraints', 
                             'RajagopalDGF',
                             'RajagopalFunctionBasedPathsDGF',
-                            'RajagopalFunctionBasedPathsDGFNoConstraints']
+                            'RajagopalFunctionBasedPathsDGFNoConstraints',
+                            'RajagopalFunctionBasedPathsDGFContact',
+                            'RajagopalFunctionBasedPathsDGFContactNoConstraints']
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'], 
                                                  f'{model_name}.osim'))
     
-        self.add_action([self.base_model_path, self.function_based_paths], 
+        self.add_action([self.base_model_path, self.function_based_paths,
+                         self.expression_based_coordinate_force_set,
+                         self.contact_geometry_set, self.contact_force_set], 
                         self.model_paths, 
                         self.create_rajagopal_models)
         
@@ -1087,6 +1100,101 @@ class TaskCreateRajagopalModels(StudyTask):
         model.printToXML(target[8])
         print(f' --> Created {target[8]}')
 
+        # Function-based DeGrooteFregly2016Muscle model with contact.
+        modelProcessor = osim.ModelProcessor(file_dep[0])
+        modelProcessor.append(osim.ModOpReplaceMusclesWithDeGrooteFregly2016())
+        modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(file_dep[1]))
+        model = modelProcessor.process()
+        model.initSystem()
+
+        # Add stiffness and damping to the joints. Toe stiffness and damping values
+        # are based on Falisse et al. (2022), "Modeling toes contributes to 
+        # realistic stance knee mechanics in three-dimensional predictive 
+        # simulations of walking."
+        expressionBasedForceSet = osim.ForceSet(file_dep[2])
+        for i in range(expressionBasedForceSet.getSize()):
+            model.addComponent(expressionBasedForceSet.get(i).clone())
+
+        # Add the contact geometry to the model.
+        contactGeometrySet = osim.ContactGeometrySet(file_dep[3])
+        for i in range(contactGeometrySet.getSize()):
+            contactGeometry = contactGeometrySet.get(i).clone()
+            # Raise the ContactSpheres by 2 cm so that bottom of the spheres
+            # are better aligned with the ground.
+            if 'floor' not in contactGeometry.getName():
+                location = contactGeometry.upd_location()
+                location.set(1, location.get(1) + 0.02)
+            model.addContactGeometry(contactGeometry)
+
+        # Add the contact forces to the model.
+        contactForceSet = osim.ForceSet(file_dep[4])
+        for i in range(contactForceSet.getSize()):
+            model.addComponent(contactForceSet.get(i).clone())
+        model.finalizeConnections()
+
+        # Update the default pelvis Y location so that the contact spheres lie just
+        # above the ground.
+        coordset = model.updCoordinateSet()
+        pelvis_ty = coordset.get('pelvis_ty')
+        pelvis_ty.set_default_value(1.03)
+        pelvis_ty.set_default_speed_value(0.0)
+
+        model.initSystem()
+        model.printToXML(target[9])
+        print(f' --> Created {target[9]}')
+
+        # Function-based DeGrooteFregly2016Muscle model with contact and
+        # without constraints.
+        modelProcessor = osim.ModelProcessor(file_dep[0])
+        modelProcessor.append(osim.ModOpReplaceMusclesWithDeGrooteFregly2016())
+        modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(file_dep[1]))
+        model = modelProcessor.process()
+        model.initSystem()
+
+        constraints = model.updConstraintSet()
+        constraints.clearAndDestroy()
+
+        bodyset = model.updBodySet()
+        patella_l = bodyset.get('patella_l')
+        patella_r = bodyset.get('patella_r')
+        bodyset.remove(patella_l)
+        bodyset.remove(patella_r)
+
+        jointset = model.updJointSet()
+        patellofemoral_l = jointset.get('patellofemoral_l')
+        patellofemoral_r = jointset.get('patellofemoral_r')
+        jointset.remove(patellofemoral_l)
+        jointset.remove(patellofemoral_r)
+
+        model.finalizeConnections()
+
+        # Add stiffness and damping to the joints. Toe stiffness and damping values
+        # are based on Falisse et al. (2022), "Modeling toes contributes to 
+        # realistic stance knee mechanics in three-dimensional predictive 
+        # simulations of walking."
+        expressionBasedForceSet = osim.ForceSet(file_dep[2])
+        for i in range(expressionBasedForceSet.getSize()):
+            model.addComponent(expressionBasedForceSet.get(i).clone())
+
+        # Add the contact geometry to the model.
+        contactGeometrySet = osim.ContactGeometrySet(file_dep[3])
+        for i in range(contactGeometrySet.getSize()):
+            contactGeometry = contactGeometrySet.get(i).clone()
+            # Raise the ContactSpheres by 2 cm so that bottom of the spheres
+            # are better aligned with the ground.
+            if 'floor' not in contactGeometry.getName():
+                location = contactGeometry.upd_location()
+                location.set(1, location.get(1) + 0.02)
+            model.addContactGeometry(contactGeometry)
+
+        # Add the contact forces to the model.
+        contactForceSet = osim.ForceSet(file_dep[4])
+        for i in range(contactForceSet.getSize()):
+            model.addComponent(contactForceSet.get(i).clone())
+        model.finalizeConnections()
+
+        model.printToXML(target[10])
+        print(f' --> Created {target[10]}')
         
 class TaskGenerateModels(ModelTask):
     REGISTRY = []
@@ -1424,7 +1532,6 @@ class TaskPlotBenchmarkComparison(StudyTask):
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
-
 
 
 class TaskRunPerf(PerfTask):

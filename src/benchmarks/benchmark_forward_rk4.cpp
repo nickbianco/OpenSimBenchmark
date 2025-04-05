@@ -17,13 +17,6 @@ Options:
   -s <step>, --step <step>  Set the step size.
 )";
 
-void resetState(SimTK::State& state) {
-    // Reset the state to the initial state.
-    state.setTime(0);
-    state.updQ() = SimTK::Vector(state.getNQ(), 0.0);
-    state.updU() = SimTK::Vector(state.getNU(), 0.0);
-}
-
 int main(int argc, char** argv) {
 
     using std::chrono::high_resolution_clock;
@@ -46,8 +39,15 @@ int main(int argc, char** argv) {
     SimTK::State state = model.initSystem();
     const SimTK::MultibodySystem& system = model.getMultibodySystem();
 
+    // Helper function to reset the state.
+    Vector defaultY = state.getY();
+    auto resetState = [&](SimTK::State& state) {
+        state.setTime(0);
+        state.updY() = defaultY;
+    };
+
     // Final time.
-    double time = 5.0; // seconds
+    double time = -1.0; // seconds
     if (args["--time"]) {
         time = std::stod(args["--time"].asString());
         OPENSIM_THROW_IF(time <= 0, OpenSim::Exception, 
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     }
 
     // Step size.
-    double step = -1; // seconds
+    double step = -1.0; // seconds
     if (args["--step"]) {
         step = std::stod(args["--step"].asString());
         OPENSIM_THROW_IF(step <= 0, OpenSim::Exception, 
@@ -84,22 +84,24 @@ int main(int argc, char** argv) {
 
     // One simulation step.
     // --------------------
-    SimTK::RungeKuttaMersonIntegrator integrator(system);
-    integrator.setFixedStepSize(step);
-    SimTK::TimeStepper timeStepper(system, integrator);
-    SimTK::Vector step_times(100, 0.0);
-    for (int i = 0; i < 100; ++i) {
-        resetState(state);
-        timeStepper.initialize(state);
-        auto start = high_resolution_clock::now();
-        timeStepper.stepTo(0.1);
-        auto end = high_resolution_clock::now();
-        double time_elapsed = duration_cast<microseconds>(end - start).count();
-        time_elapsed /= 1.0e6;
-        step_times[i] = time_elapsed;
+    if (step > 0) {
+        SimTK::RungeKuttaMersonIntegrator integrator(system);
+        integrator.setFixedStepSize(step);
+        SimTK::TimeStepper timeStepper(system, integrator);
+        SimTK::Vector step_times(100, 0.0);
+        for (int i = 0; i < 100; ++i) {
+            resetState(state);
+            timeStepper.initialize(state);
+            auto start = high_resolution_clock::now();
+            timeStepper.stepTo(step);
+            auto end = high_resolution_clock::now();
+            double time_elapsed = duration_cast<microseconds>(end - start).count();
+            time_elapsed /= 1.0e6;
+            step_times[i] = time_elapsed;
+        }
+        j["single_step_time"] = SimTK::mean(step_times);
     }
-    j["single_step_time"] = SimTK::mean(step_times);
-
+    
     // Initial energy
     // --------------
     resetState(state);
@@ -112,6 +114,11 @@ int main(int argc, char** argv) {
     SimTK::Vector real_time_factors(10, 0.0);
     SimTK::Vector final_energies(10, 0.0);
     for (int i = 0; i < 10; ++i) {
+        SimTK::RungeKuttaMersonIntegrator integrator(system);
+        if (step > 0) {
+            integrator.setFixedStepSize(step);
+        }
+        SimTK::TimeStepper timeStepper(system, integrator);
         resetState(state);
         integrator.resetAllStatistics();
         timeStepper.initialize(state);

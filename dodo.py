@@ -93,42 +93,43 @@ def add_model(model_file, label, flags=[]):
     model = study.add_model(model_file, label)
     model.add_task(TaskGenerateModels, flags)
     step = 0.001
+    time = 1.0
 
     # Benchmark tests.
     benchmark_forward_euler = model.add_benchmark('benchmark_forward_euler')
     benchmark_forward_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
-            exe_args={'time': 1.0, 'step': step})
+            exe_args={'time': time, 'step': step})
     benchmark_forward_euler.add_task(TaskPlotBenchmark, benchmark_forward_euler.tasks[-1])
 
     benchmark_forward_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
-            exe_args={'time': 5.0})
+            exe_args={'time': time})
     benchmark_forward_euler.add_task(TaskPlotBenchmark, benchmark_forward_euler.tasks[-1])
 
     benchmark_forward_rk4 = model.add_benchmark('benchmark_forward_rk4')
     benchmark_forward_rk4.add_task(TaskRunBenchmark, model.tasks[-1], 
-            exe_args={'time': 1.0, 'step': step})
+            exe_args={'time': time, 'step': step})
     benchmark_forward_rk4.add_task(TaskPlotBenchmark, benchmark_forward_rk4.tasks[-1])
 
     benchmark_forward_rk4.add_task(TaskRunBenchmark, model.tasks[-1], 
-            exe_args={'time': 5.0})
+            exe_args={'time': time})
     benchmark_forward_rk4.add_task(TaskPlotBenchmark, benchmark_forward_rk4.tasks[-1])
 
     benchmark_manager_euler = model.add_benchmark('benchmark_manager_euler')
     benchmark_manager_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
-            exe_args={'time': 1.0, 'step': step})
+            exe_args={'time': time, 'step': step})
     benchmark_manager_euler.add_task(TaskPlotBenchmark, benchmark_manager_euler.tasks[-1])
 
     benchmark_manager_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
-            exe_args={'time': 5.0})
+            exe_args={'time': time})
     benchmark_manager_euler.add_task(TaskPlotBenchmark, benchmark_manager_euler.tasks[-1])
 
     benchmark_manager_rk4 = model.add_benchmark('benchmark_manager_rk4')
     benchmark_manager_rk4.add_task(TaskRunBenchmark, model.tasks[-1], 
-            exe_args={'time': 1.0, 'step': step})
+            exe_args={'time': time, 'step': step})
     benchmark_manager_rk4.add_task(TaskPlotBenchmark, benchmark_manager_rk4.tasks[-1])
 
     benchmark_manager_rk4.add_task(TaskRunBenchmark, model.tasks[-1], 
-            exe_args={'time': 5.0})
+            exe_args={'time': time})
     benchmark_manager_rk4.add_task(TaskPlotBenchmark, benchmark_manager_rk4.tasks[-1])
 
 
@@ -173,6 +174,17 @@ add_model('RajagopalFunctionBasedPathsDGFNoConstraints',
                  'ignore_passive_fiber_force',
                  'remove_muscles']) 
 
+add_model('RajagopalFunctionBasedPathsDGFContact', 
+          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact', 
+          flags=['ignore_activation_dynamics', 
+                 'ignore_passive_fiber_force',
+                 'remove_muscles']) 
+
+add_model('RajagopalFunctionBasedPathsDGFContactNoConstraints', 
+          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact\nno constraints', 
+          flags=['ignore_activation_dynamics', 
+                 'ignore_passive_fiber_force',
+                 'remove_muscles']) 
 
 model_tuples = []
 empty_flags = ['']
@@ -189,21 +201,31 @@ model_tuples.append(('RajagopalFunctionBasedPathsDGF', empty_flags))
 labels.append('function-based paths\nsmooth muscles')
 model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
 labels.append('function-based paths\nsmooth muscles\nno muscle dynamics')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', empty_flags))
+labels.append('function-based paths\nsmooth muscles\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', flags))
+labels.append('function-based paths\nsmooth muscles\nno muscle dynamics\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFNoConstraints', empty_flags))
+labels.append('function-based paths\nsmooth muscles\nno constraints')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFNoConstraints', flags))
+labels.append('function-based paths\nsmooth muscles\nno muscle dynamics\nno constraints')
 model_tuples.append(('Rajagopal', ['remove_muscles']))
 labels.append('no muscles')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', ['remove_muscles']))
+labels.append('no muscles\ncontact')
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
                model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
-               model_tuples, labels, 'real_time_factor', 5.0)
+               model_tuples, labels, 'real_time_factor', 1.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_euler', 
                model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_euler', 
-               model_tuples, labels, 'real_time_factor', 5.0)
+               model_tuples, labels, 'real_time_factor', 1.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_rk4', 
                model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_rk4', 
-               model_tuples, labels, 'real_time_factor', 5.0)
+               model_tuples, labels, 'real_time_factor', 1.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_euler', 
                model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_euler', 
-               model_tuples, labels, 'real_time_factor', 5.0)
+               model_tuples, labels, 'real_time_factor', 1.0)
