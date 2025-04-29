@@ -119,8 +119,8 @@ int main() {
     Logger::setLevel(Logger::Level::Error);
 
     // Load the model.
-    Model model("RajagopalFunctionBasedPathsDGFContact_noactdyn_nopassive.osim");
-    // Model model("RajagopalFunctionBasedPathsDGFContact_nomuscles.osim"); 
+    // Model model("RajagopalFunctionBasedPathsDGFContact_noactdyn_nopassive.osim");
+    Model model("RajagopalFunctionBasedPathsDGFContact_nomuscles.osim"); 
     model.initSystem();
     // model.addModelComponent(new AccelerationReporter());
     // model.addModelComponent(new VisualizerReporter()); 
@@ -134,9 +134,10 @@ int main() {
     auto resetState = [&](SimTK::State& state) {
         state.setTime(0);
         state.updY() = defaultY;
-        state.updU() = 0.1*SimTK::Test::randVector(state.getNU());
+        // state.updU() = 0.1*SimTK::Test::randVector(state.getNU());
     };
     
+    // SimTK::RungeKuttaMersonIntegrator integ(system);
     SimTK::CPodesIntegrator integ(system,
         SimTK::CPodes::BDF, SimTK::CPodes::Newton);
     // integ.setFixedStepSize(0.001);
@@ -147,7 +148,7 @@ int main() {
     timeStepper.initialize(state);
 
     const double startCPU = cpuTime(), startTime = realTime();
-    timeStepper.stepTo(5.0);
+    timeStepper.stepTo(1.0);
     dumpIntegratorStats(startCPU, startTime, integ);
 
 
