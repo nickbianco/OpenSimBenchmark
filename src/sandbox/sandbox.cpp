@@ -112,8 +112,9 @@ Model loadModel(double stiffnessScale = 1.0,
                 double frictionScale = 1.0,
                 double smoothingScale = 1.0) {
 
-    Model model("RajagopalFunctionBasedPathsDGFContact_noactdyn_nopassive.osim");
-    // Model model("RajagopalFunctionBasedPathsDGFContact_nomuscles.osim"); 
+    // Model model("RajagopalFunctionBasedPathsDGFContact_noactdyn_nopassive.osim");
+    Model model("RajagopalFunctionBasedPathsDGFContact_nomuscles.osim"); 
+    // Model model("RajagopalFunctionBasedPathsDGFContactNoConstraints_nomuscles.osim");
     model.initSystem();
 
     for (auto& force : model.updComponentList<OpenSim::SmoothSphereHalfSpaceForce>()) {
@@ -199,6 +200,48 @@ void simulateSweep(std::string sweepParameter) {
 
 }
 
+void simulateOnce(double stiffnessScale = 1.0,
+                  double dissipationScale = 1.0,
+                  double frictionScale = 1.0,
+                  double smoothingScale = 1.0) {
+
+     // Load the model with the specified scale.
+     Model model = loadModel(stiffnessScale,
+                             dissipationScale,
+                             frictionScale,
+                             smoothingScale);
+
+    // Initialize the system.
+    SimTK::State state = model.initSystem();
+
+    const MultibodySystem& system = model.getMultibodySystem();
+
+    // Helper function to reset the state.
+    Vector defaultY = state.getY();
+    auto resetState = [&](SimTK::State& state) {
+        state.setTime(0);
+        state.updY() = defaultY;
+        // state.updU() = 0.1*SimTK::Test::randVector(state.getNU());
+    };
+
+    // Create the integrator and time stepper.
+    SimTK::CPodesIntegrator integ(system,
+        SimTK::CPodes::BDF, SimTK::CPodes::Newton);
+    // SimTK::RungeKuttaMersonIntegrator integ(system);
+    integ.setAccuracy(1e-2);
+    SimTK::TimeStepper timeStepper(system, integ);
+
+    resetState(state);
+    timeStepper.initialize(state);
+
+    const double startCPU = cpuTime(), startTime = realTime();
+    
+    // Run the simulation for 5 seconds.
+    timeStepper.stepTo(5.0);
+
+    dumpIntegratorStats(startCPU, startTime, integ);
+}
+
 int main() {
 
     using std::chrono::high_resolution_clock;
@@ -209,11 +252,13 @@ int main() {
     // Disable logging.
     Logger::setLevel(Logger::Level::Error);
 
-    simulateSweep("stiffness");
+    // simulateSweep("stiffness");
     // simulateSweep("dissipation");
     // simulateSweep("friction");
     // simulateSweep("smoothing");
 
+
+    simulateOnce(0.01, 0.1, 0.01, 1.0);
 
 
 

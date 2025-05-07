@@ -9,7 +9,7 @@ static const char HELP[] =
 R"(Benchmark a forward simulation.
 
 Usage:
-  benchmark_manager_rk4 <model> <output> [--time <time>] [--step <step>]
+  benchmark_manager_rk4 <model> <output> --time=<time> --step=<step>
   benchmark_manager_rk4 -h | --help
 
 Options:

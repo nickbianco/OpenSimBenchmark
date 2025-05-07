@@ -9,7 +9,7 @@ static const char HELP[] =
 R"(Benchmark a forward simulation.
 
 Usage:
-  benchmark_forward_euler <model> <output> [--time <time>] [--step <step>]
+  benchmark_forward_euler <model> <output> --time=<time> --step=<step>
   benchmark_forward_euler -h | --help
 
 Options:

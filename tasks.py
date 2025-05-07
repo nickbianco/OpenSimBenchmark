@@ -154,6 +154,12 @@ def get_result_name(result):
     elif result == 'energy_conservation':
         result_name = '$\\Delta$ total energy'
         units = '(J)'
+    elif result == 'average_step_size':
+        result_name = 'avg. step size'
+        units = '(ms)'
+    elif result == 'num_steps':
+        result_name = 'no. steps'
+        units = '(ms)'
 
     return result_name, units
 
@@ -625,7 +631,7 @@ class TaskSimbodyPendulumBenchmark(StudyTask):
     def run_pendulum_benchmark(self, file_dep, target):
         import subprocess
         command = f'{self.exe_path} {self.nlinks} {target[0]}'
-        command += f' --time {self.time} --step {self.step}'
+        command += f' --time={self.time} --step={self.step}'
         try:
             p = subprocess.run(command, check=True, shell=True,
                             cwd=self.result_path)
@@ -1249,7 +1255,7 @@ class TaskRunBenchmark(BenchmarkTask):
         for model_path, out_path in zip(file_dep, target):
             command = f'{self.exe_path} {model_path} {out_path}'
             for arg in self.exe_args:
-                command += f' --{arg} {self.exe_args[arg]}'
+                command += f' --{arg}={self.exe_args[arg]}'
             try:
                 p = subprocess.run(command, check=True, shell=True,
                                     cwd=self.benchmark.results_path)
@@ -1285,7 +1291,8 @@ class TaskPlotBenchmark(BenchmarkTask):
         self.result_path = run_task.result_path
         self.results = ['acceleration_compute_time', 'single_step_time',
                         'forward_integration_time', 'real_time_factor',
-                        'energy_conservation']
+                        'energy_conservation', 'num_steps', 'average_step_size']
+   
         self.result_names = list()
         self.units_list = list()
         for result in self.results:
@@ -1351,106 +1358,41 @@ class TaskPlotBenchmark(BenchmarkTask):
             plt.close()
 
 
-    def plot_real_time_factor(self, file_dep, target):
-        import matplotlib.pyplot as plt
-        import json
-
-        # Filter out failed benchmark tests.
-        model_tags = list()
-        out_paths = list()
-        for model_tag, out_path in zip(self.model_tags, file_dep):
-            with open(out_path) as f:
-                data = json.load(f)
-                if 'failed' not in data:
-                    model_tags.append(model_tag)
-                    out_paths.append(out_path)
-        
-        # Initialize the dictionary of CPU times.
-        real_time_factors = dict()
-        num_benchmarks = 0
-        with open(out_paths[0]) as f:
-            data = json.load(f)
-            for benchmark in data['benchmarks']:
-                real_time_factors[benchmark['name']] = list()
-            num_benchmarks = len(data['benchmarks'])
-
-        # Fill the dictionary with CPU times.
-        for out_path in out_paths:
-            with open(out_path) as f:
-                data = json.load(f)
-                for benchmark in data['benchmarks']:
-                    real_time_factors[benchmark['name']].append(
-                        self.time / (0.001*benchmark['cpu_time']))
-
-        # Plot the real time factor.
-        y = np.arange(len(model_tags))
-        width = 0.6 / num_benchmarks
-        multiplier = 0
-        if num_benchmarks > 1:
-            multiplier = -num_benchmarks // 2
-
-        # Create the figure and axis.
-        fig, ax = plt.subplots(figsize=(5, 8))
-        
-        # Plot the real time factors.
-        for benchmark, rt_factor in real_time_factors.items():
-            offset = width * multiplier
-            ax.barh(y + offset, rt_factor, width, label=benchmark)
-            multiplier += 1
-
-        # Set the x-axis labels based on max CPU time.
-        all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
-        all_xticklabels = ['0.01', '0.1', '1', '10', '100', '1000', '10000', '100000']
-        max_value = 0
-        for key, value in real_time_factors.items():
-            max_value = max(max_value, max(value))
-
-        xticks = list()
-        xticklabels = list()
-        for xtick, xticklabel in zip(all_xticks, all_xticklabels):
-            if xtick < 100 * max_value:
-                xticks.append(xtick)
-                xticklabels.append(xticklabel)
-
-        # Set the plot parameters.
-        plt.xscale('log')
-        plt.xticks(xticks, xticklabels)
-        plt.yticks(y, model_tags, fontsize=6)
-        plt.xlabel(f'Real Time Factor')
-        plt.grid(axis='x', linestyle='--')
-        plt.grid(axis='x', which='minor', alpha=0.7, linestyle='--', linewidth=0.4)
-        ax.set_axisbelow(True)
-        plt.title(self.benchmark_name)
-        plt.legend(loc='lower right', fontsize=6)
-
-        # Save the plot.
-        plt.tight_layout()
-        plt.savefig(target[0], dpi=600)
-        plt.close()
-
-
 class TaskPlotBenchmarkComparison(StudyTask):
     REGISTRY = []
-    def __init__(self, study, benchmark, model_tuples, labels, result, time, step=None):
+    def __init__(self, study, benchmark, model_tuples, labels, result, time, flags=None):
         super(TaskPlotBenchmarkComparison, self).__init__(study)
-        self.name = f'plot_{benchmark}_comparison_{result}_time{time}'
-        if not step is None:
-            self.name += f'_step{step}'
+        self.name = f'plot_{benchmark}_comparison_{result}'
+        self.time = time
+        self.flags = flags if flags is not None else dict()
+
+        subdir = f'time{self.time}'
+        if 'step' in self.flags:
+            subdir += f'_step{self.flags["step"]}'
+        if 'accuracy' in self.flags:
+            subdir += f'_accuracy{self.flags["accuracy"]}'
+        if 'parameter' in self.flags:
+            subdir += f'_parameter{self.flags["parameter"]}'
+        if 'scale' in self.flags:
+            subdir += f'_scale{self.flags["scale"]}'
+
+        self.name += f'_{subdir}'
+
         self.benchmark = benchmark
         self.result = result
-        self.step = step
-        self.time = time
         self.integrator_name = ''
         if 'euler' in self.benchmark.lower():
             self.integrator_name = 'semi-explicit Euler'
         elif 'rk4' in self.benchmark.lower():
             self.integrator_name = 'Runge-Kutta-Merson embedded 4th order'
+        elif 'benchmark_contact' in self.benchmark.lower():
+            self.integrator_name = 'CPodes'
 
         self.step_name = ''
-        if step is None:
+        if 'step' not in self.flags:
             self.step_name = f'adaptive step size'
         else:
-            self.step_name = f'$h$ = {self.step} s'
+            self.step_name = f'$h$ = {self.flags["step"]} s'
 
         self.result_name, self.units = get_result_name(self.result)
 
@@ -1460,19 +1402,17 @@ class TaskPlotBenchmarkComparison(StudyTask):
         assert(len(model_tuples) == len(labels))
         for model_tuple in model_tuples:
             name = model_tuple[0]
-            flags = model_tuple[1]
+            model_flags = model_tuple[1]
             model = self.study.get_model(name)
             if model is None:
                 print(f' --> {self.name}: Model {name} not found.')
             else:
                 self.models.append(model)
                 model_name, model_tag = ModelGenerator.get_name_and_tag(
-                    model.name, flags)
+                    model.name, model_flags)
                 self.model_names.append(model_name)
 
-        subdir = f'time{self.time}'
-        if not step is None:
-            subdir += f'_step{self.step}'
+
 
         self.json_files = list()
         for model, model_name in zip(self.models, self.model_names):
@@ -1481,7 +1421,7 @@ class TaskPlotBenchmarkComparison(StudyTask):
                     f'{model.name}', self.benchmark, subdir, f'{model_name}.json'))
             
         self.figure_path = os.path.join(self.study.config['figures_path'],
-                f'{benchmark}_comparison_{result}_time{time}_step{step}.png')
+                f'{benchmark}_comparison_{result}_{subdir}.png')
         
         self.add_action(self.json_files, 
                         [self.figure_path],
@@ -1498,6 +1438,7 @@ class TaskPlotBenchmarkComparison(StudyTask):
                 if self.result in data:
                     results.append(abs(data[self.result]))
                 else:
+                    results.append(np.nan)
                     print(f' --> {self.name}: Result {self.result} not found.')
 
         fig, ax = plt.subplots(figsize=(5, 4))

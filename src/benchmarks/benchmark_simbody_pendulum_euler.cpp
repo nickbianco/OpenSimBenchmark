@@ -9,7 +9,7 @@ static const char HELP[] =
 R"(Benchmark a simulation of an N-link pendulum in Simbody.
 
 Usage:
-  benchmark_simbody_pendulum_euler <nlinks> <output> [--time <time>] [--step <step>]
+  benchmark_simbody_pendulum_euler <nlinks> <output> --time=<time> --step=<step>
   benchmark_simbody_pendulum_euler -h | --help
 
 Options:

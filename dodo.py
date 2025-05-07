@@ -132,6 +132,8 @@ def add_model(model_file, label, flags=[]):
             exe_args={'time': time})
     benchmark_manager_rk4.add_task(TaskPlotBenchmark, benchmark_manager_rk4.tasks[-1])
 
+    return model
+
 
 add_model('Rajagopal', 'Rajagopal', 
           flags=['ignore_activation_dynamics', 
@@ -174,17 +176,38 @@ add_model('RajagopalFunctionBasedPathsDGFNoConstraints',
                  'ignore_passive_fiber_force',
                  'remove_muscles']) 
 
-add_model('RajagopalFunctionBasedPathsDGFContact', 
-          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact', 
-          flags=['ignore_activation_dynamics', 
-                 'ignore_passive_fiber_force',
-                 'remove_muscles']) 
+model = add_model('RajagopalFunctionBasedPathsDGFContact', 
+                 'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact', 
+                 flags=['ignore_activation_dynamics', 
+                        'ignore_passive_fiber_force',
+                        'remove_muscles']) 
 
-add_model('RajagopalFunctionBasedPathsDGFContactNoConstraints', 
-          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact\nno constraints', 
-          flags=['ignore_activation_dynamics', 
-                 'ignore_passive_fiber_force',
-                 'remove_muscles']) 
+scales = [0.01, 0.1, 1.0]
+parameters = ['stiffness', 'dissipation', 'friction']
+accuracy = 0.01
+time = 2.5
+
+benchmark_contact = model.add_benchmark('benchmark_contact')
+for parameter in parameters:
+    for scale in scales:
+        benchmark_contact.add_task(TaskRunBenchmark, model.tasks[-1], 
+                exe_args={'time': time, 'accuracy': accuracy, 
+                          'parameter': parameter, 'scale': scale})
+        benchmark_contact.add_task(TaskPlotBenchmark, benchmark_contact.tasks[-1])
+
+model = add_model('RajagopalFunctionBasedPathsDGFContactNoConstraints', 
+                  'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact\nno constraints', 
+                  flags=['ignore_activation_dynamics', 
+                         'ignore_passive_fiber_force',
+                         'remove_muscles']) 
+benchmark_contact = model.add_benchmark('benchmark_contact')
+for parameter in parameters:
+    for scale in scales:
+        benchmark_contact.add_task(TaskRunBenchmark, model.tasks[-1], 
+                exe_args={'time': time, 'accuracy': accuracy, 
+                          'parameter': parameter, 'scale': scale})
+        benchmark_contact.add_task(TaskPlotBenchmark, benchmark_contact.tasks[-1])
+
 
 model_tuples = []
 empty_flags = ['']
@@ -214,18 +237,43 @@ labels.append('no muscles')
 model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', ['remove_muscles']))
 labels.append('no muscles\ncontact')
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
-               model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
+               model_tuples, labels, 'real_time_factor', 1.0, {'step': 0.001})
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
                model_tuples, labels, 'real_time_factor', 1.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_euler', 
-               model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
+               model_tuples, labels, 'real_time_factor', 1.0, {'step': 0.001})
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_euler', 
                model_tuples, labels, 'real_time_factor', 1.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_rk4', 
-               model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
+               model_tuples, labels, 'real_time_factor', 1.0, {'step': 0.001})
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_rk4', 
                model_tuples, labels, 'real_time_factor', 1.0)
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_euler', 
-               model_tuples, labels, 'real_time_factor', 1.0, step=0.001)
+               model_tuples, labels, 'real_time_factor', 1.0, {'step': 0.001})
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_manager_euler', 
                model_tuples, labels, 'real_time_factor', 1.0)
+
+
+model_tuples = []
+empty_flags = ['']
+labels = list()
+flags = ['ignore_activation_dynamics',
+         'ignore_passive_fiber_force']
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', empty_flags))
+labels.append('function-based paths\nsmooth muscles\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', flags))
+labels.append('function-based paths\nsmooth muscles\nno muscle dynamics\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContactNoConstraints', empty_flags))
+labels.append('function-based paths\nsmooth muscles\nno constraints\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContactNoConstraints', flags))
+labels.append('function-based paths\nsmooth muscles\nno muscle dynamics\nno constraints\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', ['remove_muscles']))
+labels.append('no muscles\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContactNoConstraints', ['remove_muscles']))
+labels.append('no muscles\nno constraints\ncontact')
+for parameter in parameters:
+    for scale in scales:
+        study.add_task(TaskPlotBenchmarkComparison, 'benchmark_contact', 
+                    model_tuples, labels, 'real_time_factor', 2.5, 
+                    {'accuracy': 0.01, 'parameter': parameter, 'scale': scale})
+
