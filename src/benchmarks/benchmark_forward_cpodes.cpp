@@ -6,14 +6,15 @@
 using json = nlohmann::json;
 
 static const char HELP[] =
-R"(Benchmark a forward simulation with contact.
+R"(Benchmark a forward simulation with contact using the CPodes integrator.
 
 Usage:
-  benchmark_contact <model> <output> --time=<time> --accuracy=<accuracy> --parameter=<parameter> --scale=<scale>
-  benchmark_contact -h | --help
+  benchmark_forward_cpodes <model> <output> --time=<time> --step=<step> --accuracy=<accuracy> --parameter=<parameter> --scale=<scale>
+  benchmark_forward_cpodes -h | --help
 
 Options:
   -t <time>,      --time <time>            Set the final time.
+  -s <step>,      --step <step>            Set the step size.
   -a <accuracy>,  --step <accuracy>        Set the integrator accuracy.
   -p <parameter>, --parameter <parameter>  Set the contact parameter to evaluate.
   -s <scale>,     --scale <scale>          Scale factor for the parameter.
@@ -103,6 +104,12 @@ int main(int argc, char** argv) {
                 "Final time must be positive.");
     }
 
+    // Step size.
+    double step = -1.0; // seconds
+    if (args["--step"]) {
+        step = std::stod(args["--step"].asString());
+    }
+
     // Integrator accuracy.
     double accuracy = -1.0;
     if (args["--accuracy"]) {
@@ -128,6 +135,9 @@ int main(int argc, char** argv) {
     for (int i = 0; i < num_reps; ++i) {
         SimTK::CPodesIntegrator integrator(system,
             SimTK::CPodes::BDF, SimTK::CPodes::Newton);
+        if (step > 0) {
+            integrator.setFixedStepSize(step);
+        }
         integrator.setAccuracy(accuracy);
         SimTK::TimeStepper timeStepper(system, integrator);
         resetState(state, true);

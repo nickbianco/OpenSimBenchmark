@@ -153,8 +153,6 @@ int main(int argc, char** argv) {
     double step = -1; // seconds
     if (args["--step"]) {
         step = std::stod(args["--step"].asString());
-        OPENSIM_THROW_IF(step <= 0, OpenSim::Exception, 
-                "Step size must be positive.");
     }
 
     // Get the output file.

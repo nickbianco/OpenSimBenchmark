@@ -31,7 +31,8 @@ study = Study('opensim_benchmark')
 study.add_task(TaskInstallDependencies)
 
 # MyoSuite tests.
-study.add_task(TaskBenchmarkMyoSuiteModels, 1.0, 0.001)
+study.add_task(TaskBenchmarkMyoSuiteModels, 1.0, 0.001, False)
+study.add_task(TaskBenchmarkMyoSuiteModels, 1.0, 0.001, True)
 
 # MuJoCo pendulum tests.
 integrators = ['Euler', 'RK4']
@@ -182,31 +183,32 @@ model = add_model('RajagopalFunctionBasedPathsDGFContact',
                         'ignore_passive_fiber_force',
                         'remove_muscles']) 
 
-scales = [0.01, 0.1, 1.0]
+scales = [0.001, 0.01, 0.1, 1.0, 10.0]
 parameters = ['stiffness', 'dissipation', 'friction']
 accuracy = 0.01
 time = 2.5
 
-benchmark_contact = model.add_benchmark('benchmark_contact')
+benchmark_forward_cpodes = model.add_benchmark('benchmark_forward_cpodes')
 for parameter in parameters:
     for scale in scales:
-        benchmark_contact.add_task(TaskRunBenchmark, model.tasks[-1], 
+        benchmark_forward_cpodes.add_task(TaskRunBenchmark, model.tasks[-1], 
                 exe_args={'time': time, 'accuracy': accuracy, 
                           'parameter': parameter, 'scale': scale})
-        benchmark_contact.add_task(TaskPlotBenchmark, benchmark_contact.tasks[-1])
+        benchmark_forward_cpodes.add_task(TaskPlotBenchmark, benchmark_forward_cpodes.tasks[-1])
 
 model = add_model('RajagopalFunctionBasedPathsDGFContactNoConstraints', 
                   'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact\nno constraints', 
                   flags=['ignore_activation_dynamics', 
                          'ignore_passive_fiber_force',
                          'remove_muscles']) 
-benchmark_contact = model.add_benchmark('benchmark_contact')
+benchmark_forward_cpodes = model.add_benchmark('benchmark_forward_cpodes')
 for parameter in parameters:
     for scale in scales:
-        benchmark_contact.add_task(TaskRunBenchmark, model.tasks[-1], 
+        benchmark_forward_cpodes.add_task(TaskRunBenchmark, model.tasks[-1], 
                 exe_args={'time': time, 'accuracy': accuracy, 
                           'parameter': parameter, 'scale': scale})
-        benchmark_contact.add_task(TaskPlotBenchmark, benchmark_contact.tasks[-1])
+        benchmark_forward_cpodes.add_task(TaskPlotBenchmark, benchmark_forward_cpodes.tasks[-1])
+
 
 
 model_tuples = []
@@ -273,7 +275,7 @@ model_tuples.append(('RajagopalFunctionBasedPathsDGFContactNoConstraints', ['rem
 labels.append('no muscles\nno constraints\ncontact')
 for parameter in parameters:
     for scale in scales:
-        study.add_task(TaskPlotBenchmarkComparison, 'benchmark_contact', 
+        study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_cpodes', 
                     model_tuples, labels, 'real_time_factor', 2.5, 
                     {'accuracy': 0.01, 'parameter': parameter, 'scale': scale})
 

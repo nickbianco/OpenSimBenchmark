@@ -188,9 +188,12 @@ class TaskInstallDependencies(StudyTask):
 
 class TaskBenchmarkMyoSuiteModels(StudyTask):
     REGISTRY = []
-    def __init__(self, study, time, step):
+    def __init__(self, study, time, step, contact=False):
         super(TaskBenchmarkMyoSuiteModels, self).__init__(study)
         self.name = f'run_benchmark_myosuite_models_time{time}_step{step}'
+        self.contact = contact
+        if self.contact:
+            self.name += '_contact'
         self.model_paths = list()
         self.mujoco_path = self.study.config['mujoco_path']
         self.model_names = list()
@@ -198,7 +201,9 @@ class TaskBenchmarkMyoSuiteModels(StudyTask):
         self.step = step
 
         # Output directory
-        self.result_path = os.path.join(self.study.config['results_path'], 'MyoSuite')
+        subdir = 'contact' if self.contact else 'no_contact'
+        self.result_path = os.path.join(self.study.config['results_path'], 'MyoSuite',
+                                         subdir)
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
@@ -256,9 +261,10 @@ class TaskBenchmarkMyoSuiteModels(StudyTask):
             model.opt.timestep = self.step
 
             # Disable contacts
-            for i in range(model.ngeom):
-                model.geom_contype[i] = 0
-                model.geom_conaffinity[i] = 0
+            if not self.contact:
+                for i in range(model.ngeom):
+                    model.geom_contype[i] = 0
+                    model.geom_conaffinity[i] = 0
 
             # Disable collision detection            
             data = mujoco.MjData(model)
@@ -1256,6 +1262,8 @@ class TaskRunBenchmark(BenchmarkTask):
             command = f'{self.exe_path} {model_path} {out_path}'
             for arg in self.exe_args:
                 command += f' --{arg}={self.exe_args[arg]}'
+            if 'step' not in self.exe_args:
+                command += ' --step=-1'
             try:
                 p = subprocess.run(command, check=True, shell=True,
                                     cwd=self.benchmark.results_path)
@@ -1385,7 +1393,7 @@ class TaskPlotBenchmarkComparison(StudyTask):
             self.integrator_name = 'semi-explicit Euler'
         elif 'rk4' in self.benchmark.lower():
             self.integrator_name = 'Runge-Kutta-Merson embedded 4th order'
-        elif 'benchmark_contact' in self.benchmark.lower():
+        elif 'cpodes' in self.benchmark.lower():
             self.integrator_name = 'CPodes'
 
         self.step_name = ''

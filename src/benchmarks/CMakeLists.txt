@@ -28,6 +28,6 @@ add_executable(benchmark_simbody_pendulum_rk4_custom benchmark_simbody_pendulum_
 target_link_libraries(benchmark_simbody_pendulum_rk4_custom ${OpenSim_LIBRARIES} docopt_s nlohmann_json::nlohmann_json)
 target_include_directories(benchmark_simbody_pendulum_rk4_custom PRIVATE ${docopt_INCLUDE_DIRS})
 
-add_executable(benchmark_contact benchmark_contact.cpp ../../utilities/utilities.h)
-target_link_libraries(benchmark_contact ${OpenSim_LIBRARIES} docopt_s nlohmann_json::nlohmann_json)
-target_include_directories(benchmark_contact PRIVATE ${docopt_INCLUDE_DIRS})
+add_executable(benchmark_forward_cpodes benchmark_forward_cpodes.cpp ../../utilities/utilities.h)
+target_link_libraries(benchmark_forward_cpodes ${OpenSim_LIBRARIES} docopt_s nlohmann_json::nlohmann_json)
+target_include_directories(benchmark_forward_cpodes PRIVATE ${docopt_INCLUDE_DIRS})
