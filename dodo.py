@@ -278,4 +278,31 @@ for parameter in parameters:
         study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_cpodes', 
                     model_tuples, labels, 'real_time_factor', 2.5, 
                     {'accuracy': 0.01, 'parameter': parameter, 'scale': scale})
+        
+model_tuples = []
+empty_flags = ['']
+labels = list()
+flags = ['ignore_activation_dynamics',
+         'ignore_passive_fiber_force']
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', empty_flags))
+labels.append('function-based paths\nsmooth muscles\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', flags))
+labels.append('function-based paths\nsmooth muscles\nno muscle dynamics\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContactNoConstraints', empty_flags))
+labels.append('function-based paths\nsmooth muscles\nno constraints\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContactNoConstraints', flags))
+labels.append('function-based paths\nsmooth muscles\nno muscle dynamics\nno constraints\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', ['remove_muscles']))
+labels.append('no muscles\ncontact')
+model_tuples.append(('RajagopalFunctionBasedPathsDGFContactNoConstraints', ['remove_muscles']))
+labels.append('no muscles\nno constraints\ncontact')
+study.add_task(TaskPlotContactParameterSweep, 'benchmark_forward_cpodes',
+               model_tuples, labels, 'real_time_factor', 2.5,
+               'stiffness', 0.01, scales)
+study.add_task(TaskPlotContactParameterSweep, 'benchmark_forward_cpodes',
+               model_tuples, labels, 'real_time_factor', 2.5,
+               'dissipation', 0.01, scales)
+study.add_task(TaskPlotContactParameterSweep, 'benchmark_forward_cpodes',
+               model_tuples, labels, 'real_time_factor', 2.5,
+               'friction', 0.01, scales)
 

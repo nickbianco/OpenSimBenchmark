@@ -1483,6 +1483,109 @@ class TaskPlotBenchmarkComparison(StudyTask):
         plt.close()
 
 
+class TaskPlotContactParameterSweep(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, benchmark, model_tuples, labels, result, time,
+                 parameter, accuracy, scales):
+        super(TaskPlotContactParameterSweep, self).__init__(study)
+        subdir = f'time{time}_accuracy{accuracy}_parameter{parameter}'
+        self.name = f'plot_{benchmark}_{subdir}_sweep_{result}'
+        self.time = time
+        self.accuracy = accuracy
+        self.parameter = parameter
+        self.scales = scales
+        self.benchmark = benchmark
+        self.result = result
+        subdir = f'time{self.time}_accuracy{self.accuracy}_parameter{self.parameter}'
+
+        self.result_name, self.units = get_result_name(self.result)
+
+        self.models = list()
+        self.model_names = list()
+        self.labels = labels
+        assert(len(model_tuples) == len(labels))
+        for model_tuple in model_tuples:
+            name = model_tuple[0]
+            model_flags = model_tuple[1]
+            model = self.study.get_model(name)
+            if model is None:
+                print(f' --> {self.name}: Model {name} not found.')
+            else:
+                self.models.append(model)
+                model_name, model_tag = ModelGenerator.get_name_and_tag(
+                    model.name, model_flags)
+                self.model_names.append(model_name)
+
+        self.json_files = list()
+        for model, model_name in zip(self.models, self.model_names):
+            for scale in scales:
+                self.json_files.append(
+                        os.path.join(self.study.config['results_path'],
+                        f'{model.name}', self.benchmark, f'{subdir}_scale{scale}', 
+                        f'{model_name}.json'))
+            
+        self.figure_path = os.path.join(self.study.config['figures_path'],
+                f'{benchmark}_{parameter}_sweep_{result}_{subdir}.png')
+        
+        self.add_action(self.json_files, 
+                        [self.figure_path],
+                        self.plot_benchmark_comparison)
+
+    def plot_benchmark_comparison(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+
+        results = dict()
+        idx = 0
+        for model_name in self.model_names:
+            results[model_name] = list()
+            for scale in self.scales:
+                json_file = file_dep[idx]
+                with open(json_file) as f:
+                    data = json.load(f)
+                    if self.result in data:
+                        results[model_name].append(abs(data[self.result]))
+                    else:
+                        results[model_name].append(np.nan)
+                        print(f' --> {self.name}: Result {self.result} not found.')
+                idx += 1
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        x = np.arange(len(self.scales))
+
+        for i, model_name in enumerate(self.model_names):
+            ax.plot(x, results[model_name], label=model_name, lw=1.5, 
+                    marker='o', markersize=5)
+            
+        # Plot the y-axis on a log scale
+        ax.set_yscale('log')
+
+        # Set the x-ticks and labels.
+        ax.set_xticks(x)
+        ax.set_xticklabels(self.scales, fontsize=8)
+
+        # Set the y-label and title.
+        ax.set_xlabel('parameter scale factor')
+        ax.set_ylabel(f'{self.result_name} {self.units}')
+        ax.set_ylim(0.1, 30)
+
+        if 'real_time_factor' in self.result:
+            ax.axhline(y=1, color='black', linestyle='-', lw=3, zorder=0)
+
+        # Set the grid include minor ticks.
+        ax.grid(which='major', linestyle='-', linewidth=0.5)
+        ax.grid(which='minor', linestyle='-', linewidth=0.2, alpha=0.5)
+
+        ax = plt.gca()
+        ax.set_axisbelow(True)
+        ax.legend(fontsize=6)
+
+        # Save the figure.
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
+
+
 class TaskRunPerf(PerfTask):
     REGISTRY = []
     def __init__(self, perf, event, generate_models_task, exe_args=None):
