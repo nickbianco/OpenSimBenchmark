@@ -987,7 +987,8 @@ class TaskCreateRajagopalModels(StudyTask):
                             'RajagopalFunctionBasedPathsDGF',
                             'RajagopalFunctionBasedPathsDGFNoConstraints',
                             'RajagopalFunctionBasedPathsDGFContact',
-                            'RajagopalFunctionBasedPathsDGFContactNoConstraints']
+                            'RajagopalFunctionBasedPathsDGFContactNoConstraints',
+                            'RajagopalContact']
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'], 
@@ -1207,6 +1208,47 @@ class TaskCreateRajagopalModels(StudyTask):
 
         model.printToXML(target[10])
         print(f' --> Created {target[10]}')
+
+        # Base model with contact.
+        model = osim.Model(file_dep[0])
+        model.initSystem()
+
+        # Add stiffness and damping to the joints. Toe stiffness and damping values
+        # are based on Falisse et al. (2022), "Modeling toes contributes to 
+        # realistic stance knee mechanics in three-dimensional predictive 
+        # simulations of walking."
+        expressionBasedForceSet = osim.ForceSet(file_dep[2])
+        for i in range(expressionBasedForceSet.getSize()):
+            model.addComponent(expressionBasedForceSet.get(i).clone())
+
+        # Add the contact geometry to the model.
+        contactGeometrySet = osim.ContactGeometrySet(file_dep[3])
+        for i in range(contactGeometrySet.getSize()):
+            contactGeometry = contactGeometrySet.get(i).clone()
+            # Raise the ContactSpheres by 2 cm so that bottom of the spheres
+            # are better aligned with the ground.
+            if 'floor' not in contactGeometry.getName():
+                location = contactGeometry.upd_location()
+                location.set(1, location.get(1) + 0.02)
+            model.addContactGeometry(contactGeometry)
+
+        # Add the contact forces to the model.
+        contactForceSet = osim.ForceSet(file_dep[4])
+        for i in range(contactForceSet.getSize()):
+            model.addComponent(contactForceSet.get(i).clone())
+        model.finalizeConnections()
+
+        # Update the default pelvis Y location so that the contact spheres lie just
+        # above the ground.
+        coordset = model.updCoordinateSet()
+        pelvis_ty = coordset.get('pelvis_ty')
+        pelvis_ty.set_default_value(1.03)
+        pelvis_ty.set_default_speed_value(0.0)
+
+        model.initSystem()
+        model.printToXML(target[11])
+        print(f' --> Created {target[11]}')
+
         
 class TaskGenerateModels(ModelTask):
     REGISTRY = []

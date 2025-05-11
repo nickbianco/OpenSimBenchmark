@@ -210,6 +210,19 @@ for parameter in parameters:
         benchmark_forward_cpodes.add_task(TaskPlotBenchmark, benchmark_forward_cpodes.tasks[-1])
 
 
+model = add_model('RajagopalContact', 
+                  'Rajagopal\ncontact', 
+                  flags=['ignore_activation_dynamics', 
+                         'ignore_passive_fiber_force',
+                         'remove_muscles']) 
+benchmark_forward_cpodes = model.add_benchmark('benchmark_forward_cpodes')
+for parameter in parameters:
+    for scale in scales:
+        benchmark_forward_cpodes.add_task(TaskRunBenchmark, model.tasks[-1], 
+                exe_args={'time': time, 'accuracy': accuracy, 
+                          'parameter': parameter, 'scale': scale})
+        benchmark_forward_cpodes.add_task(TaskPlotBenchmark, benchmark_forward_cpodes.tasks[-1])
+
 
 model_tuples = []
 empty_flags = ['']
@@ -226,18 +239,12 @@ model_tuples.append(('RajagopalFunctionBasedPathsDGF', empty_flags))
 labels.append('function-based paths\nsmooth muscles')
 model_tuples.append(('RajagopalFunctionBasedPathsDGF', flags))
 labels.append('function-based paths\nsmooth muscles\nno muscle dynamics')
-model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', empty_flags))
-labels.append('function-based paths\nsmooth muscles\ncontact')
-model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', flags))
-labels.append('function-based paths\nsmooth muscles\nno muscle dynamics\ncontact')
 model_tuples.append(('RajagopalFunctionBasedPathsDGFNoConstraints', empty_flags))
 labels.append('function-based paths\nsmooth muscles\nno constraints')
 model_tuples.append(('RajagopalFunctionBasedPathsDGFNoConstraints', flags))
 labels.append('function-based paths\nsmooth muscles\nno muscle dynamics\nno constraints')
 model_tuples.append(('Rajagopal', ['remove_muscles']))
 labels.append('no muscles')
-model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', ['remove_muscles']))
-labels.append('no muscles\ncontact')
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
                model_tuples, labels, 'real_time_factor', 1.0, {'step': 0.001})
 study.add_task(TaskPlotBenchmarkComparison, 'benchmark_forward_rk4', 
@@ -261,6 +268,10 @@ empty_flags = ['']
 labels = list()
 flags = ['ignore_activation_dynamics',
          'ignore_passive_fiber_force']
+model_tuples.append(('RajagopalContact', empty_flags))
+labels.append('base model\ncontact')
+model_tuples.append(('RajagopalContact', flags))
+labels.append('base model\nno muscle dynamics\ncontact')
 model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', empty_flags))
 labels.append('function-based paths\nsmooth muscles\ncontact')
 model_tuples.append(('RajagopalFunctionBasedPathsDGFContact', flags))
