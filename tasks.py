@@ -988,7 +988,9 @@ class TaskCreateRajagopalModels(StudyTask):
                             'RajagopalFunctionBasedPathsDGFNoConstraints',
                             'RajagopalFunctionBasedPathsDGFContact',
                             'RajagopalFunctionBasedPathsDGFContactNoConstraints',
-                            'RajagopalContact']
+                            'RajagopalContact',
+                            'Rajagopal18Muscles',
+                            'Rajagopal18MusclesContact']
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'], 
@@ -1248,6 +1250,75 @@ class TaskCreateRajagopalModels(StudyTask):
         model.initSystem()
         model.printToXML(target[11])
         print(f' --> Created {target[11]}')
+
+        # 18 muscle model.
+        model = osim.Model(file_dep[0])
+        model.initSystem()
+        muscles = model.updMuscles()
+
+        muscles_to_keep = ['bfsh', 'gasmed', 'glmax2', 'psoas', 'recfem', 'semimem',
+                           'soleus', 'tibant', 'vasint']
+        muscle_strenths = [557.11, 4690.57, 3337.58, 2697.34, 2191.74, 4105.46,
+                           7924.99, 2116.81, 9593.95]
+        muscles_to_remove = []
+        for i in range(muscles.getSize()):
+            muscle = muscles.get(i)
+
+            removeMuscle = True
+            for j, name in enumerate(muscles_to_keep):
+                if name in muscle.getName():
+                    muscle.setMaxIsometricForce(muscle_strenths[j])
+                    removeMuscle = False
+                    break
+
+            if removeMuscle:
+                muscles_to_remove.append(muscle.getName())
+
+        forceset = model.updForceSet()
+        for muscle_name in muscles_to_remove:
+            muscle = muscles.get(muscle_name)
+            forceset.remove(forceset.getIndex(muscle))
+
+        model.initSystem()
+        model.printToXML(target[12])
+        print(f' --> Created {target[12]}')
+
+        # 18 muscle model with contact.
+        # Add stiffness and damping to the joints. Toe stiffness and damping values
+        # are based on Falisse et al. (2022), "Modeling toes contributes to 
+        # realistic stance knee mechanics in three-dimensional predictive 
+        # simulations of walking."
+        expressionBasedForceSet = osim.ForceSet(file_dep[2])
+        for i in range(expressionBasedForceSet.getSize()):
+            model.addComponent(expressionBasedForceSet.get(i).clone())
+
+        # Add the contact geometry to the model.
+        contactGeometrySet = osim.ContactGeometrySet(file_dep[3])
+        for i in range(contactGeometrySet.getSize()):
+            contactGeometry = contactGeometrySet.get(i).clone()
+            # Raise the ContactSpheres by 2 cm so that bottom of the spheres
+            # are better aligned with the ground.
+            if 'floor' not in contactGeometry.getName():
+                location = contactGeometry.upd_location()
+                location.set(1, location.get(1) + 0.02)
+            model.addContactGeometry(contactGeometry)
+
+        # Add the contact forces to the model.
+        contactForceSet = osim.ForceSet(file_dep[4])
+        for i in range(contactForceSet.getSize()):
+            model.addComponent(contactForceSet.get(i).clone())
+        model.finalizeConnections()
+
+        # Update the default pelvis Y location so that the contact spheres lie just
+        # above the ground.
+        coordset = model.updCoordinateSet()
+        pelvis_ty = coordset.get('pelvis_ty')
+        pelvis_ty.set_default_value(1.03)
+        pelvis_ty.set_default_speed_value(0.0)
+
+        model.initSystem()
+        model.printToXML(target[13])
+        print(f' --> Created {target[13]}')
 
         
 class TaskGenerateModels(ModelTask):

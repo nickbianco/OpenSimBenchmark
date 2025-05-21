@@ -141,6 +141,11 @@ add_model('Rajagopal', 'Rajagopal',
                  'ignore_passive_fiber_force',
                  'remove_muscles'])
 
+add_model('Rajagopal18Muscles', 'Rajagopal\n18 muscles', 
+          flags=['ignore_activation_dynamics', 
+                 'ignore_passive_fiber_force',
+                 'remove_muscles'])
+
 add_model('RajagopalPathActuators', 'Rajagopal\npath actuators')
 
 add_model('RajagopalFunctionBasedPaths', 'Rajagopal\nfunction based paths', 
@@ -212,6 +217,20 @@ for parameter in parameters:
 
 model = add_model('RajagopalContact', 
                   'Rajagopal\ncontact', 
+                  flags=['ignore_activation_dynamics', 
+                         'ignore_passive_fiber_force',
+                         'remove_muscles']) 
+benchmark_forward_cpodes = model.add_benchmark('benchmark_forward_cpodes')
+for parameter in parameters:
+    for scale in scales:
+        benchmark_forward_cpodes.add_task(TaskRunBenchmark, model.tasks[-1], 
+                exe_args={'time': time, 'accuracy': accuracy, 
+                          'parameter': parameter, 'scale': scale})
+        benchmark_forward_cpodes.add_task(TaskPlotBenchmark, benchmark_forward_cpodes.tasks[-1])
+
+
+model = add_model('Rajagopal18MusclesContact', 
+                  'Rajagopal\n18 muscles\ncontact', 
                   flags=['ignore_activation_dynamics', 
                          'ignore_passive_fiber_force',
                          'remove_muscles']) 
