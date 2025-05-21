@@ -79,7 +79,18 @@ for result_type in result_types:
 for step in steps:
         study.add_task(TaskPlotPendulumComparison, ['Simbody', 'MuJoCo'],
                     result_type, nlinks, step, time, 'rk4_custom')
+        
+# Simbody Gait3D tests.
+for time in [5.0, 20.0]:
+    for contact in ['hunt_crossley', 'exponential_spring']:
+        for integrator in ['euler', 'cpodes']:
+            for accuracy in [0.01, 0.001]:
+                study.add_task(TaskSimbodyGait3DBenchmark, contact, integrator,
+                            exe_args={'time': time, 'accuracy': accuracy})
+                
 
+# Compare Millard model curves between OpenSim and SCONE.
+study.add_task(TaskCompareMillardMuscleModels)
 
 # Create Rajagopal models.
 study.add_task(TaskCreateRajagopalModels)
@@ -228,18 +239,19 @@ for parameter in parameters:
                           'parameter': parameter, 'scale': scale})
         benchmark_forward_cpodes.add_task(TaskPlotBenchmark, benchmark_forward_cpodes.tasks[-1])
 
-
+scale = 1.0
+parameter = 'stiffness'
 model = add_model('Rajagopal18MusclesContact', 
                   'Rajagopal\n18 muscles\ncontact', 
                   flags=['ignore_activation_dynamics', 
                          'ignore_passive_fiber_force',
                          'remove_muscles']) 
 benchmark_forward_cpodes = model.add_benchmark('benchmark_forward_cpodes')
-for parameter in parameters:
-    for scale in scales:
+for time in [5.0, 20.0]:
+    for accuracy in [0.01, 0.001]:
         benchmark_forward_cpodes.add_task(TaskRunBenchmark, model.tasks[-1], 
                 exe_args={'time': time, 'accuracy': accuracy, 
-                          'parameter': parameter, 'scale': scale})
+                            'parameter': parameter, 'scale': scale})
         benchmark_forward_cpodes.add_task(TaskPlotBenchmark, benchmark_forward_cpodes.tasks[-1])
 
 

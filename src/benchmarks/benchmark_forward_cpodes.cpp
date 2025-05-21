@@ -15,7 +15,7 @@ Usage:
 Options:
   -t <time>,      --time <time>            Set the final time.
   -s <step>,      --step <step>            Set the step size.
-  -a <accuracy>,  --step <accuracy>        Set the integrator accuracy.
+  -a <accuracy>,  --accuracy <accuracy>    Set the integrator accuracy.
   -p <parameter>, --parameter <parameter>  Set the contact parameter to evaluate.
   -s <scale>,     --scale <scale>          Scale factor for the parameter.
 )";

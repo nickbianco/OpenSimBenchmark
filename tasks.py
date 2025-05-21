@@ -953,6 +953,131 @@ class TaskPlotPendulumComparison(StudyTask):
         plt.savefig(target[0], dpi=600)
         plt.close()
 
+class TaskSimbodyGait3DBenchmark(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, contact, integrator, exe_args=None):
+        super(TaskSimbodyGait3DBenchmark, self).__init__(study)
+        self.contact = contact
+        self.integrator = integrator
+        self.name = f'run_simbody_gait3d_benchmark'
+        if exe_args is None:
+            exe_args = dict()
+        self.exe_args = exe_args
+        for arg in self.exe_args:
+            self.name  += f'_{arg}{exe_args[arg]}'
+        self.name += f'_{self.contact}_{self.integrator}'
+
+        self.result_name = 'gait3d'
+        for arg in self.exe_args:
+            self.result_name += f'_{arg}{self.exe_args[arg]}'
+        self.result_name += f'_{self.contact}_{self.integrator}'
+
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+                f'benchmark_gait3d_{self.contact}_{self.integrator}')
+
+        # A dummy file dependency to satisify doit's dependency tree.
+        self.dummy_path = os.path.join(self.study.config['data_path'], 'pendulum',
+                                       'dummy.txt')
+        self.result_path = os.path.join(self.study.config['results_path'], 'Gait3D',
+                self.result_name)
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+        self.result_file = os.path.join(self.result_path, f'{self.result_name}.json')
+        
+        self.add_action([self.dummy_path], 
+                        [self.result_file], 
+                        self.run_gait3d_benchmark)        
+
+    def run_gait3d_benchmark(self, file_dep, target):
+        import subprocess
+        command = f'{self.exe_path} {target[0]}'
+        for arg in self.exe_args:
+                command += f' --{arg}={self.exe_args[arg]}'
+        if 'step' not in self.exe_args:
+            command += ' --step=-1'
+        try:
+            p = subprocess.run(command, check=True, shell=True,
+                            cwd=self.result_path)
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+        except Exception as e:
+            import json
+            output = dict()
+            output['failed'] = True
+            output['error'] = str(e)
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4)
+
+        if not os.path.exists(target[0]):
+            output = dict()
+            output['failed'] = True
+            output['error'] = 'No output file was created.'
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4) 
+
+
+class TaskCompareMillardMuscleModels(StudyTask):
+    REGISTRY = []
+    def __init__(self, study):
+        super(TaskCompareMillardMuscleModels, self).__init__(study)
+
+        self.name = 'compare_millard_muscle_models'
+
+        self.model_path = os.path.join(self.study.config['data_path'], 'Rajagopal',
+                'subject_walk_scaled.osim')
+        self.result_file = os.path.join(self.study.config['figures_path'], 
+                'millard_muscle_model_comparison.png')
+        
+        self.add_action([self.model_path], 
+                        [self.result_file], 
+                        self.run_millard_model_comparison)        
+
+    def run_millard_model_comparison(self, file_dep, target):
+        import matplotlib.pyplot as plt
+
+        def calc_active_force_length_multiplier_scone(normalizedFiberLength):
+            r1 = 0.46899
+            r2 = 1.80528
+            cL1 = 1.5
+            cL2 = -2.75
+            if r1 < normalizedFiberLength and normalizedFiberLength < r2:
+                fiberStrain = normalizedFiberLength - 1.0
+                fiberStrainSquared = fiberStrain*fiberStrain
+                fiberStrainCubed = fiberStrainSquared*fiberStrain
+                return cL1*fiberStrainCubed + cL2*fiberStrainSquared + 1.0
+            else:
+                return 0
+        
+        normFiberLengths = np.linspace(0.2, 2.2, 500)
+        model = osim.Model(file_dep[0])
+        model.finalizeConnections()
+
+        muscles = model.getMuscles()
+        muscle = osim.Millard2012EquilibriumMuscle.safeDownCast(muscles.get(0))
+        fl = muscle.get_ActiveForceLengthCurve()
+
+        fl_opensim = np.zeros_like(normFiberLengths)
+        fl_scone = np.zeros_like(normFiberLengths)
+        for i, normFiberLength in enumerate(normFiberLengths):
+            x = osim.Vector(1, normFiberLength)
+            fl_opensim[i] = fl.calcValue(x)
+            # Get the active force length multiplier for the Scone model.
+            fl_scone[i] = calc_active_force_length_multiplier_scone(normFiberLength)
+
+        # Plot the results.
+        fig, ax = plt.subplots(figsize=(2.5, 2.5))
+        ax.plot(normFiberLengths, fl_opensim, label='current', lw=2.5, color='k')
+        ax.plot(normFiberLengths, fl_scone, label='fast', lw=2.5, color='red')
+        ax.set_xlabel('norm. fiber length')
+        ax.set_ylabel('norm. fiber force')
+        ax.legend()
+        ax.set_xlim(0, 2.75)
+        ax.grid(alpha=0.2)
+        ax = plt.gca()
+        ax.set_axisbelow(True)
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
 
 class TaskCreateRajagopalModels(StudyTask):
     REGISTRY = []
