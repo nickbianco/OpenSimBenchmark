@@ -1721,6 +1721,128 @@ class TaskPlotBenchmarkComparison(StudyTask):
         plt.close()
 
 
+class TaskPlotP41Comparison(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, benchmark, model_tuples, labels, result, time, flags=None):
+        super(TaskPlotP41Comparison, self).__init__(study)
+        self.name = 'plot_p41_comparison'
+        self.time = time
+        self.flags = flags if flags is not None else dict()
+
+        subdir = f'time{self.time}'
+        if 'step' in self.flags:
+            subdir += f'_step{self.flags["step"]}'
+        if 'accuracy' in self.flags:
+            subdir += f'_accuracy{self.flags["accuracy"]}'
+        if 'parameter' in self.flags:
+            subdir += f'_parameter{self.flags["parameter"]}'
+        if 'scale' in self.flags:
+            subdir += f'_scale{self.flags["scale"]}'
+
+        # self.name += f'_{subdir}'
+
+        self.benchmark = benchmark
+        self.result = result
+        self.integrator_name = ''
+        if 'euler' in self.benchmark.lower():
+            self.integrator_name = 'semi-explicit Euler'
+        elif 'rk4' in self.benchmark.lower():
+            self.integrator_name = 'Runge-Kutta-Merson embedded 4th order'
+        elif 'cpodes' in self.benchmark.lower():
+            self.integrator_name = 'CPodes'
+
+        self.step_name = ''
+        if 'step' not in self.flags:
+            self.step_name = f'adaptive step size'
+        else:
+            self.step_name = f'$h$ = {self.flags["step"]} s'
+
+        self.result_name, self.units = get_result_name(self.result)
+
+        self.models = list()
+        self.model_names = list()
+        self.labels = labels
+        assert(len(model_tuples) == len(labels))
+        for model_tuple in model_tuples:
+            name = model_tuple[0]
+            model_flags = model_tuple[1]
+            model = self.study.get_model(name)
+            if model is None:
+                print(f' --> {self.name}: Model {name} not found.')
+            else:
+                self.models.append(model)
+                model_name, model_tag = ModelGenerator.get_name_and_tag(
+                    model.name, model_flags)
+                self.model_names.append(model_name)
+
+
+
+        self.json_files = list()
+        for model, model_name in zip(self.models, self.model_names):
+            self.json_files.append(
+                    os.path.join(self.study.config['results_path'],
+                    f'{model.name}', self.benchmark, subdir, f'{model_name}.json'))
+            
+        self.figure_path = os.path.join(self.study.config['figures_path'],
+                'p41_comparison.png')
+        
+        self.add_action(self.json_files, 
+                        [self.figure_path],
+                        self.plot_p41_comparison)
+
+    def plot_p41_comparison(self, file_dep, target):
+        import matplotlib.pyplot as plt
+        import json
+
+        results = list()
+        for json_file in file_dep:
+            with open(json_file) as f:
+                data = json.load(f)
+                if self.result in data:
+                    results.append(abs(data[self.result]))
+                else:
+                    results.append(np.nan)
+                    print(f' --> {self.name}: Result {self.result} not found.')
+
+        fig, ax = plt.subplots(figsize=(3, 3.25))
+        bar_width = 0.5
+        x = np.arange(len(self.models))
+        ax.bar(x, results, width=bar_width)    
+
+        ax.set_ylim(0.1, 10000)
+            
+        # Plot the y-axis on a log scale
+        ax.set_yscale('log')
+
+        # Set the x-ticks and labels.
+        ax.set_xticks(x)
+        ax.set_xticklabels(self.labels, fontsize=6)
+
+        # Reduce fontsize of the y-tick labels.
+        for label in ax.get_yticklabels():
+            label.set_fontsize(6)
+
+        # Set the y-label and title.
+        ax.set_ylabel(f'real-to-sim time ratio', fontsize=7)
+
+        if 'real_time_factor' in self.result:
+            ax.axhline(y=1, color='red', linestyle='-', lw=1.5, zorder=0)
+
+        # Set the grid include minor ticks.
+        ax.grid(which='major', linestyle='-', linewidth=0.5, alpha=0.5)
+        ax.grid(which='minor', linestyle='-', linewidth=0.2, alpha=0.2)
+
+        # Remove the top and right spines.
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        ax = plt.gca()
+        ax.set_axisbelow(True)
+        # Save the figure.
+        plt.tight_layout()
+        plt.savefig(target[0], dpi=600)
+        plt.close()
+
 class TaskPlotContactParameterSweep(StudyTask):
     REGISTRY = []
     def __init__(self, study, benchmark, model_tuples, labels, result, time,

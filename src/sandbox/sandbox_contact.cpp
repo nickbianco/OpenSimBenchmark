@@ -9,7 +9,7 @@ const Real fviscous = 0.;
 const Real dissipation = 1.0;
 // Converted from Scone stiffness k = 11000 N/m with radius 0.03 m.
 const Real stiffness = 1e7; 
-const Real tvel = 0.1;
+const Real tvel = 0.001;
 
 // Body parameters.
 const Real hx = 0.5;
@@ -347,10 +347,10 @@ double testExponentialSpringForce(double mass, bool visualize = false) {
     ExponentialSpringParameters params;
     double scale = 1.0;
     params.setNormalViscosity(scale*dissipation);
-    params.setFrictionViscosity(scale*dissipation);
+    // params.setFrictionViscosity(scale*dissipation);
     params.setInitialMuStatic(scale*fstatic);
     params.setInitialMuKinetic(scale*fdynamic);
-    params.setSettleVelocity(tvel);
+    // params.setSettleVelocity(tvel);
 
     ExponentialSpringForce spring1(forces, groundFrame, root, 
                                    Vec3(-hx, 0, 0), params);
@@ -398,38 +398,38 @@ double testExponentialSpringForce(double mass, bool visualize = false) {
 int main() {
     // Disable logging
 
-    // testCompliantContactSubsystem(1.0, true);
-    // testHuntCrossleyForce(1000.0, true);
-    // testExponentialSpringForce(1.0, true);
+    testCompliantContactSubsystem(10.0, false);
+    testHuntCrossleyForce(10.0, false);
+    testExponentialSpringForce(10.0, false);
 
 
-    std::vector<double> masses = {0.1, 1.0, 10.0, 100.0, 1000.0};
-    std::unordered_map<std::string, std::vector<double>> realTimeFactors;
+    // std::vector<double> masses = {0.1, 1.0, 10.0, 100.0, 1000.0};
+    // std::unordered_map<std::string, std::vector<double>> realTimeFactors;
 
-    // Run the test.
-    for (const auto& mass : masses) {
-        std::cout << "Running simulation with mass: " << mass << std::endl;
-        realTimeFactors["CompliantContactSubsystem"].push_back(
-            testCompliantContactSubsystem(mass));
-        realTimeFactors["HuntCrossleyForce"].push_back(
-            testHuntCrossleyForce(mass));
-        realTimeFactors["SmoothSphereHalfSpaceForce"].push_back(
-            testSmoothSphereHalfSpaceForce(mass));
-        realTimeFactors["ExponentialSpringForce"].push_back(
-            testExponentialSpringForce(mass));
-    }
+    // // Run the test.
+    // for (const auto& mass : masses) {
+    //     std::cout << "Running simulation with mass: " << mass << std::endl;
+    //     realTimeFactors["CompliantContactSubsystem"].push_back(
+    //         testCompliantContactSubsystem(mass));
+    //     realTimeFactors["HuntCrossleyForce"].push_back(
+    //         testHuntCrossleyForce(mass));
+    //     realTimeFactors["SmoothSphereHalfSpaceForce"].push_back(
+    //         testSmoothSphereHalfSpaceForce(mass));
+    //     realTimeFactors["ExponentialSpringForce"].push_back(
+    //         testExponentialSpringForce(mass));
+    // }
 
-    // Print a table of results.
-    std::cout << "\nResults:\n";
-    std::cout << "Mass\tCompliantContact\tHuntCrossley\tSmoothSphere\tExponentialSpring\n";
-    for (size_t i = 0; i < masses.size(); ++i) {
-        std::cout << masses[i] << "\t" 
-                  << realTimeFactors["CompliantContactSubsystem"][i] << "\t" << "\t" << "\t"
-                  << realTimeFactors["HuntCrossleyForce"][i] << "\t" << "\t" << "\t"
-                  << realTimeFactors["SmoothSphereHalfSpaceForce"][i] << "\t" << "\t" << "\t"
-                  << realTimeFactors["ExponentialSpringForce"][i] << "\n";
-    }
-    std::cout << "\n";
+    // // Print a table of results.
+    // std::cout << "\nResults:\n";
+    // std::cout << "Mass\tCompliantContact\tHuntCrossley\tSmoothSphere\tExponentialSpring\n";
+    // for (size_t i = 0; i < masses.size(); ++i) {
+    //     std::cout << masses[i] << "\t" 
+    //               << realTimeFactors["CompliantContactSubsystem"][i] << "\t" << "\t" << "\t"
+    //               << realTimeFactors["HuntCrossleyForce"][i] << "\t" << "\t" << "\t"
+    //               << realTimeFactors["SmoothSphereHalfSpaceForce"][i] << "\t" << "\t" << "\t"
+    //               << realTimeFactors["ExponentialSpringForce"][i] << "\n";
+    // }
+    // std::cout << "\n";
 
-    return 0;
+    // return 0;
 }

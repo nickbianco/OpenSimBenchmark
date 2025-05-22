@@ -348,3 +348,18 @@ study.add_task(TaskPlotContactParameterSweep, 'benchmark_forward_cpodes',
                model_tuples, labels, 'real_time_factor', 2.5,
                'friction', 0.01, scales)
 
+
+model_tuples = []
+labels = list()
+flags = ['ignore_activation_dynamics',
+         'ignore_passive_fiber_force']
+model_tuples.append(('Rajagopal', ['remove_muscles']))
+labels.append('skeleton\nonly')
+model_tuples.append(('Rajagopal', ['']))
+labels.append('w/ muscles')
+model_tuples.append(('RajagopalContact', ['remove_muscles']))
+labels.append('w/ contact')
+model_tuples.append(('RajagopalContact', ['']))
+labels.append('w/ muscles,\ncontact')
+study.add_task(TaskPlotP41Comparison, 'benchmark_forward_rk4', 
+               model_tuples, labels, 'real_time_factor', 1.0)
