@@ -112,6 +112,8 @@ int main(int argc, char** argv) {
     SimTK::Vector integration_times(10, 0.0);
     SimTK::Vector real_time_factors(10, 0.0);
     SimTK::Vector final_energies(10, 0.0);
+    SimTK::Vector num_steps(10, 0.0);
+    SimTK::Vector times_per_step(10, 0.0);
     for (int i = 0; i < 10; ++i) {
         resetState(state);
         Manager manager(model);
@@ -128,6 +130,8 @@ int main(int argc, char** argv) {
         time_elapsed /= 1.0e6;
         integration_times[i] = time_elapsed;
         real_time_factors[i] = time / time_elapsed;
+        num_steps[i] =  manager.getIntegrator().getNumStepsTaken();
+        times_per_step[i] = 1000.0*(time_elapsed / num_steps[i]);
         
         // Final energy
         // ------------
@@ -139,6 +143,8 @@ int main(int argc, char** argv) {
     j["real_time_factor"] = SimTK::mean(real_time_factors);
     double final_energy = SimTK::mean(final_energies);
     j["energy_conservation"] = final_energy - initial_energy;
+    j["num_steps"] = SimTK::mean(num_steps);
+    j["time_per_step"] = SimTK::mean(times_per_step);
 
     std::ofstream file(output_file, std::ios::out | std::ios::binary);
     if (file) {

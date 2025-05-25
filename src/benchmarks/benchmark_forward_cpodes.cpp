@@ -132,6 +132,7 @@ int main(int argc, char** argv) {
     std::vector<int> num_steps(num_reps);
     num_steps.reserve(num_reps);
     SimTK::Vector average_step_sizes(num_reps, 0.0);
+    SimTK::Vector times_per_step(num_reps, 0.0);
     for (int i = 0; i < num_reps; ++i) {
         SimTK::CPodesIntegrator integrator(system,
             SimTK::CPodes::BDF, SimTK::CPodes::Newton);
@@ -152,11 +153,13 @@ int main(int argc, char** argv) {
         real_time_factors[i] = time / time_elapsed;
         num_steps.push_back(integrator.getNumStepsTaken());
         average_step_sizes[i] = (1000.0 * time) / integrator.getNumStepsTaken();
+        times_per_step[i] = 1000.0 * time_elapsed / integrator.getNumStepsTaken();
     }
     j["forward_integration_time"] = SimTK::mean(integration_times);
     j["real_time_factor"] = SimTK::mean(real_time_factors);
     j["num_steps"] = std::accumulate(num_steps.begin(), num_steps.end(), 0) / num_reps;
     j["average_step_size"] = SimTK::mean(average_step_sizes);
+    j["time_per_step"] = SimTK::mean(times_per_step);
 
     std::ofstream file(output_file, std::ios::out | std::ios::binary);
     if (file) {

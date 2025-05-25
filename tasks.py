@@ -1114,8 +1114,8 @@ class TaskCreateRajagopalModels(StudyTask):
                             'RajagopalFunctionBasedPathsDGFContact',
                             'RajagopalFunctionBasedPathsDGFContactNoConstraints',
                             'RajagopalContact',
-                            'Rajagopal18Muscles',
-                            'Rajagopal18MusclesContact']
+                            'Rajagopal22Muscles',
+                            'Rajagopal22MusclesContact']
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'], 
@@ -1376,15 +1376,40 @@ class TaskCreateRajagopalModels(StudyTask):
         model.printToXML(target[11])
         print(f' --> Created {target[11]}')
 
-        # 18 muscle model.
+        # 22 muscle model.
         model = osim.Model(file_dep[0])
+        model.initSystem()
+        forceset = model.updForceSet()
+        actuators_to_remove = ['shoulder_flex', 'shoulder_add', 'shoulder_rot',
+                               'elbow_flex', 'pro_sup']
+        for actuator_name in actuators_to_remove:
+            for side in ['l', 'r']:
+                actu = forceset.get(f'{actuator_name}_{side}')
+                forceset.remove(forceset.getIndex(actu))
+
+        modelProcessor = osim.ModelProcessor(model)
+        joints_to_weld = osim.StdVectorString()
+        joints_to_weld.append('mtp_l')
+        joints_to_weld.append('mtp_r')
+        joints_to_weld.append('subtalar_l')
+        joints_to_weld.append('subtalar_r')
+        joints_to_weld.append('acromial_l')
+        joints_to_weld.append('acromial_r')
+        joints_to_weld.append('elbow_l')
+        joints_to_weld.append('elbow_r')
+        joints_to_weld.append('radioulnar_l')
+        joints_to_weld.append('radioulnar_r')
+        joints_to_weld.append('radius_hand_l')
+        joints_to_weld.append('radius_hand_r')
+        modelProcessor.append(osim.ModOpReplaceJointsWithWelds(joints_to_weld))
+        model = modelProcessor.process()
         model.initSystem()
         muscles = model.updMuscles()
 
         muscles_to_keep = ['bfsh', 'gasmed', 'glmax2', 'psoas', 'recfem', 'semimem',
-                           'soleus', 'tibant', 'vasint']
+                           'soleus', 'tibant', 'vasint', 'glmed2', 'addmagDist']
         muscle_strenths = [557.11, 4690.57, 3337.58, 2697.34, 2191.74, 4105.46,
-                           7924.99, 2116.81, 9593.95]
+                           7924.99, 2116.81, 9593.95, 2045.0, 2268.0]
         muscles_to_remove = []
         for i in range(muscles.getSize()):
             muscle = muscles.get(i)
@@ -1415,7 +1440,11 @@ class TaskCreateRajagopalModels(StudyTask):
         # simulations of walking."
         expressionBasedForceSet = osim.ForceSet(file_dep[2])
         for i in range(expressionBasedForceSet.getSize()):
-            model.addComponent(expressionBasedForceSet.get(i).clone())
+            force = expressionBasedForceSet.get(i)
+            if (not 'Shoulder' in force.getName() and
+                not 'Elbow' in force.getName() and
+                not 'Toe' in force.getName()):
+                model.addComponent(force.clone())
 
         # Add the contact geometry to the model.
         contactGeometrySet = osim.ContactGeometrySet(file_dep[3])

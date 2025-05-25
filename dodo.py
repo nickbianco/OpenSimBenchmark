@@ -117,6 +117,14 @@ def add_model(model_file, label, flags=[]):
             exe_args={'time': time})
     benchmark_forward_euler.add_task(TaskPlotBenchmark, benchmark_forward_euler.tasks[-1])
 
+    benchmark_forward_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
+            exe_args={'time': 5.0})
+    benchmark_forward_euler.add_task(TaskPlotBenchmark, benchmark_forward_euler.tasks[-1])
+
+    benchmark_forward_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
+            exe_args={'time': 20.0})
+    benchmark_forward_euler.add_task(TaskPlotBenchmark, benchmark_forward_euler.tasks[-1])
+
     benchmark_forward_rk4 = model.add_benchmark('benchmark_forward_rk4')
     benchmark_forward_rk4.add_task(TaskRunBenchmark, model.tasks[-1], 
             exe_args={'time': time, 'step': step})
@@ -133,6 +141,14 @@ def add_model(model_file, label, flags=[]):
 
     benchmark_manager_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
             exe_args={'time': time})
+    benchmark_manager_euler.add_task(TaskPlotBenchmark, benchmark_manager_euler.tasks[-1])
+
+    benchmark_manager_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
+            exe_args={'time': 5.0})
+    benchmark_manager_euler.add_task(TaskPlotBenchmark, benchmark_manager_euler.tasks[-1])
+
+    benchmark_manager_euler.add_task(TaskRunBenchmark, model.tasks[-1], 
+            exe_args={'time': 20.0})
     benchmark_manager_euler.add_task(TaskPlotBenchmark, benchmark_manager_euler.tasks[-1])
 
     benchmark_manager_rk4 = model.add_benchmark('benchmark_manager_rk4')
@@ -152,7 +168,7 @@ add_model('Rajagopal', 'Rajagopal',
                  'ignore_passive_fiber_force',
                  'remove_muscles'])
 
-add_model('Rajagopal18Muscles', 'Rajagopal\n18 muscles', 
+add_model('Rajagopal22Muscles', 'Rajagopal\n22 muscles', 
           flags=['ignore_activation_dynamics', 
                  'ignore_passive_fiber_force',
                  'remove_muscles'])
@@ -241,7 +257,7 @@ for parameter in parameters:
 
 scale = 1.0
 parameter = 'stiffness'
-model = add_model('Rajagopal18MusclesContact', 
+model = add_model('Rajagopal22MusclesContact', 
                   'Rajagopal\n18 muscles\ncontact', 
                   flags=['ignore_activation_dynamics', 
                          'ignore_passive_fiber_force',
@@ -253,7 +269,6 @@ for time in [5.0, 20.0]:
                 exe_args={'time': time, 'accuracy': accuracy, 
                             'parameter': parameter, 'scale': scale})
         benchmark_forward_cpodes.add_task(TaskPlotBenchmark, benchmark_forward_cpodes.tasks[-1])
-
 
 model_tuples = []
 empty_flags = ['']
