@@ -283,31 +283,35 @@ private:
 
 class Gait3D {
 public:
-    enum BodyType {LeftFoot=0, RightFoot,
-                   LeftShank, RightShank,
-                   LeftThigh, RightThigh,
-                   Pelvis, Torso};
-    enum Muscle   {GlutMed_R, AddMag_R, Hamstrings_R, Bifemsh_R,
-                   GlutMax_R, Iliopsoas_R, RectFem_R, Vasti_R,
-                   Gastroc_R, Soleus_R, TibAnt_R, GlutMed_L,
-                   AddMag_L, Hamstrings_L, Bifemsh_L,
-                   GlutMax_L, Iliopsoas_L, RectFem_L, Vasti_L,
-                   Gastroc_L, Soleus_L, TibAnt_L};
+    enum BodyType    {LeftFoot=0, RightFoot,
+                      LeftShank, RightShank,
+                      LeftThigh, RightThigh,
+                      Pelvis, Torso};
+    enum Muscle      {GlutMed_R, AddMag_R, Hamstrings_R, Bifemsh_R,
+                      GlutMax_R, Iliopsoas_R, RectFem_R, Vasti_R,
+                      Gastroc_R, Soleus_R, TibAnt_R, GlutMed_L,
+                      AddMag_L, Hamstrings_L, Bifemsh_L,
+                      GlutMax_L, Iliopsoas_L, RectFem_L, Vasti_L,
+                      Gastroc_L, Soleus_L, TibAnt_L};
+    enum ContactType {HuntCrossleyForce,
+                      CompliantContactSubsystem,
+                      ExponentialSpringForce};
 
     static const int NBodyType = Torso-LeftFoot+1;
     static const int NContacts = 3;
 
-    Gait3D(bool useExponentialSpringContact);
+    Gait3D(ContactType contactType);
 
     void loadDefaultState(State& state);
 
-    MultibodySystem             m_system;
-    SimbodyMatterSubsystem      m_matter;
-    GeneralForceSubsystem       m_forces;
-    ContactTrackerSubsystem     m_tracker;
-    CompliantContactSubsystem   m_contactForces;
-    DecorationSubsystem         m_viz;
-    SimTK::Force::Gravity       m_gravity;
+    MultibodySystem                    m_system;
+    SimbodyMatterSubsystem             m_matter;
+    GeneralForceSubsystem              m_forces;
+    ContactTrackerSubsystem            m_tracker;
+    SimTK::CompliantContactSubsystem   m_compliantContacts;
+    GeneralContactSubsystem            m_generalContacts;
+    DecorationSubsystem                m_viz;
+    SimTK::Force::Gravity              m_gravity;
 
     Vector m_mass;             // index by BodyType
     Vector_<Vec3> m_inertia;  // index by BodyType
@@ -320,6 +324,15 @@ private:
     static Real massData[NBodyType];
     static Vec3 inertiaData[NBodyType];
     static Vec3 leftContactPoints[NContacts], rightContactPoints[NContacts];
+
+    // Contact parameters.
+    constexpr static Real stiffness = 5e6;
+    constexpr static Real dissipation = 1.0;
+    constexpr static Real mu_static = 0.9;
+    constexpr static Real mu_dynamic = 0.6;
+    constexpr static Real mu_viscous = 0.;
+    constexpr static Real transitionVelocity = .1;
+    constexpr static Real radius = 0.02;
 };
 
 Real Gait3D::massData[] = {1.25, 1.25, 3.7075, 3.7075, 9.3014, 9.3014, 
@@ -338,25 +351,16 @@ Vec3 Gait3D::leftContactPoints[] = {Vec3(-0.085, -0.015, 0.005), // heel
                                     Vec3(0.0425, -0.03, -0.041), // lateral toe
                                     Vec3(0.085, -0.03, 0.0275)}; // medial toe
                                   
-Vec3 Gait3D::rightContactPoints[] = {Vec3(-0.085, -0.015, -0.005),
-                                     Vec3(0.0425, -0.03, 0.041),
-                                     Vec3(0.085, -0.03, -0.0275)};
+Vec3 Gait3D::rightContactPoints[] = {Vec3(-0.085, -0.015, -0.005), // heel
+                                     Vec3(0.0425, -0.03, 0.041),   // lateral toe
+                                     Vec3(0.085, -0.03, -0.0275)}; // medial toe
 
-Gait3D::Gait3D(bool useExponentialSpringContact)
+Gait3D::Gait3D(ContactType contactType)
 :   m_matter(m_system), m_forces(m_system), m_tracker(m_system), 
-    m_contactForces(m_system, m_tracker), m_viz(m_system),
-    m_gravity(m_forces, m_matter, -YAxis, 9.81),
+    m_compliantContacts(m_system, m_tracker), m_generalContacts(m_system), 
+    m_viz(m_system), m_gravity(m_forces, m_matter, -YAxis, 9.81),
     m_mass(NBodyType, massData), m_inertia(NBodyType, inertiaData)
 {
-    // Contact parameters.
-    const Real stiffness = 5e6;
-    const Real dissipation = 1.0;
-    const Real mu_static = 0.9;
-    const Real mu_dynamic = 0.6;
-    const Real mu_viscous = 0.0;
-    const Real transitionVelocity = .1;
-    m_contactForces.setTransitionVelocity(transitionVelocity);
-
     // Create bodies
     m_body[Pelvis] = SimTK::Body::Rigid(MassProperties(m_mass[Pelvis], Vec3(0),
         Inertia(m_inertia[Pelvis])));
@@ -375,7 +379,56 @@ Gait3D::Gait3D(bool useExponentialSpringContact)
     m_body[RightFoot] = SimTK::Body::Rigid(MassProperties(m_mass[RightFoot],  Vec3(0),
         Inertia(m_inertia[RightFoot])));
 
-    if (!useExponentialSpringContact) {
+    // Add body decorative geometry.
+    Real opacity = 0.6;
+    m_body[Pelvis].addDecoration(Vec3(-0.01, -0.05, 0), 
+            DecorativeEllipsoid(Vec3(0.07, 0.07, 0.12))
+                    .setColor(Gray).setOpacity(opacity));
+
+    m_body[Torso].addDecoration(Vec3(0), 
+            DecorativeEllipsoid(Vec3(0.1, 0.27, 0.1))
+                    .setColor(Gray).setOpacity(opacity));
+    m_body[Torso].addDecoration(Vec3(0, 0.38, 0), 
+            DecorativeSphere(0.09).setColor(Gray).setOpacity(opacity));
+
+    m_body[LeftThigh].addDecoration(Vec3(0), 
+            DecorativeEllipsoid(Vec3(0.04, 0.2, 0.04))
+                    .setColor(Gray).setOpacity(opacity));
+    m_body[LeftShank].addDecoration(Vec3(0), 
+            DecorativeCylinder(0.02, 0.22)
+                    .setColor(Gray).setOpacity(opacity));
+    m_body[LeftFoot].addDecoration(Vec3(0), 
+            DecorativeEllipsoid(Vec3(0.1, 0.03, 0.05))
+                    .setColor(Gray).setOpacity(opacity));
+
+    m_body[RightThigh].addDecoration(Vec3(0), 
+            DecorativeEllipsoid(Vec3(0.04, 0.2, 0.04))
+                    .setColor(Gray).setOpacity(opacity));
+    m_body[RightShank].addDecoration(Vec3(0), 
+            DecorativeCylinder(0.02, 0.22)
+                    .setColor(Gray).setOpacity(opacity));
+    m_body[RightFoot].addDecoration(Vec3(0), 
+            DecorativeEllipsoid(Vec3(0.1, 0.03, 0.05))
+                    .setColor(Gray).setOpacity(opacity));
+
+    // Add contact decorative geometry.
+    m_body[LeftFoot].addDecoration(leftContactPoints[0],
+            DecorativeSphere(radius).setColor(Green));
+    m_body[LeftFoot].addDecoration(leftContactPoints[1],
+            DecorativeSphere(radius).setColor(Green));
+    m_body[LeftFoot].addDecoration(leftContactPoints[2],
+            DecorativeSphere(radius).setColor(Green));
+
+    m_body[RightFoot].addDecoration(rightContactPoints[0],
+            DecorativeSphere(radius).setColor(Green));
+    m_body[RightFoot].addDecoration(rightContactPoints[1],
+            DecorativeSphere(radius).setColor(Green));
+    m_body[RightFoot].addDecoration(rightContactPoints[2],
+            DecorativeSphere(radius).setColor(Green));
+
+    if (contactType == ContactType::CompliantContactSubsystem) {
+        m_compliantContacts.setTransitionVelocity(transitionVelocity);
+
         // Add ContactSurfaces to the feet.
         ContactCliqueId clique1 = ContactSurface::createNewContactClique();
         ContactMaterial material(stiffness, dissipation, mu_static, 
@@ -385,47 +438,35 @@ Gait3D::Gait3D(bool useExponentialSpringContact)
         // ---------
         // Heel sphere
         m_body[LeftFoot].addContactSurface(leftContactPoints[0],
-            ContactSurface(SimTK::ContactGeometry::Sphere(0.03), material)
+            ContactSurface(SimTK::ContactGeometry::Sphere(radius), material)
             .joinClique(clique1));
-        m_body[LeftFoot].addDecoration(leftContactPoints[0],
-            DecorativeSphere(0.03).setColor(Green));
-
+        
         // Lateral toe sphere
         m_body[LeftFoot].addContactSurface(leftContactPoints[1],
-            ContactSurface(SimTK::ContactGeometry::Sphere(0.02), material)
+            ContactSurface(SimTK::ContactGeometry::Sphere(radius), material)
             .joinClique(clique1));
-        m_body[LeftFoot].addDecoration(leftContactPoints[1],
-            DecorativeSphere(0.02).setColor(Green));
-
+        
         // Medial toe sphere
         m_body[LeftFoot].addContactSurface(leftContactPoints[2],
-            ContactSurface(SimTK::ContactGeometry::Sphere(0.02), material)
+            ContactSurface(SimTK::ContactGeometry::Sphere(radius), material)
             .joinClique(clique1));
-        m_body[LeftFoot].addDecoration(leftContactPoints[2],
-            DecorativeSphere(0.02).setColor(Green));
 
         // Right foot
         // ----------
         // Heel sphere
         m_body[RightFoot].addContactSurface(rightContactPoints[0],
-            ContactSurface(SimTK::ContactGeometry::Sphere(0.03), material)
+            ContactSurface(SimTK::ContactGeometry::Sphere(radius), material)
             .joinClique(clique1));
-        m_body[RightFoot].addDecoration(rightContactPoints[0],
-            DecorativeSphere(0.03).setColor(Green));
 
         // Lateral toe sphere
         m_body[RightFoot].addContactSurface(rightContactPoints[1],
-            ContactSurface(SimTK::ContactGeometry::Sphere(0.02), material)
+            ContactSurface(SimTK::ContactGeometry::Sphere(radius), material)
             .joinClique(clique1));
-        m_body[RightFoot].addDecoration(rightContactPoints[1],
-            DecorativeSphere(0.02).setColor(Green));
 
         // Medial toe sphere
         m_body[RightFoot].addContactSurface(rightContactPoints[2],
-            ContactSurface(SimTK::ContactGeometry::Sphere(0.02), material)
+            ContactSurface(SimTK::ContactGeometry::Sphere(radius), material)
             .joinClique(clique1));
-        m_body[RightFoot].addDecoration(rightContactPoints[2],
-            DecorativeSphere(0.02).setColor(Green));
 
         // Half space
         // ----------
@@ -441,8 +482,8 @@ Gait3D::Gait3D(bool useExponentialSpringContact)
 
     // Add torso.
     m_mobod[Torso] = MobilizedBody::Ball(
-            m_mobod[Pelvis], Vec3(-0.03, 0.0815, 0), 
-            m_body[Torso], Vec3(0.03, -0.32, 0));
+            m_mobod[Pelvis], Vec3(0, 0.05, 0), 
+            m_body[Torso], Vec3(0, -0.25, 0));
 
     // Add left leg.
     m_mobod[LeftThigh] = MobilizedBody::Ball(
@@ -467,7 +508,7 @@ Gait3D::Gait3D(bool useExponentialSpringContact)
             m_body[RightFoot], Transform(Vec3(-0.05123, 0.01195, -0.00792)));
 
     // We need the mobilized bodies to add exponential spring forces.
-    if (useExponentialSpringContact) {
+    if (contactType == ContactType::ExponentialSpringForce) {
         Transform groundFrame(Rotation(-0.5*Pi, XAxis), Vec3(0));
 
         ExponentialSpringParameters params;
@@ -475,72 +516,139 @@ Gait3D::Gait3D(bool useExponentialSpringContact)
         // params.setFrictionViscosity(dissipation);
         params.setInitialMuStatic(mu_static);
         params.setInitialMuKinetic(mu_dynamic);
-        // params.setSettleVelocity(transitionVelocity);
+        params.setSettleVelocity(transitionVelocity);
 
-        ExponentialSpringForce leftHeel(m_forces, groundFrame, 
+        SimTK::ExponentialSpringForce leftHeel(m_forces, groundFrame, 
                 m_mobod[LeftFoot], leftContactPoints[0], params);
-        ExponentialSpringForce leftLateralToe(m_forces, groundFrame, 
+        SimTK::ExponentialSpringForce leftLateralToe(m_forces, groundFrame, 
                 m_mobod[LeftFoot], leftContactPoints[1], params);
-        ExponentialSpringForce leftMedialToe(m_forces, groundFrame, 
+        SimTK::ExponentialSpringForce leftMedialToe(m_forces, groundFrame, 
                 m_mobod[LeftFoot], leftContactPoints[2], params);
 
-        ExponentialSpringForce rightHeel(m_forces, groundFrame, 
+        SimTK::ExponentialSpringForce rightHeel(m_forces, groundFrame, 
                 m_mobod[RightFoot], rightContactPoints[0], params);
-        ExponentialSpringForce rightLateralToe(m_forces, groundFrame,
+        SimTK::ExponentialSpringForce rightLateralToe(m_forces, groundFrame,
                 m_mobod[RightFoot], rightContactPoints[1], params);
-        ExponentialSpringForce rightMedialToe(m_forces, groundFrame,
+        SimTK::ExponentialSpringForce rightMedialToe(m_forces, groundFrame,
                 m_mobod[RightFoot], rightContactPoints[2], params);
+
+    } else if (contactType == ContactType::HuntCrossleyForce) {
+
+        ContactSetIndex setIndex = m_generalContacts.createContactSet();
+        m_generalContacts.addBody(setIndex, m_matter.updGround(), 
+                SimTK::ContactGeometry::HalfSpace(), 
+                Transform(Rotation(-0.5*Pi, ZAxis), Vec3(0))); // y < 0
+
+        m_generalContacts.addBody(setIndex, m_mobod[LeftFoot], 
+                SimTK::ContactGeometry::Sphere(radius), 
+                Transform(leftContactPoints[0]));
+        m_generalContacts.addBody(setIndex, m_mobod[LeftFoot], 
+                SimTK::ContactGeometry::Sphere(radius), 
+                Transform(leftContactPoints[1]));
+        m_generalContacts.addBody(setIndex, m_mobod[LeftFoot], 
+                SimTK::ContactGeometry::Sphere(radius), 
+                Transform(leftContactPoints[2]));
+
+        m_generalContacts.addBody(setIndex, m_mobod[RightFoot], 
+                SimTK::ContactGeometry::Sphere(radius), 
+                Transform(rightContactPoints[0]));
+        m_generalContacts.addBody(setIndex, m_mobod[RightFoot], 
+                SimTK::ContactGeometry::Sphere(radius), 
+                Transform(rightContactPoints[1]));
+        m_generalContacts.addBody(setIndex, m_mobod[RightFoot], 
+                SimTK::ContactGeometry::Sphere(radius), 
+                Transform(rightContactPoints[2]));
+       
+        SimTK::HuntCrossleyForce hc(m_forces, m_generalContacts, setIndex);
+        hc.setBodyParameters(ContactSurfaceIndex(0), stiffness, dissipation, 
+                mu_static, mu_dynamic, mu_viscous);
+        hc.setBodyParameters(ContactSurfaceIndex(1), stiffness, dissipation, 
+                mu_static, mu_dynamic, mu_viscous);
+        hc.setBodyParameters(ContactSurfaceIndex(2), stiffness, dissipation, 
+                mu_static, mu_dynamic, mu_viscous);
+        hc.setBodyParameters(ContactSurfaceIndex(3), stiffness, dissipation, 
+                mu_static, mu_dynamic, mu_viscous);
+        hc.setBodyParameters(ContactSurfaceIndex(4), stiffness, dissipation, 
+                mu_static, mu_dynamic, mu_viscous);
+        hc.setBodyParameters(ContactSurfaceIndex(5), stiffness, dissipation, 
+                mu_static, mu_dynamic, mu_viscous);
+        hc.setBodyParameters(ContactSurfaceIndex(6), stiffness, dissipation, 
+                mu_static, mu_dynamic, mu_viscous);
+        hc.setTransitionVelocity(transitionVelocity);
     }
+
+    // Joint damping forces.
+    // -------------------
+    Real jointDamping = 0.1;
+    SimTK::Force::MobilityLinearDamper lumbarDamperX(m_forces, m_mobod[Torso],
+            MobilizerUIndex(0), 10.0*jointDamping);
+    SimTK::Force::MobilityLinearDamper lumbarDamperY(m_forces, m_mobod[Torso],
+            MobilizerUIndex(1), 10.0*jointDamping);
+    SimTK::Force::MobilityLinearDamper lumbarDamperZ(m_forces, m_mobod[Torso],
+            MobilizerUIndex(2), 10.0*jointDamping);
+
+    SimTK::Force::MobilityLinearDamper leftHipDamperX(m_forces, m_mobod[LeftThigh],
+            MobilizerUIndex(0), jointDamping);
+    SimTK::Force::MobilityLinearDamper leftHipDamperY(m_forces, m_mobod[LeftThigh],
+            MobilizerUIndex(1), jointDamping);
+    SimTK::Force::MobilityLinearDamper leftHipDamperZ(m_forces, m_mobod[LeftThigh],
+            MobilizerUIndex(2), jointDamping);
+
+    SimTK::Force::MobilityLinearDamper righHipDamperX(m_forces, m_mobod[RightThigh],
+            MobilizerUIndex(0), jointDamping);
+    SimTK::Force::MobilityLinearDamper rightHipDamperY(m_forces, m_mobod[RightThigh],
+            MobilizerUIndex(1), jointDamping);
+    SimTK::Force::MobilityLinearDamper rightHipDamperZ(m_forces, m_mobod[RightThigh],
+            MobilizerUIndex(2), jointDamping);
+
+    SimTK::Force::MobilityLinearDamper leftKneeDamper(m_forces, m_mobod[LeftShank],
+            MobilizerUIndex(0), jointDamping);
+    SimTK::Force::MobilityLinearDamper leftAnkleDamper(m_forces, m_mobod[LeftFoot],
+            MobilizerUIndex(0), jointDamping);
+
+    SimTK::Force::MobilityLinearDamper rightKneeDamper(m_forces, m_mobod[RightShank],
+            MobilizerUIndex(0), jointDamping);
+    SimTK::Force::MobilityLinearDamper rightAnkleDamper(m_forces, m_mobod[RightFoot],
+            MobilizerUIndex(0), jointDamping);
 
     // Joint limit forces.
     // -------------------
-    SimTK::Force::MobilityLinearStop lumbarForceX(m_forces, m_mobod[Torso], 
-            MobilizerQIndex(0), 500, 9.02585, 
-            convertDegreesToRadians(-60.0), 
-            convertDegreesToRadians(60.0));
-    SimTK::Force::MobilityLinearStop lumbarForceY(m_forces, m_mobod[Torso], 
-            MobilizerQIndex(1), 500, 9.02585, 
-            convertDegreesToRadians(-60.0), 
-            convertDegreesToRadians(60.0));
-    SimTK::Force::MobilityLinearStop lumbarForceZ(m_forces, m_mobod[Torso], 
-            MobilizerQIndex(2), 500, 9.02585, 
-            convertDegreesToRadians(-60.0), 
-            convertDegreesToRadians(60.0));
+    // SimTK::Force::MobilityLinearStop lumbarForceX(m_forces, m_mobod[Torso], 
+    //         MobilizerQIndex(1), 500, 9.02585, 
+    //         convertDegreesToRadians(-20.0), convertDegreesToRadians(20.0));
+    // SimTK::Force::MobilityLinearStop lumbarForceY(m_forces, m_mobod[Torso], 
+    //         MobilizerQIndex(2), 500, 9.02585, 
+    //         convertDegreesToRadians(-30.0), convertDegreesToRadians(30.0));
+    // SimTK::Force::MobilityLinearStop lumbarForceZ(m_forces, m_mobod[Torso], 
+    //         MobilizerQIndex(3), 500, 9.02585, 
+    //         convertDegreesToRadians(-60.0), convertDegreesToRadians(30.0));
 
     SimTK::Force::MobilityLinearStop leftHipForceX(m_forces, m_mobod[LeftThigh], 
-            MobilizerQIndex(0), 20, 1.22629, 
-            convertDegreesToRadians(-20.0), 
-            convertDegreesToRadians(45.0));
+            MobilizerQIndex(1), 20, 1.22629,
+            convertDegreesToRadians(-20.0), convertDegreesToRadians(45.0));
     SimTK::Force::MobilityLinearStop rightHipForceX(m_forces, m_mobod[RightThigh], 
-            MobilizerQIndex(0), 20, 1.22629, 
-            convertDegreesToRadians(-20.0), 
-            convertDegreesToRadians(45.0));
+            MobilizerQIndex(1), 20, 1.22629, 
+            convertDegreesToRadians(-20.0), convertDegreesToRadians(45.0));
     SimTK::Force::MobilityLinearStop leftHipForceZ(m_forces, m_mobod[LeftThigh], 
-            MobilizerQIndex(2), 20, 1.22629, 
-            convertDegreesToRadians(-30.0), 
-            convertDegreesToRadians(120.0));
+            MobilizerQIndex(3), 20, 1.22629, 
+            convertDegreesToRadians(-30.0), convertDegreesToRadians(120.0));
     SimTK::Force::MobilityLinearStop rightHipForceZ(m_forces, m_mobod[RightThigh], 
-            MobilizerQIndex(2), 20, 1.22629, 
-            convertDegreesToRadians(-30.0), 
-            convertDegreesToRadians(120.0));
+            MobilizerQIndex(3), 20, 1.22629, 
+            convertDegreesToRadians(-30.0), convertDegreesToRadians(120.0));
 
     SimTK::Force::MobilityLinearStop leftKneeForce(m_forces, m_mobod[LeftShank], 
             MobilizerQIndex(0), 500, 2.95953, 
-            convertDegreesToRadians(-120.0), 
-            convertDegreesToRadians(-3.0));
+            convertDegreesToRadians(-120.0), convertDegreesToRadians(-3.0));
     SimTK::Force::MobilityLinearStop rightKneeForce(m_forces, m_mobod[RightShank], 
             MobilizerQIndex(0), 500, 2.95953, 
-            convertDegreesToRadians(-120.0), 
-            convertDegreesToRadians(-3.0));
+            convertDegreesToRadians(-120.0), convertDegreesToRadians(-3.0));
 
     SimTK::Force::MobilityLinearStop leftAnkleForce(m_forces, m_mobod[LeftFoot], 
             MobilizerQIndex(0), 500, 1.41762, 
-            convertDegreesToRadians(-60.0), 
-            convertDegreesToRadians(25.0));
+            convertDegreesToRadians(-60.0), convertDegreesToRadians(25.0));
     SimTK::Force::MobilityLinearStop rightAnkleForce(m_forces, m_mobod[RightFoot], 
             MobilizerQIndex(0), 500, 1.41762, 
-            convertDegreesToRadians(-60.0), 
-            convertDegreesToRadians(25.0));
+            convertDegreesToRadians(-60.0), convertDegreesToRadians(25.0));
 
     // Muscles
     // -------
@@ -744,26 +852,25 @@ Gait3D::Gait3D(bool useExponentialSpringContact)
 }
 
 void Gait3D::loadDefaultState(State& state) {
-    const static Real hipAngle = -15*Pi/180;
-    const static Real kneeAngle = -40*Pi/180;
+    const static Real hipAbductionAngle = 5*Pi/180;
+    const static Real hipFlexionAngle = 15*Pi/180;
+    const static Real kneeAngle = -60*Pi/180;
     const static Real ankleAngle = 20*Pi/180;
-    const static Real hipVelocity = .125;
-    const static Real kneeVelocity = 0;
 
-    m_mobod[Pelvis].setQToFitTranslation(state, Vec3(0,1.0,0));
-    m_mobod[Pelvis].setOneU(state, 2, -hipVelocity);
+    m_mobod[Pelvis].setQToFitTranslation(state, Vec3(0,1.05,0));
 
-    m_mobod[LeftThigh].setOneQ(state, 0, -hipAngle);
-    m_mobod[LeftShank].setOneQ(state, 0, kneeAngle);
-    m_mobod[LeftFoot].setOneQ(state, 0, ankleAngle);
-    m_mobod[LeftThigh].setOneU(state, 0, hipVelocity);
-    m_mobod[LeftShank].setOneU(state, 0, kneeVelocity);
+    // m_mobod[Torso].setQToFitRotation(state, Rotation(-Pi/6, ZAxis));
 
-    m_mobod[RightThigh].setOneQ(state, 0, hipAngle);
-    m_mobod[RightShank].setOneQ(state, 0, kneeAngle);
-    m_mobod[RightFoot].setOneQ(state, 0, ankleAngle);
-    m_mobod[RightThigh].setOneU(state, 0, hipVelocity);
-    m_mobod[RightShank].setOneU(state, 0, -kneeVelocity);
+    // m_mobod[LeftThigh].setOneQ(state, 1, hipAbductionAngle);
+    // m_mobod[LeftThigh].setOneQ(state, 3, hipFlexionAngle);
+    // m_mobod[LeftShank].setOneQ(state, 0, kneeAngle);
+    // m_mobod[LeftFoot].setOneQ(state, 0, ankleAngle);
+
+    // m_mobod[RightThigh].setOneQ(state, 1, -hipAbductionAngle);
+    // m_mobod[RightThigh].setOneQ(state, 3, hipFlexionAngle);
+    // m_mobod[RightShank].setOneQ(state, 0, kneeAngle);
+    // m_mobod[RightFoot].setOneQ(state, 0, ankleAngle);
+
 }
 
 

@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
         true); // show help if requested
 
     // 3D gait system.
-    Gait3D model(false);
+    Gait3D model(Gait3D::ContactType::CompliantContactSubsystem);
 
     // Final time.
     double time = 5.0; // seconds

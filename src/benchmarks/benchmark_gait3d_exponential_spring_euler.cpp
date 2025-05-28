@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
         true); // show help if requested
 
     // 3D gait system.
-    Gait3D model(true);
+    Gait3D model(Gait3D::ContactType::ExponentialSpringForce);
 
     // Final time.
     double time = 5.0; // seconds
