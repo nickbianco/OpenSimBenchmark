@@ -1087,46 +1087,133 @@ class TaskCompareMillardMuscleModels(StudyTask):
     def run_millard_model_comparison(self, file_dep, target):
         import matplotlib.pyplot as plt
 
-        def calc_active_force_length_multiplier_scone(normalizedFiberLength):
+        def calc_active_force_length_multiplier(normFiberLength):
             r1 = 0.46899
             r2 = 1.80528
             cL1 = 1.5
             cL2 = -2.75
-            if r1 < normalizedFiberLength and normalizedFiberLength < r2:
-                fiberStrain = normalizedFiberLength - 1.0
+            if r1 < normFiberLength and normFiberLength < r2:
+                fiberStrain = normFiberLength - 1.0
                 fiberStrainSquared = fiberStrain*fiberStrain
                 fiberStrainCubed = fiberStrainSquared*fiberStrain
                 return cL1*fiberStrainCubed + cL2*fiberStrainSquared + 1.0
             else:
                 return 0
+            
+        def calc_tendon_force_length_multiplier(normTendonLength):
+            cT1 = 260.972;
+            cT2 = 7.9706;
+            if normTendonLength > 1.0:
+                tendonStrain = normTendonLength - 1.0
+                return tendonStrain * (cT1*tendonStrain + cT2)
+            else:
+                return 0
+
+        def calc_active_force_velocity_multiplier(normFiberVelocity):
+            cV1 = 0.227;
+            cV2 = 0.5;
+            Fvmax = 1.6;
+            if normFiberVelocity >= 0.0:
+                return Fvmax*normFiberVelocity + (cV2 / (cV2 + normFiberVelocity))
+            elif -1.0 < normFiberVelocity < 0.0:
+                return cV1*(normFiberVelocity + 1.0) / (cV1 - normFiberVelocity)
+            else:
+                return 0
+
+        def calc_passive_force_length_multiplier(normFiberLength):
+            cP1 = 1.08027;
+            cP2 = 1.27368;
+            if normFiberLength > 1.0:
+                fiberStrain = normFiberLength - 1.0
+                fiberStrainSquared = fiberStrain*fiberStrain
+                fiberStrainCubed = fiberStrainSquared*fiberStrain
+                return cP1*fiberStrainCubed + cP2*fiberStrainSquared
+            else:
+                return 0
         
-        normFiberLengths = np.linspace(0.2, 2.2, 500)
+        normFiberLengths = np.linspace(0.0, 2.5, 500)
+        normTendonLengths = np.linspace(0.8, 1.2, 500)
+        normFiberVelocities = np.linspace(-1.0, 1.0, 500)
+
         model = osim.Model(file_dep[0])
         model.finalizeConnections()
 
         muscles = model.getMuscles()
         muscle = osim.Millard2012EquilibriumMuscle.safeDownCast(muscles.get(0))
         fl = muscle.get_ActiveForceLengthCurve()
+        ft = muscle.get_TendonForceLengthCurve()
+        fv = muscle.get_ForceVelocityCurve()
+        fp = muscle.get_FiberForceLengthCurve()
 
         fl_opensim = np.zeros_like(normFiberLengths)
         fl_scone = np.zeros_like(normFiberLengths)
+        fp_opensim = np.zeros_like(normFiberLengths)
+        fp_scone = np.zeros_like(normFiberLengths)
         for i, normFiberLength in enumerate(normFiberLengths):
             x = osim.Vector(1, normFiberLength)
             fl_opensim[i] = fl.calcValue(x)
-            # Get the active force length multiplier for the Scone model.
-            fl_scone[i] = calc_active_force_length_multiplier_scone(normFiberLength)
+            fl_scone[i] = calc_active_force_length_multiplier(normFiberLength)
 
-        # Plot the results.
-        fig, ax = plt.subplots(figsize=(2.5, 2.5))
-        ax.plot(normFiberLengths, fl_opensim, label='current', lw=2.5, color='k')
-        ax.plot(normFiberLengths, fl_scone, label='fast', lw=2.5, color='red')
-        ax.set_xlabel('norm. fiber length')
-        ax.set_ylabel('norm. fiber force')
-        ax.legend()
-        ax.set_xlim(0, 2.75)
-        ax.grid(alpha=0.2)
-        ax = plt.gca()
-        ax.set_axisbelow(True)
+            fp_opensim[i] = fp.calcValue(x)
+            fp_scone[i] = calc_passive_force_length_multiplier(normFiberLength)
+
+        ft_opensim = np.zeros_like(normTendonLengths)
+        ft_scone = np.zeros_like(normTendonLengths)
+        for i, normTendonLength in enumerate(normTendonLengths):
+            x = osim.Vector(1, normTendonLength)
+            ft_opensim[i] = ft.calcValue(x)
+            ft_scone[i] = calc_tendon_force_length_multiplier(normTendonLength)
+
+        fv_opensim = np.zeros_like(normFiberVelocities)
+        fv_scone = np.zeros_like(normFiberVelocities)
+        for i, normFiberVelocity in enumerate(normFiberVelocities):
+            x = osim.Vector(1, normFiberVelocity)
+            fv_opensim[i] = fv.calcValue(x)
+            fv_scone[i] = calc_active_force_velocity_multiplier(normFiberVelocity)
+
+
+        # Create a figure with four subplots
+        fig, axs = plt.subplots(2, 2, figsize=(6, 6))
+        axs = axs.flatten()
+        # active force length curve.
+        axs[0].plot(normFiberLengths, fl_opensim, label='OpenSim', lw=2.5, color='k')
+        axs[0].plot(normFiberLengths, fl_scone, label='SCONE', lw=2.5, color='red')
+        axs[0].set_xlabel('norm. fiber length')
+        axs[0].set_ylabel('norm. fiber force')
+        axs[0].set_title('active force length curve')
+        axs[0].grid(alpha=0.2)
+        axs[0].set_xlim(0, 2.5)
+        axs[0].set_axisbelow(True)
+        # active force velocity curve.
+        axs[1].plot(normFiberVelocities, fv_opensim, label='OpenSim', lw=2.5, color='k')
+        axs[1].plot(normFiberVelocities, fv_scone, label='SCONE', lw=2.5, color='red')
+        axs[1].set_xlabel('norm. fiber velocity')
+        axs[1].set_ylabel('norm. fiber force')
+        axs[1].set_title('active force velocity curve')
+        axs[1].grid(alpha=0.2)
+        axs[1].set_xlim(-1.0, 1.0)  
+        axs[1].set_axisbelow(True)
+        # passive force length curve.
+        axs[2].plot(normFiberLengths, fp_opensim, label='OpenSim', lw=2.5, color='k')
+        axs[2].plot(normFiberLengths, fp_scone, label='SCONE', lw=2.5, color='red')
+        axs[2].set_xlabel('norm. fiber length')
+        axs[2].set_ylabel('norm. fiber force')
+        axs[2].set_title('passive force length curve')
+        axs[2].grid(alpha=0.2)
+        axs[2].set_xlim(0, 2.5)
+        axs[2].set_axisbelow(True)
+        axs[2].legend()
+        # tendon force length curve.
+        axs[3].plot(normTendonLengths, ft_opensim, label='OpenSim', lw=2.5, color='k')
+        axs[3].plot(normTendonLengths, ft_scone, label='SCONE', lw=2.5, color='red')
+        axs[3].set_xlabel('norm. tendon length')
+        axs[3].set_ylabel('norm. tendon force')
+        axs[3].set_title('tendon force length curve')
+        axs[3].grid(alpha=0.2)
+        axs[3].set_xlim(0.8, 1.2)
+        axs[3].set_axisbelow(True)
+        
+
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
