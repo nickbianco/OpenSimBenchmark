@@ -711,6 +711,58 @@ class TaskSimbodyPendulumBenchmarkRK4Custom(StudyTask):
                 json.dump(output, f, indent=4) 
         
 
+class TaskSimbodyPendulumBenchmarkEulerCustom(StudyTask):
+    REGISTRY = []
+    def __init__(self, study, nlinks, step, time):
+        super(TaskSimbodyPendulumBenchmarkEulerCustom, self).__init__(study)
+        self.name = (f'run_simbody_{nlinks}link_pendulum_benchmark'
+                     f'_step{step}_time{time}_Euler_custom')
+        self.nlinks = nlinks
+        self.step = step
+        self.time = time
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+                f'benchmark_simbody_pendulum_euler_custom')
+
+        # A dummy file dependency to satisify doit's dependency tree.
+        self.dummy_path = os.path.join(self.study.config['data_path'], 'pendulum',
+                                       'dummy.txt')
+        self.result_path = os.path.join(self.study.config['results_path'], 'pendulums',
+                'Simbody', f'{nlinks}link_pendulum')
+        if not os.path.exists(self.result_path):
+            os.makedirs(self.result_path)
+
+        self.result_file = os.path.join(self.result_path, 
+                f'{nlinks}link_pendulum_step{step}_time{time}_Euler_custom.json')
+        
+        self.add_action([self.dummy_path], 
+                        [self.result_file], 
+                        self.run_pendulum_benchmark)        
+
+    def run_pendulum_benchmark(self, file_dep, target):
+        import subprocess
+        command = f'{self.exe_path} {self.nlinks} {target[0]}'
+        command += f' --time {self.time} --step {self.step}'
+        try:
+            p = subprocess.run(command, check=True, shell=True,
+                            cwd=self.result_path)
+            if p.returncode != 0:
+                raise Exception('Non-zero exit status: code %s.' % p.returncode)
+        except Exception as e:
+            import json
+            output = dict()
+            output['failed'] = True
+            output['error'] = str(e)
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4)
+
+        if not os.path.exists(target[0]):
+            output = dict()
+            output['failed'] = True
+            output['error'] = 'No output file was created.'
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4) 
+
+
 class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
     REGISTRY = []
     def __init__(self, study, nlinks, steps, time, integrator):

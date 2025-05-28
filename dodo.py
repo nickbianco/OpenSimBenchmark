@@ -54,6 +54,7 @@ nlinks = [1, 2, 5, 10, 20, 50, 100]
 time = 5.0
 for step in steps:
     for nlink in nlinks:
+        study.add_task(TaskSimbodyPendulumBenchmarkEulerCustom, nlink, step, time)
         study.add_task(TaskSimbodyPendulumBenchmarkRK4Custom, nlink, step, time)
         for integrator in integrators:
             study.add_task(TaskSimbodyPendulumBenchmark, nlink, step, time, integrator)

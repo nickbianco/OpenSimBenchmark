@@ -14,3 +14,6 @@ target_link_libraries(sandbox_contact ${OpenSim_LIBRARIES})
 add_executable(sandbox_jaredsdude sandbox_jaredsdude.cpp ../../utilities/utilities.h)
 target_link_libraries(sandbox_jaredsdude ${OpenSim_LIBRARIES})
 
+add_executable(sandbox_integrators sandbox_integrators.cpp ../../utilities/utilities.h)
+target_link_libraries(sandbox_integrators ${OpenSim_LIBRARIES})
+

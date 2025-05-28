@@ -9,8 +9,8 @@ static const char HELP[] =
 R"(Benchmark a simulation of an N-link pendulum in Simbody.
 
 Usage:
-  benchmark_simbody_pendulum_rk4_custom <nlinks> <output> --time=<time> --step=<step>
-  benchmark_simbody_pendulum_rk4_custom -h | --help
+  benchmark_simbody_pendulum_euler_custom <nlinks> <output> --time=<time> --step=<step>
+  benchmark_simbody_pendulum_euler_custom -h | --help
 
 Options:
   -t <time>, --time <time>        Set the final time.
@@ -33,19 +33,17 @@ public:
         advancedState.setTime(initialState.getTime());
         advancedState.updY() = initialState.getY();
         setPreviousStateFromAdvancedState();
-
-        k1 = Vector(advancedState.getY().size(), 0.0);
-        k2 = Vector(advancedState.getY().size(), 0.0);
-        k3 = Vector(advancedState.getY().size(), 0.0);
-        k4 = Vector(advancedState.getY().size(), 0.0);
     }
 
     const System& getSystem() const {
         return system;
     }
 
-    void setAdvancedState(const Real& t, const Vector& y) {
-        advancedState.updY() = y;
+    void setAdvancedState(const Real& t, const Vector& q, const Vector& u,
+            const Vector& z) {
+        advancedState.updQ() = q;
+        advancedState.updU() = u;
+        advancedState.updZ() = z;
         advancedState.updTime() = t;
     }
 
@@ -53,8 +51,12 @@ public:
     Real getAdvancedTime() const { return advancedState.getTime(); }
 
     const Real& getPreviousTime() const { return tPrev; }
-    const Vector& getPreviousY() const { return yPrev; }
-    const Vector& getPreviousYDot() const { return yDotPrev; }
+    const Vector& getPreviousQ() const { return qPrev; }
+    const Vector& getPreviousQDot() const { return qDotPrev; }
+    const Vector& getPreviousU() const { return uPrev; }    
+    const Vector& getPreviousUDot() const { return uDotPrev; }
+    const Vector& getPreviousZ() const { return zPrev; }
+    const Vector& getPreviousZDot() const { return zDotPrev; }
 
     void realizeStateDerivatives(const SimTK::State& state) {
         if (state.getSystemStage() < Stage::Acceleration) {
@@ -62,62 +64,49 @@ public:
         }       
     }
 
-    void setAdvancedStateAndRealizeDerivatives(const Real& t, const Vector& y) {
-        setAdvancedState(t, y);
+    void setAdvancedStateAndRealizeDerivatives(const Real& t, const Vector& q,
+            const Vector& u, const Vector& z) {
+        setAdvancedState(t, q, u, z);
         realizeStateDerivatives(getAdvancedState());
     }
 
     void setPreviousStateFromAdvancedState() {
         tPrev = advancedState.getTime();
-        yPrev = advancedState.getY();
-        yDotPrev = advancedState.getYDot();
+        qPrev = advancedState.getQ();
+        qDotPrev = advancedState.getQDot();
+        uPrev = advancedState.getU();
+        uDotPrev = advancedState.getUDot();
+        zPrev = advancedState.getZ();
+        zDotPrev = advancedState.getZDot();
     }
 
     void takeOneStep(Real h) {
-        takeOneRungeKutta4Step(h);
+        takeOneEulerStep(h);
         setPreviousStateFromAdvancedState();
     }
 
-    // Standard Runge-Kutta 4th order method.
-    //
-    //  0  |
-    // 1/2 | 1/2
-    // 1/2 |  0  1/2
-    //  1  |  0   0   1
-    // --------------------
-    //     | 1/6 2/6 2/6 1/6
-    void takeOneRungeKutta4Step(Real h) {
+    // Semi-explicit Euler.
+    void takeOneEulerStep(Real h) {
         const Real t0 = getPreviousTime();
-        const Vector& y0 = getPreviousY();
-        const Vector& f0 = getPreviousYDot();
         const Real t1 = t0 + h;
 
-        k1 = f0;
-
-        setAdvancedStateAndRealizeDerivatives(t0 + 0.5*h, y0 + h*0.5*k1);
-        k2 = getAdvancedState().getYDot();
-
-        setAdvancedStateAndRealizeDerivatives(t0 + 0.5*h, y0 + h*0.5*k2);
-        k3 = getAdvancedState().getYDot();
-
-        setAdvancedStateAndRealizeDerivatives(t0 + h, y0 + h*k3);
-        k4 = getAdvancedState().getYDot();
-
-        setAdvancedStateAndRealizeDerivatives(t1, 
-                y0 + h*(1.0/6.0)*(k1 + 2*k2 + 2*k3 + k4));
+        advancedState.updZ() = getPreviousZ() + h * getPreviousZDot();
+        advancedState.updU() = getPreviousU() + h * getPreviousUDot();
+        advancedState.updQ() = getPreviousQ() + h * advancedState.getU();
+        getSystem().realize(advancedState, Stage::Velocity);
+        // realizeStateDerivatives(advancedState);
     }
 
 private:
     const System& system;
     State advancedState;
     Real tPrev;
-    Vector yPrev;
-    Vector yDotPrev;
-
-    Vector k1;
-    Vector k2;
-    Vector k3;
-    Vector k4;
+    Vector qPrev;
+    Vector qDotPrev;
+    Vector uPrev;
+    Vector uDotPrev;
+    Vector zPrev;
+    Vector zDotPrev;
 };
 
 int main(int argc, char** argv) {
