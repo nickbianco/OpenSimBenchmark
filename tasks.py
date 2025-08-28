@@ -1114,7 +1114,7 @@ class TaskCompareMillardMuscleModels(StudyTask):
             cV2 = 0.5;
             Fvmax = 1.6;
             if normFiberVelocity >= 0.0:
-                return Fvmax*normFiberVelocity + (cV2 / (cV2 + normFiberVelocity))
+                return (Fvmax*normFiberVelocity + cV2) / (cV2 + normFiberVelocity)
             elif -1.0 < normFiberVelocity < 0.0:
                 return cV1*(normFiberVelocity + 1.0) / (cV1 - normFiberVelocity)
             else:
