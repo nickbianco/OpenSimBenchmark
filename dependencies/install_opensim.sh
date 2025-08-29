@@ -7,7 +7,8 @@ set -e
 DEBUG_TYPE="Release"
 NUM_JOBS=24
 MOCO="on"
-BRANCH="main"
+ORG="nickbianco"
+BRANCH="gait3d"
 GENERATOR="Unix Makefiles"
 
 # Install dependencies.
@@ -27,7 +28,7 @@ GENERATOR="Unix Makefiles"
 #         python3 \
 #         python3-dev \
 #         python3-numpy \
-#         python3-setuptools \ 
+#         python3-setuptools \
 #         git \
 #         libssl-dev \
 #         libpcre3 \
@@ -46,13 +47,13 @@ fi
 mkdir -p $WORKING_DIR
 
 # Get opensim-core.
-git clone https://github.com/opensim-org/opensim-core.git $WORKING_DIR/opensim-core
+git clone https://github.com/$ORG/opensim-core.git $WORKING_DIR/opensim-core
 cd $WORKING_DIR/opensim-core
 git checkout $BRANCH
 
 # Build opensim-core dependencies.
 mkdir -p $WORKING_DIR/opensim-core/dependencies/build
-cd $WORKING_DIR/opensim-core/dependencies/build 
+cd $WORKING_DIR/opensim-core/dependencies/build
 cmake $WORKING_DIR/opensim-core/dependencies -DCMAKE_INSTALL_PREFIX=$WORKING_DIR/opensim_dependencies_install/ -DSUPERBUILD_ezc3d=on -DOPENSIM_WITH_CASADI=$MOCO -DOPENSIM_WITH_TROPTER=$MOCO
 cmake . -LAH
 cmake --build . --config $DEBUG_TYPE -j$NUM_JOBS
