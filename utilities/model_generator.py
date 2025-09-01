@@ -41,7 +41,7 @@ class ModelGenerator:
             muscle = muscles.get(i)
             muscle.set_ignore_activation_dynamics(False)
             muscle.set_ignore_tendon_compliance(True)
-    
+
     @staticmethod
     def ignore_activation_dynamics(model, model_name):
         muscles = model.updMuscles()
@@ -53,7 +53,7 @@ class ModelGenerator:
         tag = 'no act. dyn.'
 
         return model_name, tag
-    
+
     # @staticmethod
     # def ignore_tendon_compliance(model, model_name):
     #     muscles = model.updMuscles()
@@ -65,7 +65,7 @@ class ModelGenerator:
     #     tag = 'no ten. dyn.'
 
     #     return model_name, tag
-    
+
     @staticmethod
     def ignore_passive_fiber_force(model, model_name):
         muscles = model.updMuscles()
@@ -75,7 +75,7 @@ class ModelGenerator:
             dgfMuscle = osim.DeGrooteFregly2016Muscle.safeDownCast(muscle)
             if dgfMuscle:
                 dgfMuscle.set_ignore_passive_fiber_force(True)
-            
+
             # strainAtZeroForce < strainAtOneNormForce
             # stiffnessAtOneNormForce > 1/(strainAtOneNormForce-strainAtZeroForce)
             # 0 < stiffnessAtLowForce < stiffnessAtOneNormForce
@@ -116,7 +116,7 @@ class ModelGenerator:
         tag = 'no wrapping'
 
         return model_name, tag
-    
+
     @staticmethod
     def remove_muscles(model, model_name):
         muscles = model.getMuscles()
@@ -127,12 +127,24 @@ class ModelGenerator:
             model.updForceSet().remove(index)
             size = muscles.getSize()
 
+        forces = model.getForceSet()
+
+        forces_to_remove = []
+        for i in range(forces.getSize()):
+            force = forces.get(i)
+            if 'PathActuator' in force.getConcreteClassName():
+                forces_to_remove.append(model.getForceSet().getIndex(force, 0))
+
+        if len(forces_to_remove) > 0:
+            for force in reversed(forces_to_remove):
+                model.updForceSet().remove(force)
+
         model.finalizeConnections()
         model_name += '_nomuscles'
         tag = 'no muscles'
 
         return model_name, tag
-    
+
     # @staticmethod
     # def disable_constraints(model, model_name):
     #     constraints = model.updConstraintSet()
@@ -163,7 +175,7 @@ class ModelGenerator:
         if flags.get('ignore_passive_fiber_force'):
             model_name, tag = self.ignore_passive_fiber_force(model, model_name)
             tags.append(tag)
-        
+
         if flags.get('remove_wrap_objects'):
             model_name, tag = self.remove_wrap_objects(model, model_name)
             tags.append(tag)
@@ -195,20 +207,20 @@ class ModelGenerator:
         tags = list()
 
         if 'ignore_activation_dynamics' in flags:
-            model_name, tag = ModelGenerator.ignore_activation_dynamics(model, 
+            model_name, tag = ModelGenerator.ignore_activation_dynamics(model,
                                                                         model_name)
             tags.append(tag)
 
         # if 'ignore_tendon_compliance' in flags:
-        #     model_name, tag = ModelGenerator.ignore_tendon_compliance(model, 
+        #     model_name, tag = ModelGenerator.ignore_tendon_compliance(model,
         #                                                               model_name)
         #     tags.append(tag)
 
         if 'ignore_passive_fiber_force' in flags:
-            model_name, tag = ModelGenerator.ignore_passive_fiber_force(model, 
+            model_name, tag = ModelGenerator.ignore_passive_fiber_force(model,
                                                                         model_name)
             tags.append(tag)
-        
+
         if 'remove_wrap_objects' in flags:
             model_name, tag = ModelGenerator.remove_wrap_objects(model, model_name)
             tags.append(tag)
@@ -237,22 +249,22 @@ class ModelGenerator:
 
     def filter_flags(self, flags):
         if 'remove_muscles' in flags and flags['remove_muscles']:
-            if ('ignore_activation_dynamics' in flags and 
+            if ('ignore_activation_dynamics' in flags and
                     flags['ignore_activation_dynamics']):
                 return False
-            
-            # if ('ignore_tendon_compliance' in flags and 
+
+            # if ('ignore_tendon_compliance' in flags and
             #         flags['ignore_tendon_compliance']):
             #     return False
-            
-            if ('remove_wrap_objects' in flags and 
+
+            if ('remove_wrap_objects' in flags and
                     flags['remove_wrap_objects']):
                 return False
-            
-            if ('ignore_passive_fiber_force' in flags and 
+
+            if ('ignore_passive_fiber_force' in flags and
                     flags['ignore_passive_fiber_force']):
                 return False
-            
+
         return True
 
     def get_flags_list(self):
@@ -267,12 +279,12 @@ class ModelGenerator:
         else:
             # Generate all combinations of flags for flags to include.
             from itertools import product
-            combinations = list(product([True, False], 
+            combinations = list(product([True, False],
                                         repeat=len(self.flags_to_include)))
             for combination in combinations:
-                flags = {flag: combination[i] for i, 
+                flags = {flag: combination[i] for i,
                          flag in enumerate(self.flags_to_include)}
-                
+
                 if self.filter_flags(flags):
                     flags_list.append(flags)
 
@@ -293,5 +305,5 @@ class ModelGenerator:
             model_name, model_tag = self.generate_model(flags, False)
             model_names.append(model_name)
             model_tags.append(model_tag)
-        
+
         return model_names, model_tags

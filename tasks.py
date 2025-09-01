@@ -1,4 +1,5 @@
 import os
+from pyexpat import model
 import numpy as np
 from doit.action import CmdAction
 import shutil
@@ -21,7 +22,7 @@ class Task(object):
         self.actions = []
         self.targets = []
         self.task_dep = []
-        self.doc = None 
+        self.doc = None
         self.title = None
         #self.clean = []
         # Add this specific instance to the class variable REGISTRY.
@@ -39,11 +40,11 @@ class Task(object):
 
         def member_function(self, file_dep, target):
         ```
-        
+
         Make sure the `target` option is not named `targets`; python-doit tries
         to be smart about actions with a `targets` parameter, and overrides the
         behavior we want here.
-        
+
 
         The arguments `file_dep` and `target` should be lists or dicts.
 
@@ -59,7 +60,7 @@ class Task(object):
         args = [file_dep, target]
         if len(args_to_member):
             args += args_to_member
-        
+
         if bool(kwargs_to_member):
             self.actions.append((member_function, args, kwargs_to_member))
         else:
@@ -89,7 +90,7 @@ class Task(object):
                     'title': instance.title,
                     'doc': instance.doc,
                     #'clean': instance.clean,
-                    } 
+                    }
 
 class StudyTask(Task):
     def __init__(self, study):
@@ -105,16 +106,16 @@ class BenchmarkTask(ModelTask):
     def __init__(self, benchmark):
         super(BenchmarkTask, self).__init__(benchmark.model)
         self.benchmark = benchmark
-        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'],
                                       benchmark.name)
 
 class PerfTask(ModelTask):
     def __init__(self, perf):
         super(PerfTask, self).__init__(perf.model)
         self.perf = perf
-        self.exe_path =  os.path.join(self.study.config['perfs_path'], 
+        self.exe_path =  os.path.join(self.study.config['perfs_path'],
                                       perf.name)
-            
+
 ######################################################################
 #                           CUSTOM TASKS                             #
 ######################################################################
@@ -168,14 +169,14 @@ class TaskInstallDependencies(StudyTask):
     def __init__(self, study):
         super(TaskInstallDependencies, self).__init__(study)
         self.name = 'install_dependencies'
-        
-        self.install_script = os.path.join(self.study.config['dependencies_path'], 
+
+        self.install_script = os.path.join(self.study.config['dependencies_path'],
                                            'install_dependencies.sh')
-        self.opensim_cmd_exe = os.path.join(self.study.config['dependencies_path'], 
-                                            'opensim', 'opensim_core_install', 'bin', 
-                                            'opensim-cmd')    
-        self.add_action([self.install_script], 
-                        [self.opensim_cmd_exe], 
+        self.opensim_cmd_exe = os.path.join(self.study.config['dependencies_path'],
+                                            'opensim', 'opensim_core_install', 'bin',
+                                            'opensim-cmd')
+        self.add_action([self.install_script],
+                        [self.opensim_cmd_exe],
                         self.install_dependencies)
 
     def install_dependencies(self, file_dep, target):
@@ -210,31 +211,31 @@ class TaskBenchmarkMyoSuiteModels(StudyTask):
         self.result_paths = list()
 
         # Elbow model
-        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'elbow', 
+        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'elbow',
                                              'myoelbow_2dof6muscles.xml'))
         self.model_names.append('myosuite_elbow')
         self.result_paths.append(os.path.join(self.result_path, 'elbow.json'))
 
         # Hand model
-        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'hand', 
+        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'hand',
                                              'myohand.xml'))
         self.model_names.append('myosuite_hand')
         self.result_paths.append(os.path.join(self.result_path, 'hand.json'))
 
         # Arm model
-        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'arm', 
+        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'arm',
                                              'myoarm.xml'))
         self.model_names.append('myosuite_arm')
         self.result_paths.append(os.path.join(self.result_path, 'arm.json'))
 
         # Legs model
-        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'leg', 
+        self.model_paths.append(os.path.join(self.mujoco_path, 'myo_sim', 'leg',
                                              'myolegs.xml'))
         self.model_names.append('myosuite_legs')
         self.result_paths.append(os.path.join(self.result_path, 'legs.json'))
 
-        self.add_action(self.model_paths, 
-                        self.result_paths, 
+        self.add_action(self.model_paths,
+                        self.result_paths,
                         self.benchmark_myosuite_models)
 
     def benchmark_myosuite_models(self, file_dep, target):
@@ -266,7 +267,7 @@ class TaskBenchmarkMyoSuiteModels(StudyTask):
                     model.geom_contype[i] = 0
                     model.geom_conaffinity[i] = 0
 
-            # Disable collision detection            
+            # Disable collision detection
             data = mujoco.MjData(model)
 
             forward_integration_times = list()
@@ -308,12 +309,12 @@ class TaskMuJoCoPendulumBenchmark(StudyTask):
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
-        self.result_file = os.path.join(self.result_path, 
+        self.result_file = os.path.join(self.result_path,
                 f'{nlinks}link_pendulum_step{step}_time{time}_{integrator}.json')
-        
-        self.add_action([self.dummy_path], 
-                        [self.result_file], 
-                        self.run_pendulum_benchmark)        
+
+        self.add_action([self.dummy_path],
+                        [self.result_file],
+                        self.run_pendulum_benchmark)
 
     def run_pendulum_benchmark(self, file_dep, target):
         import mujoco
@@ -454,12 +455,12 @@ class TaskMuJoCoPendulumBenchmarkRK4Custom(StudyTask):
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
-        self.result_file = os.path.join(self.result_path, 
+        self.result_file = os.path.join(self.result_path,
                 f'{nlinks}link_pendulum_step{step}_time{time}_rk4_custom.json')
-        
-        self.add_action([self.dummy_path], 
-                        [self.result_file], 
-                        self.run_pendulum_benchmark)        
+
+        self.add_action([self.dummy_path],
+                        [self.result_file],
+                        self.run_pendulum_benchmark)
 
     def run_pendulum_benchmark(self, file_dep, target):
         import mujoco
@@ -514,13 +515,13 @@ class TaskMuJoCoPendulumBenchmarkRK4Custom(StudyTask):
             model = mujoco.MjModel.from_xml_string(xml)
             model.opt.gravity = [0.0, 0.0, -9.81]
             return model
-        
+
         def get_y(data):
             return np.concatenate((data.qpos, data.qvel))
 
         def set_y(model, data, y):
             data.qpos[:] = y[:model.nq]
-            data.qvel[:] = y[model.nq:model.nq + model.nv]    
+            data.qvel[:] = y[model.nq:model.nq + model.nv]
 
         def get_ydot(data):
             return np.concatenate((data.qvel, data.qacc))
@@ -616,7 +617,7 @@ class TaskSimbodyPendulumBenchmark(StudyTask):
         self.step = step
         self.time = time
         self.integrator = integrator
-        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'],
                 f'benchmark_simbody_pendulum_{integrator}')
 
         # A dummy file dependency to satisify doit's dependency tree.
@@ -627,12 +628,12 @@ class TaskSimbodyPendulumBenchmark(StudyTask):
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
-        self.result_file = os.path.join(self.result_path, 
+        self.result_file = os.path.join(self.result_path,
                 f'{nlinks}link_pendulum_step{step}_time{time}_{integrator}.json')
-        
-        self.add_action([self.dummy_path], 
-                        [self.result_file], 
-                        self.run_pendulum_benchmark)        
+
+        self.add_action([self.dummy_path],
+                        [self.result_file],
+                        self.run_pendulum_benchmark)
 
     def run_pendulum_benchmark(self, file_dep, target):
         import subprocess
@@ -656,7 +657,7 @@ class TaskSimbodyPendulumBenchmark(StudyTask):
             output['failed'] = True
             output['error'] = 'No output file was created.'
             with open(target[0], 'w') as f:
-                json.dump(output, f, indent=4) 
+                json.dump(output, f, indent=4)
 
 
 class TaskSimbodyPendulumBenchmarkRK4Custom(StudyTask):
@@ -668,7 +669,7 @@ class TaskSimbodyPendulumBenchmarkRK4Custom(StudyTask):
         self.nlinks = nlinks
         self.step = step
         self.time = time
-        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'],
                 f'benchmark_simbody_pendulum_rk4_custom')
 
         # A dummy file dependency to satisify doit's dependency tree.
@@ -679,12 +680,12 @@ class TaskSimbodyPendulumBenchmarkRK4Custom(StudyTask):
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
-        self.result_file = os.path.join(self.result_path, 
+        self.result_file = os.path.join(self.result_path,
                 f'{nlinks}link_pendulum_step{step}_time{time}_rk4_custom.json')
-        
-        self.add_action([self.dummy_path], 
-                        [self.result_file], 
-                        self.run_pendulum_benchmark)        
+
+        self.add_action([self.dummy_path],
+                        [self.result_file],
+                        self.run_pendulum_benchmark)
 
     def run_pendulum_benchmark(self, file_dep, target):
         import subprocess
@@ -708,8 +709,8 @@ class TaskSimbodyPendulumBenchmarkRK4Custom(StudyTask):
             output['failed'] = True
             output['error'] = 'No output file was created.'
             with open(target[0], 'w') as f:
-                json.dump(output, f, indent=4) 
-        
+                json.dump(output, f, indent=4)
+
 
 class TaskSimbodyPendulumBenchmarkEulerCustom(StudyTask):
     REGISTRY = []
@@ -720,7 +721,7 @@ class TaskSimbodyPendulumBenchmarkEulerCustom(StudyTask):
         self.nlinks = nlinks
         self.step = step
         self.time = time
-        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'],
                 f'benchmark_simbody_pendulum_euler_custom')
 
         # A dummy file dependency to satisify doit's dependency tree.
@@ -731,12 +732,12 @@ class TaskSimbodyPendulumBenchmarkEulerCustom(StudyTask):
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
-        self.result_file = os.path.join(self.result_path, 
+        self.result_file = os.path.join(self.result_path,
                 f'{nlinks}link_pendulum_step{step}_time{time}_Euler_custom.json')
-        
-        self.add_action([self.dummy_path], 
-                        [self.result_file], 
-                        self.run_pendulum_benchmark)        
+
+        self.add_action([self.dummy_path],
+                        [self.result_file],
+                        self.run_pendulum_benchmark)
 
     def run_pendulum_benchmark(self, file_dep, target):
         import subprocess
@@ -760,7 +761,7 @@ class TaskSimbodyPendulumBenchmarkEulerCustom(StudyTask):
             output['failed'] = True
             output['error'] = 'No output file was created.'
             with open(target[0], 'w') as f:
-                json.dump(output, f, indent=4) 
+                json.dump(output, f, indent=4)
 
 
 class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
@@ -783,18 +784,18 @@ class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
         for nlink in self.nlinks:
             for step in self.steps:
                 self.mujoco_result_files.append(
-                        os.path.join(self.study.config['results_path'], 
+                        os.path.join(self.study.config['results_path'],
                         'pendulums', 'MuJoCo', f'{nlink}link_pendulum',
                         f'{nlink}link_pendulum_step{step}_time{time}_{integrator}.json'))
                 self.simbody_result_files.append(
-                        os.path.join(self.study.config['results_path'], 
+                        os.path.join(self.study.config['results_path'],
                         'pendulums', 'Simbody', f'{nlink}link_pendulum',
                         f'{nlink}link_pendulum_step{step}_time{time}_{integrator.lower()}.json'))
-                
+
         self.figure_path = os.path.join(self.study.config['figures_path'],
                 f'speed_accuracy_tradeoff_time{time}_{integrator}.png')
-        
-        self.add_action(self.mujoco_result_files + self.simbody_result_files, 
+
+        self.add_action(self.mujoco_result_files + self.simbody_result_files,
                         [self.figure_path],
                         self.plot_speed_accuracy_tradeoff)
 
@@ -807,7 +808,7 @@ class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
         simbody_energies = list()
         simbody_real_time_factors = list()
 
-        for mujoco_file, simbody_file in zip(self.mujoco_result_files, 
+        for mujoco_file, simbody_file in zip(self.mujoco_result_files,
                                              self.simbody_result_files):
             with open(mujoco_file) as f:
                 data = json.load(f)
@@ -827,7 +828,7 @@ class TaskPlotSimbodyVsMuJoCoSpeedAccuracyTradeoff(StudyTask):
                    label='MuJoCo')
         ax.scatter(simbody_energies, simbody_real_time_factors, color='blue',
                    label='Simbody')
-        
+
         # Set the plot parameters.
         plt.xscale('log')
         plt.yscale('log')
@@ -863,17 +864,17 @@ class TaskAggregatePendulumResults(StudyTask):
             result_files = list()
             for nlink in self.nlinks:
                 for step in self.steps:
-                    result_files.append(os.path.join(self.study.config['results_path'], 
+                    result_files.append(os.path.join(self.study.config['results_path'],
                         'pendulums', engine, f'{nlink}link_pendulum',
                         f'{nlink}link_pendulum_step{step}_time{time}_{integrator}.json'))
-                
+
             csv_paths = list()
             for result_type in self.result_types:
                 csv_path = os.path.join(self.study.config['results_path'], 'pendulums',
                         engine, f'pendulum_{result_type}_time{time}_{integrator}.csv')
                 csv_paths.append(csv_path)
-        
-            self.add_action(result_files, 
+
+            self.add_action(result_files,
                             csv_paths,
                             self.aggregate_pendulum_results, integrator)
 
@@ -881,7 +882,7 @@ class TaskAggregatePendulumResults(StudyTask):
         import matplotlib.pyplot as plt
         import json
         import csv
-        
+
         # Create CSV files for each result type where the number of pendulum links
         # are along the rows and the performance results are columns. Use different columns
         # for different step sizes.
@@ -894,7 +895,7 @@ class TaskAggregatePendulumResults(StudyTask):
                 results[result_type][nlink] = dict()
                 for step in self.steps:
                     results[result_type][nlink] = list()
-        
+
         # Read the JSON files and fill the results dictionary.
         result_idx = 0
         for nlink in self.nlinks:
@@ -905,7 +906,7 @@ class TaskAggregatePendulumResults(StudyTask):
                         if result_type in data:
                             results[result_type][nlink].append(data[result_type])
                 result_idx += 1
-       
+
         # Create the CSV files.
         for result_type in self.result_types:
             csv_path = target[self.result_types.index(result_type)]
@@ -943,13 +944,13 @@ class TaskPlotPendulumComparison(StudyTask):
         for engine in engines:
             self.aggregate_files.append(
                     os.path.join(self.study.config['results_path'],
-                    'pendulums', engine, 
+                    'pendulums', engine,
                     f'pendulum_{result}_time{time}_{integrator}.csv'))
-            
+
         self.figure_path = os.path.join(self.study.config['figures_path'],
                 f'pendulum_{result}_comparison_time{time}_step{step}_{integrator}.png')
-        
-        self.add_action(self.aggregate_files, 
+
+        self.add_action(self.aggregate_files,
                         [self.figure_path],
                         self.plot_pendulum_comparison)
 
@@ -963,7 +964,7 @@ class TaskPlotPendulumComparison(StudyTask):
             df = pd.read_csv(file)
             dataframes.append(df)
 
-        # Create a grouped bar chart, where the bars are along the 
+        # Create a grouped bar chart, where the bars are along the
         # x-axis and the performance results are along the y-axis.
         # Group by 'engine'. Select the data column based on 'step'.
 
@@ -974,9 +975,9 @@ class TaskPlotPendulumComparison(StudyTask):
             # Select the data column based on 'step'.
             step_idx = df.columns.get_loc(f'step{self.step}')
             data = abs(df.iloc[:, step_idx])
-            ax.bar(bar_positions + i * bar_width, data, 
-                   width=bar_width, label=df.columns[0])    
-            
+            ax.bar(bar_positions + i * bar_width, data,
+                   width=bar_width, label=df.columns[0])
+
         # Plot the y-axis on a log scale
         ax.set_yscale('log')
 
@@ -990,7 +991,7 @@ class TaskPlotPendulumComparison(StudyTask):
         if 'acceleration_compute_time' not in self.result:
             ax.set_title(f'{self.integrator_name} with $\\Delta t$ = {self.step} s')
 
-        # Set the legend based on the engine names in self.engines  
+        # Set the legend based on the engine names in self.engines
         ax.legend(self.engines, fontsize=8)
 
         # Set the grid include minor ticks.
@@ -1024,7 +1025,7 @@ class TaskSimbodyGait3DBenchmark(StudyTask):
             self.result_name += f'_{arg}{self.exe_args[arg]}'
         self.result_name += f'_{self.contact}_{self.integrator}'
 
-        self.exe_path =  os.path.join(self.study.config['benchmarks_path'], 
+        self.exe_path =  os.path.join(self.study.config['benchmarks_path'],
                 f'benchmark_gait3d_{self.contact}_{self.integrator}')
 
         # A dummy file dependency to satisify doit's dependency tree.
@@ -1035,10 +1036,10 @@ class TaskSimbodyGait3DBenchmark(StudyTask):
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
         self.result_file = os.path.join(self.result_path, f'{self.result_name}.json')
-        
-        self.add_action([self.dummy_path], 
-                        [self.result_file], 
-                        self.run_gait3d_benchmark)        
+
+        self.add_action([self.dummy_path],
+                        [self.result_file],
+                        self.run_gait3d_benchmark)
 
     def run_gait3d_benchmark(self, file_dep, target):
         import subprocess
@@ -1065,7 +1066,7 @@ class TaskSimbodyGait3DBenchmark(StudyTask):
             output['failed'] = True
             output['error'] = 'No output file was created.'
             with open(target[0], 'w') as f:
-                json.dump(output, f, indent=4) 
+                json.dump(output, f, indent=4)
 
 
 class TaskCompareMillardMuscleModels(StudyTask):
@@ -1077,12 +1078,12 @@ class TaskCompareMillardMuscleModels(StudyTask):
 
         self.model_path = os.path.join(self.study.config['data_path'], 'Rajagopal',
                 'subject_walk_scaled.osim')
-        self.result_file = os.path.join(self.study.config['figures_path'], 
+        self.result_file = os.path.join(self.study.config['figures_path'],
                 'millard_muscle_model_comparison.png')
-        
-        self.add_action([self.model_path], 
-                        [self.result_file], 
-                        self.run_millard_model_comparison)        
+
+        self.add_action([self.model_path],
+                        [self.result_file],
+                        self.run_millard_model_comparison)
 
     def run_millard_model_comparison(self, file_dep, target):
         import matplotlib.pyplot as plt
@@ -1099,7 +1100,7 @@ class TaskCompareMillardMuscleModels(StudyTask):
                 return cL1*fiberStrainCubed + cL2*fiberStrainSquared + 1.0
             else:
                 return 0
-            
+
         def calc_tendon_force_length_multiplier(normTendonLength):
             cT1 = 260.972;
             cT2 = 7.9706;
@@ -1130,7 +1131,7 @@ class TaskCompareMillardMuscleModels(StudyTask):
                 return cP1*fiberStrainCubed + cP2*fiberStrainSquared
             else:
                 return 0
-        
+
         normFiberLengths = np.linspace(0.0, 2.5, 500)
         normTendonLengths = np.linspace(0.8, 1.2, 500)
         normFiberVelocities = np.linspace(-1.0, 1.0, 500)
@@ -1191,7 +1192,7 @@ class TaskCompareMillardMuscleModels(StudyTask):
         axs[1].set_ylabel('norm. fiber force')
         axs[1].set_title('active force velocity curve')
         axs[1].grid(alpha=0.2)
-        axs[1].set_xlim(-1.0, 1.0)  
+        axs[1].set_xlim(-1.0, 1.0)
         axs[1].set_axisbelow(True)
         # passive force length curve.
         axs[2].plot(normFiberLengths, fp_opensim, label='OpenSim', lw=2.5, color='k')
@@ -1212,7 +1213,7 @@ class TaskCompareMillardMuscleModels(StudyTask):
         axs[3].grid(alpha=0.2)
         axs[3].set_xlim(0.8, 1.2)
         axs[3].set_axisbelow(True)
-        
+
 
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
@@ -1226,27 +1227,27 @@ class TaskCreateRajagopalModels(StudyTask):
         self.base_model_path = os.path.join(self.study.config['data_path'],
                                              'Rajagopal', 'subject_walk_scaled.osim')
         self.function_based_paths = os.path.join(
-                self.study.config['data_path'], 'Rajagopal', 
+                self.study.config['data_path'], 'Rajagopal',
                 'subject_walk_scaled_FunctionBasedPathSet.xml')
         self.expression_based_coordinate_force_set = os.path.join(
-                self.study.config['data_path'], 'Rajagopal', 
+                self.study.config['data_path'], 'Rajagopal',
                 'subject_walk_scaled_ExpressionBasedCoordinateForceSet.xml')
         self.contact_geometry_set = os.path.join(
-                self.study.config['data_path'], 'Rajagopal', 
+                self.study.config['data_path'], 'Rajagopal',
                 'subject_walk_scaled_ContactGeometrySet.xml')
         self.contact_force_set = os.path.join(
-                self.study.config['data_path'], 'Rajagopal', 
+                self.study.config['data_path'], 'Rajagopal',
                 'subject_walk_scaled_ContactForceSet.xml')
-        
+
         if not os.path.exists(self.study.config['models_path']):
             os.makedirs(self.study.config['models_path'])
-        
-        self.model_names = ['Rajagopal', 
+
+        self.model_names = ['Rajagopal',
                             'RajagopalPathActuators',
                             'RajagopalFunctionBasedPaths',
-                            'RajagopalFunctionBasedPathsNoConstraints', 
+                            'RajagopalFunctionBasedPathsNoConstraints',
                             'RajagopalFunctionBasedPathActuators',
-                            'RajagopalFunctionBasedPathActuatorsNoConstraints', 
+                            'RajagopalFunctionBasedPathActuatorsNoConstraints',
                             'RajagopalDGF',
                             'RajagopalFunctionBasedPathsDGF',
                             'RajagopalFunctionBasedPathsDGFNoConstraints',
@@ -1257,18 +1258,18 @@ class TaskCreateRajagopalModels(StudyTask):
                             'Rajagopal22MusclesContact']
         self.model_paths = list()
         for model_name in self.model_names:
-            self.model_paths.append(os.path.join(self.study.config['models_path'], 
+            self.model_paths.append(os.path.join(self.study.config['models_path'],
                                                  f'{model_name}.osim'))
-    
+
         self.add_action([self.base_model_path, self.function_based_paths,
                          self.expression_based_coordinate_force_set,
-                         self.contact_geometry_set, self.contact_force_set], 
-                        self.model_paths, 
+                         self.contact_geometry_set, self.contact_force_set],
+                        self.model_paths,
                         self.create_rajagopal_models)
-        
+
     def create_rajagopal_models(self, file_dep, target):
         osim.Logger.setLevelString('error')
-        
+
         # Base model.
         shutil.copyfile(file_dep[0], target[0])
         print(f' --> Created {target[0]}')
@@ -1296,10 +1297,10 @@ class TaskCreateRajagopalModels(StudyTask):
         constraints.clearAndDestroy()
 
         bodyset = model.updBodySet()
-        patella_l = bodyset.get('patella_l')
-        patella_r = bodyset.get('patella_r')
-        bodyset.remove(patella_l)
-        bodyset.remove(patella_r)
+        obstacle_l = bodyset.get('obstacle_l')
+        obstacle_r = bodyset.get('obstacle_r')
+        bodyset.remove(obstacle_l)
+        bodyset.remove(obstacle_r)
 
         jointset = model.updJointSet()
         patellofemoral_l = jointset.get('patellofemoral_l')
@@ -1326,10 +1327,10 @@ class TaskCreateRajagopalModels(StudyTask):
         constraints.clearAndDestroy()
 
         bodyset = model.updBodySet()
-        patella_l = bodyset.get('patella_l')
-        patella_r = bodyset.get('patella_r')
-        bodyset.remove(patella_l)
-        bodyset.remove(patella_r)
+        obstacle_l = bodyset.get('obstacle_l')
+        obstacle_r = bodyset.get('obstacle_r')
+        bodyset.remove(obstacle_l)
+        bodyset.remove(obstacle_r)
 
         jointset = model.updJointSet()
         patellofemoral_l = jointset.get('patellofemoral_l')
@@ -1364,10 +1365,10 @@ class TaskCreateRajagopalModels(StudyTask):
         constraints.clearAndDestroy()
 
         bodyset = model.updBodySet()
-        patella_l = bodyset.get('patella_l')
-        patella_r = bodyset.get('patella_r')
-        bodyset.remove(patella_l)
-        bodyset.remove(patella_r)
+        obstacle_l = bodyset.get('obstacle_l')
+        obstacle_r = bodyset.get('obstacle_r')
+        bodyset.remove(obstacle_l)
+        bodyset.remove(obstacle_r)
 
         jointset = model.updJointSet()
         patellofemoral_l = jointset.get('patellofemoral_l')
@@ -1387,8 +1388,8 @@ class TaskCreateRajagopalModels(StudyTask):
         model.initSystem()
 
         # Add stiffness and damping to the joints. Toe stiffness and damping values
-        # are based on Falisse et al. (2022), "Modeling toes contributes to 
-        # realistic stance knee mechanics in three-dimensional predictive 
+        # are based on Falisse et al. (2022), "Modeling toes contributes to
+        # realistic stance knee mechanics in three-dimensional predictive
         # simulations of walking."
         expressionBasedForceSet = osim.ForceSet(file_dep[2])
         for i in range(expressionBasedForceSet.getSize()):
@@ -1434,10 +1435,10 @@ class TaskCreateRajagopalModels(StudyTask):
         constraints.clearAndDestroy()
 
         bodyset = model.updBodySet()
-        patella_l = bodyset.get('patella_l')
-        patella_r = bodyset.get('patella_r')
-        bodyset.remove(patella_l)
-        bodyset.remove(patella_r)
+        obstacle_l = bodyset.get('obstacle_l')
+        obstacle_r = bodyset.get('obstacle_r')
+        bodyset.remove(obstacle_l)
+        bodyset.remove(obstacle_r)
 
         jointset = model.updJointSet()
         patellofemoral_l = jointset.get('patellofemoral_l')
@@ -1448,8 +1449,8 @@ class TaskCreateRajagopalModels(StudyTask):
         model.finalizeConnections()
 
         # Add stiffness and damping to the joints. Toe stiffness and damping values
-        # are based on Falisse et al. (2022), "Modeling toes contributes to 
-        # realistic stance knee mechanics in three-dimensional predictive 
+        # are based on Falisse et al. (2022), "Modeling toes contributes to
+        # realistic stance knee mechanics in three-dimensional predictive
         # simulations of walking."
         expressionBasedForceSet = osim.ForceSet(file_dep[2])
         for i in range(expressionBasedForceSet.getSize()):
@@ -1480,8 +1481,8 @@ class TaskCreateRajagopalModels(StudyTask):
         model.initSystem()
 
         # Add stiffness and damping to the joints. Toe stiffness and damping values
-        # are based on Falisse et al. (2022), "Modeling toes contributes to 
-        # realistic stance knee mechanics in three-dimensional predictive 
+        # are based on Falisse et al. (2022), "Modeling toes contributes to
+        # realistic stance knee mechanics in three-dimensional predictive
         # simulations of walking."
         expressionBasedForceSet = osim.ForceSet(file_dep[2])
         for i in range(expressionBasedForceSet.getSize()):
@@ -1574,8 +1575,8 @@ class TaskCreateRajagopalModels(StudyTask):
 
         # 18 muscle model with contact.
         # Add stiffness and damping to the joints. Toe stiffness and damping values
-        # are based on Falisse et al. (2022), "Modeling toes contributes to 
-        # realistic stance knee mechanics in three-dimensional predictive 
+        # are based on Falisse et al. (2022), "Modeling toes contributes to
+        # realistic stance knee mechanics in three-dimensional predictive
         # simulations of walking."
         expressionBasedForceSet = osim.ForceSet(file_dep[2])
         for i in range(expressionBasedForceSet.getSize()):
@@ -1613,7 +1614,62 @@ class TaskCreateRajagopalModels(StudyTask):
         model.printToXML(target[13])
         print(f' --> Created {target[13]}')
 
-        
+
+class TaskCreateGait3DModels(StudyTask):
+    REGISTRY = []
+    def __init__(self, study):
+        super(TaskCreateGait3DModels, self).__init__(study)
+        self.name = 'create_gait3d_models'
+        self.exe_path =  os.path.join(self.study.config['models_src_path'], 'gait3d')
+        self.dummy_path = os.path.join(self.study.config['data_path'], 'Gait3D',
+                                       'dummy.txt')
+
+        self.models_path = self.study.config['models_path']
+        if not os.path.exists(self.models_path):
+            os.makedirs(self.models_path)
+
+        self.model_names = ['Gait3DMillard',
+                            'Gait3DDeGrooteFregly',
+                            'Gait3DPathActuator']
+        self.model_paths = list()
+        for model_name in self.model_names:
+            self.model_paths.append(os.path.join(self.study.config['models_path'],
+                                                 f'{model_name}.osim'))
+
+        self.flags_list = ['--joint=custom --muscle=millard',
+                           '--joint=custom --muscle=degrootefregly',
+                           '--joint=custom --muscle=pathactuator']
+
+        for model_path, flags in zip(self.model_paths, self.flags_list):
+            self.add_action([self.dummy_path], [model_path],
+                            self.create_gait3d_model, flags)
+
+    def create_gait3d_model(self, file_dep, target, flags):
+        import subprocess
+        import json
+
+        command = f'{self.exe_path} {target[0]} {flags}'
+        try:
+            p = subprocess.run(command, check=True, shell=True,
+                                cwd=self.models_path)
+            if p.returncode != 0:
+                raise Exception(f'Non-zero exit status: code {p.returncode}.')
+
+        except Exception as e:
+            output = dict()
+            output['failed'] = True
+            output['error'] = str(e)
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4)
+
+        if not os.path.exists(target[0]):
+            output = dict()
+            output['failed'] = True
+            output['error'] = 'No output file was created.'
+            with open(target[0], 'w') as f:
+                json.dump(output, f, indent=4)
+
+
 class TaskGenerateModels(ModelTask):
     REGISTRY = []
     def __init__(self, model, flags):
@@ -1624,11 +1680,11 @@ class TaskGenerateModels(ModelTask):
         self.model_names, self.model_tags = self.generator.generate_model_names()
         self.model_paths = [os.path.join(self.study.config['models_path'], model.name,
                        f'{model_name}.osim') for model_name in self.model_names]
-        
-        self.add_action([model.path], 
-                        self.model_paths, 
+
+        self.add_action([model.path],
+                        self.model_paths,
                         self.generate_models)
-        
+
     def generate_models(self, file_dep, target):
         self.generator.generate_models()
 
@@ -1654,11 +1710,11 @@ class TaskRunBenchmark(BenchmarkTask):
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
-        self.out_paths = [os.path.join(self.result_path, f'{model_name}.json') 
+        self.out_paths = [os.path.join(self.result_path, f'{model_name}.json')
                           for model_name in self.model_names]
-        
+
         self.add_action(self.model_paths,
-                        self.out_paths, 
+                        self.out_paths,
                         self.run_benchmark)
 
     def run_benchmark(self, file_dep, target):
@@ -1675,7 +1731,7 @@ class TaskRunBenchmark(BenchmarkTask):
                                     cwd=self.benchmark.results_path)
                 if p.returncode != 0:
                     raise Exception(f'Non-zero exit status: code {p.returncode}.')
-                
+
             except Exception as e:
                 output = dict()
                 output['failed'] = True
@@ -1688,9 +1744,9 @@ class TaskRunBenchmark(BenchmarkTask):
                 output['failed'] = True
                 output['error'] = 'No output file was created.'
                 with open(out_path, 'w') as f:
-                    json.dump(output, f, indent=4) 
-                
-            
+                    json.dump(output, f, indent=4)
+
+
 class TaskPlotBenchmark(BenchmarkTask):
     REGISTRY = []
     def __init__(self, benchmark, run_task):
@@ -1706,7 +1762,7 @@ class TaskPlotBenchmark(BenchmarkTask):
         self.results = ['acceleration_compute_time', 'single_step_time',
                         'forward_integration_time', 'real_time_factor',
                         'energy_conservation', 'num_steps', 'average_step_size']
-   
+
         self.result_names = list()
         self.units_list = list()
         for result in self.results:
@@ -1718,16 +1774,16 @@ class TaskPlotBenchmark(BenchmarkTask):
         for result in self.results:
             result_path = os.path.join(self.result_path, f'{result}.png')
             self.result_paths.append(result_path)
-        
-        self.add_action(self.out_paths, 
+
+        self.add_action(self.out_paths,
                         self.result_paths,
                         self.plot_benchmark)
 
-        
+
     def plot_benchmark(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
-        
+
         # Initialize the dictionary of CPU times.
         results_dict = dict()
         for result in self.results:
@@ -1741,19 +1797,19 @@ class TaskPlotBenchmark(BenchmarkTask):
 
         zipped = zip(self.results, self.result_names, self.units_list, target)
         for i, (result, result_name, units, result_path) in enumerate(zipped):
-            
+
             fig, ax = plt.subplots(figsize=(4, 4))
             bar_width = 0.25
             x = np.arange(len(self.model_tags))
-            ax.bar(x, abs(results_dict[result]), width=bar_width)    
-                
+            ax.bar(x, abs(results_dict[result]), width=bar_width)
+
             # Plot the y-axis on a log scale
             ax.set_yscale('log')
 
             # Set the x-ticks and labels. Use 45 degree rotation for the labels.
             ax.set_xticks(x)
             ax.set_xticklabels(self.model_tags, rotation=45, ha='right')
-            
+
             # Set the y-label and title.
             ax.set_ylabel(f'{result_name} {units}')
 
@@ -1833,11 +1889,11 @@ class TaskPlotBenchmarkComparison(StudyTask):
             self.json_files.append(
                     os.path.join(self.study.config['results_path'],
                     f'{model.name}', self.benchmark, subdir, f'{model_name}.json'))
-            
+
         self.figure_path = os.path.join(self.study.config['figures_path'],
                 f'{benchmark}_comparison_{result}_{subdir}.png')
-        
-        self.add_action(self.json_files, 
+
+        self.add_action(self.json_files,
                         [self.figure_path],
                         self.plot_benchmark_comparison)
 
@@ -1858,8 +1914,8 @@ class TaskPlotBenchmarkComparison(StudyTask):
         fig, ax = plt.subplots(figsize=(5, 4))
         bar_width = 0.35
         x = np.arange(len(self.models))
-        ax.bar(x, results, width=bar_width)    
-            
+        ax.bar(x, results, width=bar_width)
+
         # Plot the y-axis on a log scale
         ax.set_yscale('log')
 
@@ -1950,11 +2006,11 @@ class TaskPlotP41Comparison(StudyTask):
             self.json_files.append(
                     os.path.join(self.study.config['results_path'],
                     f'{model.name}', self.benchmark, subdir, f'{model_name}.json'))
-            
+
         self.figure_path = os.path.join(self.study.config['figures_path'],
                 'p41_comparison.png')
-        
-        self.add_action(self.json_files, 
+
+        self.add_action(self.json_files,
                         [self.figure_path],
                         self.plot_p41_comparison)
 
@@ -1975,10 +2031,10 @@ class TaskPlotP41Comparison(StudyTask):
         fig, ax = plt.subplots(figsize=(3, 3.25))
         bar_width = 0.5
         x = np.arange(len(self.models))
-        ax.bar(x, results, width=bar_width)    
+        ax.bar(x, results, width=bar_width)
 
         ax.set_ylim(0.1, 10000)
-            
+
         # Plot the y-axis on a log scale
         ax.set_yscale('log')
 
@@ -2049,13 +2105,13 @@ class TaskPlotContactParameterSweep(StudyTask):
             for scale in scales:
                 self.json_files.append(
                         os.path.join(self.study.config['results_path'],
-                        f'{model.name}', self.benchmark, f'{subdir}_scale{scale}', 
+                        f'{model.name}', self.benchmark, f'{subdir}_scale{scale}',
                         f'{model_name}.json'))
-            
+
         self.figure_path = os.path.join(self.study.config['figures_path'],
                 f'{benchmark}_{parameter}_sweep_{result}_{subdir}.png')
-        
-        self.add_action(self.json_files, 
+
+        self.add_action(self.json_files,
                         [self.figure_path],
                         self.plot_benchmark_comparison)
 
@@ -2082,9 +2138,9 @@ class TaskPlotContactParameterSweep(StudyTask):
         x = np.arange(len(self.scales))
 
         for i, model_name in enumerate(self.model_names):
-            ax.plot(x, results[model_name], label=model_name, lw=1.5, 
+            ax.plot(x, results[model_name], label=model_name, lw=1.5,
                     marker='o', markersize=5)
-            
+
         # Plot the y-axis on a log scale
         ax.set_yscale('log')
 
@@ -2136,13 +2192,13 @@ class TaskRunPerf(PerfTask):
         if not os.path.exists(self.result_path):
             os.makedirs(self.result_path)
 
-        self.out_paths = [os.path.join(self.result_path, f'{model_name}.data') 
+        self.out_paths = [os.path.join(self.result_path, f'{model_name}.data')
                           for model_name in self.model_names]
         self.json_paths = [os.path.join(self.result_path, f'{model_name}.json')
                            for model_name in self.model_names]
 
-        self.add_action(self.model_paths, 
-                        self.out_paths, 
+        self.add_action(self.model_paths,
+                        self.out_paths,
                         self.run_perf)
 
     def run_perf(self, file_dep, target):
@@ -2170,8 +2226,8 @@ class TaskRunPerf(PerfTask):
                 output['failed'] = True
                 output['error'] = 'No output file was created.'
                 with open(out_path, 'w') as f:
-                    json.dump(output, f, indent=4) 
-            
+                    json.dump(output, f, indent=4)
+
 
 class TaskPlotPerf(PerfTask):
     REGISTRY = []
@@ -2188,20 +2244,20 @@ class TaskPlotPerf(PerfTask):
         self.num_steps_path = os.path.join(self.result_path, 'num_steps.png')
         self.step_size_path = os.path.join(self.result_path, 'step_size.png')
 
-        self.add_action(self.json_paths, 
+        self.add_action(self.json_paths,
                         [self.time_elapsed_path],
                         self.plot_time_elapsed)
-        
+
         if 'forward' in self.perf_name:
-            self.add_action(self.json_paths, 
+            self.add_action(self.json_paths,
                             [self.num_steps_path],
                             self.plot_num_steps)
-            
+
             self.add_action(self.json_paths,
                             [self.step_size_path],
                             self.plot_step_size)
-        
-        
+
+
     def plot_time_elapsed(self, file_dep, target):
         import matplotlib.pyplot as plt
         import json
@@ -2215,7 +2271,7 @@ class TaskPlotPerf(PerfTask):
                 if 'failed' not in data:
                     model_tags.append(model_tag)
                     json_paths.append(json_path)
-        
+
         time_elapsed = list()
         for json_path in json_paths:
             with open(json_path, 'rb') as f:
@@ -2224,14 +2280,14 @@ class TaskPlotPerf(PerfTask):
 
         # Create the figure and axis.
         fig, ax = plt.subplots(figsize=(5, 8))
-        
+
         # Plot time elapsed.
         y = np.arange(len(model_tags))
         ax.barh(y, time_elapsed, label='time elapsed')
 
         # Set the x-axis labels based on max CPU time.
         all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
-        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', 
+        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms',
                            '1 s', '10 s', '100 s']
         max_value = max(time_elapsed)
 
@@ -2272,7 +2328,7 @@ class TaskPlotPerf(PerfTask):
                 if 'failed' not in data:
                     model_tags.append(model_tag)
                     json_paths.append(json_path)
-    
+
         num_steps_taken = list()
         num_iterations = list()
         num_realizations = list()
@@ -2294,10 +2350,10 @@ class TaskPlotPerf(PerfTask):
 
         # Create the figure and axis.
         fig, ax = plt.subplots(figsize=(5, 8))
-        
+
         # Plot the step values.
         offset = width * multiplier
-        ax.barh(y + offset, num_error_test_failures, width, 
+        ax.barh(y + offset, num_error_test_failures, width,
                 label='no. error test failures')
 
         offset = width * multiplier
@@ -2357,7 +2413,7 @@ class TaskPlotPerf(PerfTask):
                 if 'failed' not in data:
                     model_tags.append(model_tag)
                     json_paths.append(json_path)
-        
+
         initial_step_size = list()
         final_step_size = list()
         time_per_realization = list()
@@ -2375,7 +2431,7 @@ class TaskPlotPerf(PerfTask):
 
         # Create the figure and axis.
         fig, ax = plt.subplots(figsize=(5, 8))
-        
+
         # Plot the step sizes.
         offset = width * multiplier
         ax.barh(y + offset, initial_step_size, width, label='initial step size')
@@ -2391,7 +2447,7 @@ class TaskPlotPerf(PerfTask):
 
         # Set the x-axis labels based on max CPU time.
         all_xticks = [1e-2, 1e-1, 1, 10, 100, 1000, 10000, 100000]
-        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms', 
+        all_xticklabels = ['0.01 ms', '0.1 ms', '1 ms', '10 ms', '100 ms',
                            '1 s', '10 s', '100 s']
         max_value = max(time_per_realization)
         max_value = max(max_value, max(initial_step_size))
@@ -2419,7 +2475,7 @@ class TaskPlotPerf(PerfTask):
         plt.tight_layout()
         plt.savefig(target[0], dpi=600)
         plt.close()
-            
+
 
 class TaskGenerateFlameGraph(PerfTask):
     REGISTRY = []
@@ -2433,13 +2489,13 @@ class TaskGenerateFlameGraph(PerfTask):
         self.json_paths = run_task.json_paths
         self.out_paths = run_task.out_paths
         self.result_path = run_task.result_path
-        self.html_paths = [os.path.join(self.result_path, f'{model_name}.html') 
+        self.html_paths = [os.path.join(self.result_path, f'{model_name}.html')
                           for model_name in self.model_names]
 
-        self.add_action(self.out_paths, 
+        self.add_action(self.out_paths,
                         self.html_paths,
                         self.generate_flamegraph)
-        
+
     def generate_flamegraph(self, file_dep, target):
         import json
         import subprocess
@@ -2464,7 +2520,7 @@ class TaskGenerateFlameGraph(PerfTask):
             command += f'perf script report flamegraph --allow-download && '
             command += f'cp flamegraph.html {html_path} && '
             command += f'rm flamegraph.html perf.data'
-            try: 
+            try:
                 p = subprocess.run(command, check=True, shell=True,
                                 cwd=self.perf.results_path)
                 if p.returncode != 0:
@@ -2473,7 +2529,7 @@ class TaskGenerateFlameGraph(PerfTask):
                 with open(html_path, 'w') as f:
                     f.write('')
                 print(f'Error generating flamegraph: {e}')
-        
+
 
 class TaskGenerateDifferentialFlameGraph(StudyTask):
     REGISTRY = []
@@ -2506,7 +2562,7 @@ class TaskGenerateDifferentialFlameGraph(StudyTask):
                 self.model_labels.append(f'{model.label}\n{model_tag}')
         self.exe_args = exe_args
         self.subdir = get_sub_directory(self.exe_args)
-        
+
         self.results_path = self.study.config['results_path']
         self.data_paths = list()
         for model, model_name in zip(self.models, self.model_names):
@@ -2514,22 +2570,22 @@ class TaskGenerateDifferentialFlameGraph(StudyTask):
             self.data_paths.append(
                     os.path.join(self.results_path, model.name, 'perf_realize',
                                  self.subdir, event, f'{model_name}.data'))
-            
+
         self.figures_path = self.study.config['figures_path']
         if not os.path.exists(self.figures_path):
             os.makedirs(self.figures_path)
-        
-        self.flamegraph_path = os.path.join(self.figures_path, 
+
+        self.flamegraph_path = os.path.join(self.figures_path,
                 f'differential_flamegraph_{tag}.html')
-        self.add_action(self.data_paths, 
-                        [self.flamegraph_path], 
+        self.add_action(self.data_paths,
+                        [self.flamegraph_path],
                         self.generate_differential_flamegraph)
 
     def generate_differential_flamegraph(self, file_dep, target):
         import subprocess
 
         flamegraph = os.path.join(self.study.config['flamegraph_path'], 'flamegraph.pl')
-        stackcollapse = os.path.join(self.study.config['flamegraph_path'], 
+        stackcollapse = os.path.join(self.study.config['flamegraph_path'],
                                      'stackcollapse-perf.pl')
         difffolded = os.path.join(self.study.config['flamegraph_path'], 'difffolded.pl')
 
@@ -2559,3 +2615,122 @@ class TaskGenerateDifferentialFlameGraph(StudyTask):
             with open(target[0], 'w') as f:
                 f.write('')
             print(f'Error generating differential flamegraph: {e}')
+
+class TaskSimulateDoublePendulumWithWrapping(StudyTask):
+    REGISTRY = []
+    def __init__(self, study):
+        super(TaskSimulateDoublePendulumWithWrapping, self).__init__(study)
+        self.name = 'simulate_double_pendulum_with_wrapping'
+
+        self.data_path = self.study.config['data_path']
+        self.dummy_path = os.path.join(self.data_path, 'pendulum', 'dummy.txt')
+
+        self.results_path = self.study.config['results_path']
+
+        self.add_action([self.dummy_path],
+                        [],
+                        self.simulate_geometry_path)
+
+        self.add_action([self.dummy_path],
+                        [],
+                        self.simulate_scholz2015_geometry_path)
+
+    def simulate_geometry_path(self, file_dep, target):
+        import opensim as osim
+        from time import time
+
+        model = osim.ModelFactory.createDoublePendulum()
+        b0 = model.updBodySet().get("b0");
+
+        # Create a PathSpring with a Scholz2015GeometryPath.
+        spring = osim.PathSpring()
+        spring.setName("path_spring")
+        spring.setRestingLength(0.5)
+        spring.setDissipation(0.5)
+        spring.setStiffness(25.0)
+        # spring.set_path(osim.GeometryPath())
+        model.addComponent(spring)
+
+        # Configure the GeometryPath.
+        path = spring.updGeometryPath()
+        path.setName("path")
+
+        path.appendNewPathPoint('origin', model.getGround(), osim.Vec3(0.05, 0.05, 0.))
+        path.appendNewPathPoint('via_point', model.getBodySet().get("b1"),
+                osim.Vec3(-0.75, 0.1, 0.))
+        path.appendNewPathPoint('insertion', model.getBodySet().get("b1"),
+                osim.Vec3(-0.25, 0.1, 0.))
+
+        # Add a cylinder wrapping obstacle to the path.
+        obstacle = osim.WrapCylinder()
+        obstacle.setName('obstacle')
+        obstacle.set_translation(osim.Vec3(-0.5, 0.1, 0))
+        obstacle.set_radius(0.1)
+        obstacle.set_length(0.3)
+        obstacle.set_quadrant('x')
+        obstacle.setFrame(b0)
+        b0.addWrapObject(obstacle)
+        path.addPathWrap(obstacle)
+
+        # Initialize the system.
+        state = model.initSystem()
+
+        # Simulate.
+        manager = osim.Manager(model)
+        manager.initialize(state)
+
+        t = time()
+        manager.integrate(20.0)
+        integration_time = time() - t
+        print(f' --> {self.name}: GeometryPath integration time: {integration_time:.4f} s')
+
+    def simulate_scholz2015_geometry_path(self, file_dep, target):
+        import opensim as osim
+        from time import time
+
+        model = osim.ModelFactory.createDoublePendulum()
+
+        # Create a PathSpring with a Scholz2015GeometryPath.
+        spring = osim.PathSpring()
+        spring.setName("path_spring")
+        spring.setRestingLength(0.5)
+        spring.setDissipation(0.5)
+        spring.setStiffness(25.0)
+        spring.set_path(osim.Scholz2015GeometryPath())
+        model.addComponent(spring)
+
+        # Configure the Scholz2015GeometryPath.
+        path = osim.Scholz2015GeometryPath.safeDownCast(spring.updPath())
+        path.setName("path")
+
+        # The origin and insertion points are stored using the 'origin' and
+        # 'insertion' properties of Scholz2015GeometryPath, which are of type
+        # Station. We must update these properties after the Scholz2015GeometryPath
+        # has been added to the PathSpring, so that the Socket connections in each
+        # Station remain valid.
+        path.setOrigin(model.getGround(), osim.Vec3(0.05, 0.05, 0.))
+        path.setInsertion(model.getBodySet().get("b1"),
+                osim.Vec3(-0.25, 0.1, 0.))
+
+        # Add a ContactCylinder wrapping obstacle to the path.
+        # obstacle = osim.ContactCylinder(0.1,
+        #     osim.Vec3(-0.5, 0.1, 0.), osim.Vec3(0),
+        #     model.getBodySet().get("b0"))
+        # model.addComponent(obstacle)
+        # path.addObstacle(obstacle, osim.Vec3(0., 0.1, 0.))
+
+        # Add a via point to the path.
+        path.addViaPoint(model.getBodySet().get("b1"), osim.Vec3(-0.75, 0.1, 0.))
+
+        # Initialize the system.
+        state = model.initSystem()
+
+        # Simulate.
+        manager = osim.Manager(model)
+        manager.initialize(state)
+
+        t = time()
+        manager.integrate(20.0)
+        integration_time = time() - t
+        print(f' --> {self.name}: Scholz2015GeometryPath integration time: {integration_time:.4f} s')
+

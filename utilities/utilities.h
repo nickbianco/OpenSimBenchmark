@@ -5,6 +5,119 @@
 using namespace OpenSim;
 using namespace SimTK;
 
+inline SimTK::Vector run_benchmarks(Model model, double time, double step,
+        double accuracy, Manager::IntegratorMethod integratorMethod) {
+
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::microseconds;
+
+    // Initialize model, state, and results vector.
+    model.initSystem();
+    SimTK::Vector results(7, SimTK::NaN);
+
+    // Add a discrete controller to the model.
+    DiscreteController* controller = new DiscreteController();
+    controller->setName("controller");
+    model.addController(controller);
+    SimTK::State state = model.initSystem();
+
+    // Helper function to reset the state.
+    Vector defaultY = state.getY();
+    auto resetState = [&](SimTK::State& state) {
+        state.setTime(0);
+        state.updY() = defaultY; // + 1e-4*SimTK::Test::randVector(defaultY.size());
+        // SimTK::Random::Uniform rand(0.1, 0.2);
+        // Vector controls(model.getNumControls(), rand.getValue());
+        // controller->setDiscreteControls(state, controls);
+    };
+
+    // Realize acceleration.
+    // ---------------------
+    SimTK::Vector acceleration_times(100, 0.0);
+    for (int i = 0; i < 100; ++i) {
+        resetState(state);
+        auto start = high_resolution_clock::now();
+        model.realizeAcceleration(state);
+        auto end = high_resolution_clock::now();
+        double time_elapsed = duration_cast<microseconds>(end - start).count();
+        time_elapsed /= 1.0e6;
+        acceleration_times[i] = time_elapsed;
+    }
+    results[0] = SimTK::mean(acceleration_times);
+
+    // One simulation step.
+    // --------------------
+    if (step > 0) {
+        Manager manager(model);
+        manager.setIntegratorMethod(integratorMethod);
+        manager.setIntegratorFixedStepSize(step);
+        SimTK::Vector step_times(100, 0.0);
+        for (int i = 0; i < 100; ++i) {
+            resetState(state);
+            manager.initialize(state);
+            auto start = high_resolution_clock::now();
+            manager.integrate(step);
+            auto end = high_resolution_clock::now();
+            double time_elapsed = duration_cast<microseconds>(end - start).count();
+            time_elapsed /= 1.0e6;
+            step_times[i] = time_elapsed;
+        }
+        results[1] = SimTK::mean(step_times);
+    }
+
+    // Initial energy
+    // --------------
+    resetState(state);
+    model.realizeDynamics(state);
+    double initial_energy = model.calcPotentialEnergy(state) +
+            model.calcKineticEnergy(state);
+
+    // Forward integration.
+    // --------------------
+    SimTK::Vector integration_times(10, 0.0);
+    SimTK::Vector real_time_factors(10, 0.0);
+    SimTK::Vector final_energies(10, 0.0);
+    SimTK::Vector num_steps(10, 0.0);
+    SimTK::Vector times_per_step(10, 0.0);
+    Manager manager(model);
+    manager.setIntegratorMethod(integratorMethod);
+    if (step > 0) {
+        manager.setIntegratorFixedStepSize(step);
+    } else {
+        manager.setIntegratorAccuracy(accuracy);
+    }
+    for (int i = 0; i < 10; ++i) {
+        resetState(state);
+        manager.initialize(state);
+        auto start = high_resolution_clock::now();
+        manager.integrate(time);
+        auto end = high_resolution_clock::now();
+        double time_elapsed = duration_cast<microseconds>(end - start).count();
+        time_elapsed /= 1.0e6;
+        integration_times[i] = time_elapsed;
+        real_time_factors[i] = time / time_elapsed;
+        num_steps[i] = manager.getIntegrator().getNumStepsTaken();
+        times_per_step[i] = time_elapsed / num_steps[i];
+
+        // Final energy
+        // ------------
+        const auto& finalState = manager.getState();
+        model.realizeDynamics(finalState);
+        final_energies[i] = model.calcPotentialEnergy(finalState) +
+                model.calcKineticEnergy(finalState);
+    }
+    results[2] = SimTK::mean(integration_times);
+    results[3] = SimTK::mean(real_time_factors);
+    double final_energy = SimTK::mean(final_energies);
+    results[4] = final_energy - initial_energy;
+    results[5] = SimTK::mean(num_steps);
+    results[6] = SimTK::mean(times_per_step);
+
+    return results;
+}
+
 class StateGenerator {
 public:
     StateGenerator(Model model) : m_model(model) {
