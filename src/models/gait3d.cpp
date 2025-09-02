@@ -9,12 +9,13 @@ static const char HELP[] =
 R"(Create a 3D gait model.
 
 Usage:
-  gait3d <output> --joint=<joint> --muscle=<muscle>
+  gait3d <output> --joint=<joint> --muscle=<muscle> --obstacles=<obstacles>
   gait3d -h | --help
 
 Options:
   -j <joint>,      --joint <joint>            Set the joint type.
   -m <muscle>,     --muscle <muscle>          Set the muscle type.
+  -o <obstacles>,  --obstacles <obstacles>    Use wrap obstacles.
 )";
 
 // Enums
@@ -127,33 +128,36 @@ template<typename MuscleType>
 void createMuscles(Model& model, OpenSim::Body* pelvis, OpenSim::Body* torso,
         OpenSim::Body* leftThigh, OpenSim::Body* leftShank,
         OpenSim::Body* leftFoot, OpenSim::Body* rightThigh,
-        OpenSim::Body* rightShank, OpenSim::Body* rightFoot) {
+        OpenSim::Body* rightShank, OpenSim::Body* rightFoot,
+        bool useObstacles) {
 
     // Wrap obstacles
     // --------------
-    auto* glut_max_r_obstacle = new ContactEllipsoid(
-            SimTK::Vec3(0.04, 0.04, 0.1), SimTK::Vec3(-0.04, -0.085, 0.09),
-            SimTK::Vec3(-0.2, 0.5, 0.), *pelvis);
-    glut_max_r_obstacle->setName("glut_max_r_obstacle");
-    pelvis->addComponent(glut_max_r_obstacle);
+    if (useObstacles) {
+        auto* glut_max_r_obstacle = new ContactEllipsoid(
+                SimTK::Vec3(0.04, 0.04, 0.1), SimTK::Vec3(-0.04, -0.085, 0.09),
+                SimTK::Vec3(-0.2, 0.5, 0.), *pelvis);
+        glut_max_r_obstacle->setName("glut_max_r_obstacle");
+        pelvis->addComponent(glut_max_r_obstacle);
 
-    auto* glut_max_l_obstacle = new ContactEllipsoid(
-            SimTK::Vec3(0.04, 0.04, 0.1), SimTK::Vec3(-0.04, -0.085, -0.09),
-            SimTK::Vec3(0.2, -0.5, 0.), *pelvis);
-    glut_max_l_obstacle->setName("glut_max_l_obstacle");
-    pelvis->addComponent(glut_max_l_obstacle);
+        auto* glut_max_l_obstacle = new ContactEllipsoid(
+                SimTK::Vec3(0.04, 0.04, 0.1), SimTK::Vec3(-0.04, -0.085, -0.09),
+                SimTK::Vec3(0.2, -0.5, 0.), *pelvis);
+        glut_max_l_obstacle->setName("glut_max_l_obstacle");
+        pelvis->addComponent(glut_max_l_obstacle);
 
-    auto* gastroc_r_obstacle = new ContactEllipsoid(
-            SimTK::Vec3(0.065, 0.065, 0.2), SimTK::Vec3(-0.00861, 0.05, 0.),
-            SimTK::Vec3(2.9672, 0.028, -1.478), *rightShank);
-    gastroc_r_obstacle->setName("gastroc_r_obstacle");
-    rightShank->addComponent(gastroc_r_obstacle);
+        auto* gastroc_r_obstacle = new ContactEllipsoid(
+                SimTK::Vec3(0.065, 0.065, 0.2), SimTK::Vec3(-0.00861, 0.05, 0.),
+                SimTK::Vec3(2.9672, 0.028, -1.478), *rightShank);
+        gastroc_r_obstacle->setName("gastroc_r_obstacle");
+        rightShank->addComponent(gastroc_r_obstacle);
 
-    auto* gastroc_l_obstacle = new ContactEllipsoid(
-            SimTK::Vec3(0.065, 0.065, 0.2), SimTK::Vec3(-0.00861, 0.05, 0.),
-            SimTK::Vec3(-2.9672, 0.028, 1.478), *leftShank);
-    gastroc_l_obstacle->setName("gastroc_l_obstacle");
-    leftShank->addComponent(gastroc_l_obstacle);
+        auto* gastroc_l_obstacle = new ContactEllipsoid(
+                SimTK::Vec3(0.065, 0.065, 0.2), SimTK::Vec3(-0.00861, 0.05, 0.),
+                SimTK::Vec3(-2.9672, 0.028, 1.478), *leftShank);
+        gastroc_l_obstacle->setName("gastroc_l_obstacle");
+        leftShank->addComponent(gastroc_l_obstacle);
+    }
 
     // Right leg muscles
     // -----------------
@@ -215,8 +219,16 @@ void createMuscles(Model& model, OpenSim::Body* pelvis, OpenSim::Body* torso,
     glut_max_r_path.setOrigin(*pelvis, SimTK::Vec3(-0.0642, 0.0176, 0.0563));
     glut_max_r_path.setInsertion(*rightThigh,
             SimTK::Vec3(-0.0156, 0.0684, 0.0419));
-    glut_max_r_path.addObstacle(*glut_max_r_obstacle,
+    if (useObstacles) {
+        glut_max_r_path.addObstacle(
+            pelvis->getComponent<OpenSim::ContactGeometry>("glut_max_r_obstacle"),
             SimTK::Vec3(-0.04, 0., 0.));
+    } else {
+        glut_max_r_path.addViaPoint(*pelvis,
+            SimTK::Vec3(-0.0669, -0.052, 0.0914));
+        glut_max_r_path.addViaPoint(*rightThigh,
+            SimTK::Vec3(-0.0426, 0.117, 0.0293));
+    }
 
     // iliopsoas_r
     auto* iliopsoas_r = createMuscle<MuscleType>(
@@ -264,8 +276,11 @@ void createMuscles(Model& model, OpenSim::Body* pelvis, OpenSim::Body* torso,
     gastroc_r_path.setOrigin(*rightThigh, SimTK::Vec3(-0.02, -0.218, -0.024));
     gastroc_r_path.setInsertion(*rightFoot,
             SimTK::Vec3(-0.095, 0.001, -0.0053));
-    gastroc_r_path.addObstacle(
-            *gastroc_r_obstacle, SimTK::Vec3(0., -0.065, 0.));
+    if (useObstacles) {
+        gastroc_r_path.addObstacle(
+            rightShank->getComponent<OpenSim::ContactGeometry>("gastroc_r_obstacle"),
+            SimTK::Vec3(0., -0.065, 0.));
+    }
 
     // soleus_r
     auto* soleus_r = createMuscle<MuscleType>(
@@ -348,8 +363,16 @@ void createMuscles(Model& model, OpenSim::Body* pelvis, OpenSim::Body* torso,
     glut_max_l_path.setOrigin(*pelvis, SimTK::Vec3(-0.0642, 0.0176, -0.0563));
     glut_max_l_path.setInsertion(*leftThigh,
             SimTK::Vec3(-0.0156, 0.0684, -0.0419));
-    glut_max_l_path.addObstacle(*glut_max_l_obstacle,
+    if (useObstacles) {
+        glut_max_l_path.addObstacle(
+            pelvis->getComponent<OpenSim::ContactGeometry>("glut_max_l_obstacle"),
             SimTK::Vec3(-0.04, 0., 0.));
+    } else {
+        glut_max_l_path.addViaPoint(*pelvis,
+            SimTK::Vec3(-0.0669, -0.052, -0.0914));
+        glut_max_l_path.addViaPoint(*leftThigh,
+            SimTK::Vec3(-0.0426, 0.117, -0.0293));
+    }
 
     // iliopsoas_l
     auto* iliopsoas_l = createMuscle<MuscleType>(
@@ -395,8 +418,11 @@ void createMuscles(Model& model, OpenSim::Body* pelvis, OpenSim::Body* torso,
     gastroc_l_path.setName("gastroc_l_path");
     gastroc_l_path.setOrigin(*leftThigh, SimTK::Vec3(-0.02, -0.218, 0.024));
     gastroc_l_path.setInsertion(*leftFoot, SimTK::Vec3(-0.095, 0.001, 0.0053));
-    gastroc_l_path.addObstacle(
-            *gastroc_l_obstacle, SimTK::Vec3(-0.065, 0., 0.));
+    if (useObstacles) {
+        gastroc_l_path.addObstacle(
+            leftShank->getComponent<OpenSim::ContactGeometry>("gastroc_l_obstacle"),
+            SimTK::Vec3(-0.065, 0., 0.));
+    }
 
     // soleus_l
     auto* soleus_l = createMuscle<MuscleType>(
@@ -474,6 +500,14 @@ int main(int argc, char* argv[]) {
         jointType = JointType::Custom;
     } else if (joint == "ball") {
         jointType = JointType::Ball;
+    }
+
+    // Wrap obstacles
+    // ---------------
+    bool useObstacles = false;
+    if (args["--obstacles"]) {
+        std::string obstacles = args["--obstacles"].asString();
+        useObstacles = (obstacles == "true");
     }
 
     // Parameters
@@ -652,13 +686,16 @@ int main(int argc, char* argv[]) {
     // -------
     if (muscleModel == "millard") {
         createMuscles<Millard2012EquilibriumMuscle>(model, pelvis, torso,
-            leftThigh, leftShank, leftFoot, rightThigh, rightShank, rightFoot);
+            leftThigh, leftShank, leftFoot, rightThigh, rightShank, rightFoot,
+            useObstacles);
     } else if (muscleModel == "pathactuator") {
         createMuscles<PathActuator>(model, pelvis, torso, leftThigh,
-            leftShank, leftFoot, rightThigh, rightShank, rightFoot);
+            leftShank, leftFoot, rightThigh, rightShank, rightFoot,
+            useObstacles);
     } else if (muscleModel == "degrootefregly") {
         createMuscles<DeGrooteFregly2016Muscle>(model, pelvis, torso, leftThigh,
-            leftShank, leftFoot, rightThigh, rightShank, rightFoot);
+            leftShank, leftFoot, rightThigh, rightShank, rightFoot,
+            useObstacles);
     }
 
     // Joint damping

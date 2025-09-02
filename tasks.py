@@ -1630,15 +1630,17 @@ class TaskCreateGait3DModels(StudyTask):
 
         self.model_names = ['Gait3DMillard',
                             'Gait3DDeGrooteFregly',
-                            'Gait3DPathActuator']
+                            'Gait3DPathActuator',
+                            'Gait3DMillardNoWrap']
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'],
                                                  f'{model_name}.osim'))
 
-        self.flags_list = ['--joint=custom --muscle=millard',
-                           '--joint=custom --muscle=degrootefregly',
-                           '--joint=custom --muscle=pathactuator']
+        self.flags_list = ['--joint=custom --muscle=millard --obstacles=true',
+                           '--joint=custom --muscle=degrootefregly --obstacles=true',
+                           '--joint=custom --muscle=pathactuator --obstacles=true',
+                           '--joint=custom --muscle=millard --obstacles=false']
 
         for model_path, flags in zip(self.model_paths, self.flags_list):
             self.add_action([self.dummy_path], [model_path],
