@@ -698,20 +698,49 @@ int main(int argc, char* argv[]) {
             useObstacles);
     }
 
+    // Lumbar torque actuators
+    // -----------------------
+    ActivationCoordinateActuator* lumbarTorqueX =
+        new ActivationCoordinateActuator("lumbar_coord_0");
+    lumbarTorqueX->setName("lumbar_coord_0_torque");
+    lumbarTorqueX->setOptimalForce(100.0);
+    lumbarTorqueX->setMinControl(-1.0);
+    lumbarTorqueX->setMaxControl(1.0);
+    lumbarTorqueX->set_activation_time_constant(0.05);
+    model.addForce(lumbarTorqueX);
+
+    ActivationCoordinateActuator* lumbarTorqueY =
+        new ActivationCoordinateActuator("lumbar_coord_1");
+    lumbarTorqueY->setName("lumbar_coord_1_torque");
+    lumbarTorqueY->setOptimalForce(100.0);
+    lumbarTorqueY->setMinControl(-1.0);
+    lumbarTorqueY->setMaxControl(1.0);
+    lumbarTorqueY->set_activation_time_constant(0.05);
+    model.addForce(lumbarTorqueY);
+
+    ActivationCoordinateActuator* lumbarTorqueZ =
+        new ActivationCoordinateActuator("lumbar_coord_2");
+    lumbarTorqueZ->setName("lumbar_coord_2_torque");
+    lumbarTorqueZ->setOptimalForce(100.0);
+    lumbarTorqueZ->setMinControl(-1.0);
+    lumbarTorqueZ->setMaxControl(1.0);
+    lumbarTorqueZ->set_activation_time_constant(0.05);
+    model.addForce(lumbarTorqueZ);
+
     // Joint damping
     // -------------
     CoordinateLinearDamper* lumbarDamperX = new CoordinateLinearDamper(
-            "lumbar_coord_0", 10.0*jointDamping);
+            "lumbar_coord_0", jointDamping);
     lumbarDamperX->setName("lumbar_coord_0_damper");
     model.addForce(lumbarDamperX);
 
     CoordinateLinearDamper* lumbarDamperY = new CoordinateLinearDamper(
-            "lumbar_coord_1", 10.0*jointDamping);
+            "lumbar_coord_1", jointDamping);
     lumbarDamperY->setName("lumbar_coord_1_damper");
     model.addForce(lumbarDamperY);
 
     CoordinateLinearDamper* lumbarDamperZ = new CoordinateLinearDamper(
-            "lumbar_coord_2", 10.0*jointDamping);
+            "lumbar_coord_2", jointDamping);
     lumbarDamperZ->setName("lumbar_coord_2_damper");
     model.addForce(lumbarDamperZ);
 
@@ -770,22 +799,22 @@ int main(int argc, char* argv[]) {
     if (jointType == JointType::Custom) {
         CoordinateLinearStop* lumbarStop0 = new CoordinateLinearStop(
                 "lumbar_coord_0", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-10.0),
-                SimTK::convertDegreesToRadians(10.0));
+                SimTK::convertDegreesToRadians(-20.0),
+                SimTK::convertDegreesToRadians(20.0));
         lumbarStop0->setName("lumbar_coord_0_stop");
         model.addForce(lumbarStop0);
 
         CoordinateLinearStop* lumbarStop1 = new CoordinateLinearStop(
                 "lumbar_coord_1", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-10.0),
-                SimTK::convertDegreesToRadians(10.0));
+                SimTK::convertDegreesToRadians(-20.0),
+                SimTK::convertDegreesToRadians(20.0));
         lumbarStop1->setName("lumbar_coord_1_stop");
         model.addForce(lumbarStop1);
 
         CoordinateLinearStop* lumbarStop2 = new CoordinateLinearStop(
                 "lumbar_coord_2", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-10.0),
-                SimTK::convertDegreesToRadians(10.0));
+                SimTK::convertDegreesToRadians(-20.0),
+                SimTK::convertDegreesToRadians(20.0));
         lumbarStop2->setName("lumbar_coord_2_stop");
         model.addForce(lumbarStop2);
 
@@ -847,14 +876,14 @@ int main(int argc, char* argv[]) {
     model.addForce(rightKneeStop);
 
     CoordinateLinearStop* leftAnkleStopX = new CoordinateLinearStop(
-            "ankle_l_coord_0", stopStiffness, 1.41762,
+            "ankle_l_coord_0", stopStiffness, stopDamping,
             SimTK::convertDegreesToRadians(-60.0),
             SimTK::convertDegreesToRadians(25.0));
     leftAnkleStopX->setName("ankle_l_coord_0_stop");
     model.addForce(leftAnkleStopX);
 
     CoordinateLinearStop* rightAnkleStopX = new CoordinateLinearStop(
-            "ankle_r_coord_0", stopStiffness, 1.41762,
+            "ankle_r_coord_0", stopStiffness, stopDamping,
             SimTK::convertDegreesToRadians(-60.0),
             SimTK::convertDegreesToRadians(25.0));
     rightAnkleStopX->setName("ankle_r_coord_0_stop");
