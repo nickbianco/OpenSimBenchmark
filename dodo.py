@@ -301,5 +301,6 @@ add_model('Gait3DPathActuator',
 #                model_tuples, labels, 'real_time_factor', 1.0)
 
 
-# Double pendulum models with wrapping
+# Wrapping examples
 study.add_task(TaskSimulateDoublePendulumWithWrapping)
+study.add_task(TaskSimulateHangingPendulum)

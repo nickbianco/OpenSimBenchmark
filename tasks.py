@@ -5,6 +5,7 @@ from doit.action import CmdAction
 import shutil
 import opensim as osim
 
+from study import Model
 from utilities.model_generator import ModelGenerator
 
 ######################################################################
@@ -2628,6 +2629,7 @@ class TaskSimulateDoublePendulumWithWrapping(StudyTask):
         self.dummy_path = os.path.join(self.data_path, 'pendulum', 'dummy.txt')
 
         self.results_path = self.study.config['results_path']
+        self.iterations = 50
 
         self.add_action([self.dummy_path],
                         [],
@@ -2679,12 +2681,22 @@ class TaskSimulateDoublePendulumWithWrapping(StudyTask):
 
         # Simulate.
         manager = osim.Manager(model)
-        manager.initialize(state)
 
-        t = time()
-        manager.integrate(20.0)
-        integration_time = time() - t
-        print(f' --> {self.name}: GeometryPath integration time: {integration_time:.4f} s')
+        integration_times = np.zeros((self.iterations,), dtype=np.float64)
+        for i in range(self.iterations):
+            manager.initialize(state)
+
+            t = time()
+            manager.integrate(20.0)
+            integration_time = time() - t
+            integration_times[i] = integration_time
+
+        avg_integration_time = np.mean(integration_times)
+        std_integration_time = np.std(integration_times)
+        print(f' --> {self.name}: GeometryPath average integration time over '
+              f'{self.iterations} iterations: {avg_integration_time:.4f} s '
+              f'+/- {std_integration_time:.4f} s')
+
 
     def simulate_scholz2015_geometry_path(self, file_dep, target):
         import opensim as osim
@@ -2715,11 +2727,11 @@ class TaskSimulateDoublePendulumWithWrapping(StudyTask):
                 osim.Vec3(-0.25, 0.1, 0.))
 
         # Add a ContactCylinder wrapping obstacle to the path.
-        # obstacle = osim.ContactCylinder(0.1,
-        #     osim.Vec3(-0.5, 0.1, 0.), osim.Vec3(0),
-        #     model.getBodySet().get("b0"))
-        # model.addComponent(obstacle)
-        # path.addObstacle(obstacle, osim.Vec3(0., 0.1, 0.))
+        obstacle = osim.ContactCylinder(0.1,
+            osim.Vec3(-0.5, 0.1, 0.), osim.Vec3(0),
+            model.getBodySet().get("b0"))
+        model.addComponent(obstacle)
+        path.addObstacle(obstacle, osim.Vec3(0., 0.1, 0.))
 
         # Add a via point to the path.
         path.addViaPoint(model.getBodySet().get("b1"), osim.Vec3(-0.75, 0.1, 0.))
@@ -2729,10 +2741,219 @@ class TaskSimulateDoublePendulumWithWrapping(StudyTask):
 
         # Simulate.
         manager = osim.Manager(model)
-        manager.initialize(state)
 
-        t = time()
-        manager.integrate(20.0)
-        integration_time = time() - t
-        print(f' --> {self.name}: Scholz2015GeometryPath integration time: {integration_time:.4f} s')
+        integration_times = np.zeros((self.iterations,), dtype=np.float64)
+        for i in range(self.iterations):
+            manager.initialize(state)
+
+            t = time()
+            manager.integrate(20.0)
+            integration_time = time() - t
+            integration_times[i] = integration_time
+
+        avg_integration_time = np.mean(integration_times)
+        std_integration_time = np.std(integration_times)
+        print(f' --> {self.name}: Scholz2015GeometryPath average integration time over '
+              f'{self.iterations} iterations: {avg_integration_time:.4f} s '
+              f'+/- {std_integration_time:.4f} s')
+
+
+class TaskSimulateHangingPendulum(StudyTask):
+    REGISTRY = []
+    def __init__(self, study):
+        super(TaskSimulateHangingPendulum, self).__init__(study)
+        self.name = 'simulate_hanging_pendulum'
+
+        self.data_path = self.study.config['data_path']
+        self.dummy_path = os.path.join(self.data_path, 'pendulum', 'dummy.txt')
+
+        self.results_path = self.study.config['results_path']
+        self.iterations = 50
+
+        self.integrators = ['rk4', 'cpodes']
+        self.obstacles = ['cylinder', 'ellipsoid', 'sphere']
+
+        for integrator in self.integrators:
+            for obstacle in self.obstacles:
+                self.add_action([self.dummy_path],
+                                [],
+                                self.simulate_geometry_path, integrator, obstacle)
+
+        for integrator in self.integrators:
+            for obstacle in self.obstacles:
+                self.add_action([self.dummy_path],
+                                [],
+                                self.simulate_scholz2015_geometry_path, integrator,
+                                obstacle)
+
+    def simulate_geometry_path(self, file_dep, target, integrator, obstacle_type):
+        import opensim as osim
+        from time import time
+
+        model = osim.ModelFactory.createPendulum()
+        offset = osim.PhysicalOffsetFrame(model.getGround(),
+                                          osim.Transform(osim.Vec3(0)))
+        offset.setName('offset')
+        model.addComponent(offset)
+
+        # Create a PathSpring with a Scholz2015GeometryPath.
+        spring = osim.PathSpring()
+        spring.setName("path_spring")
+        spring.setRestingLength(0.0)
+        spring.setDissipation(0.1)
+        spring.setStiffness(50.0)
+        model.addComponent(spring)
+
+        # Configure the GeometryPath.
+        path = spring.updGeometryPath()
+        path.setName("path")
+
+        path.appendNewPathPoint('origin', model.getGround(), osim.Vec3(-0.1, 0., 0.))
+        path.appendNewPathPoint('insertion', model.getBodySet().get("b0"),
+                osim.Vec3(-0.5, 0.1, 0.))
+
+        if obstacle_type == 'cylinder':
+            # Add a cylinder wrapping obstacle to the path.
+            obstacle = osim.WrapCylinder()
+            obstacle.setName('obstacle')
+            obstacle.set_translation(osim.Vec3(0.25, 0., 0))
+            obstacle.set_radius(0.1)
+            obstacle.set_length(0.3)
+            obstacle.set_quadrant('x')
+            obstacle.setFrame(offset)
+            mutableOffset = osim.PhysicalOffsetFrame.safeDownCast(
+                model.getComponent('/offset'))
+            mutableOffset.addWrapObject(obstacle)
+            path.addPathWrap(obstacle)
+
+        elif obstacle_type == 'ellipsoid':
+            # Add an ellipsoid wrapping obstacle to the path.
+            obstacle = osim.WrapEllipsoid()
+            obstacle.setName('obstacle')
+            obstacle.set_xyz_body_rotation(osim.Vec3(0.5*np.pi, 0, 0))
+            obstacle.set_translation(osim.Vec3(0.25, 0., 0.))
+            obstacle.set_dimensions(osim.Vec3(0.1, 0.3, 0.1))
+            obstacle.set_quadrant('-z')
+            obstacle.setFrame(offset)
+            mutableOffset = osim.PhysicalOffsetFrame.safeDownCast(
+                model.getComponent('/offset'))
+            mutableOffset.addWrapObject(obstacle)
+            path.addPathWrap(obstacle)
+
+        elif obstacle_type == 'sphere':
+            # Add a sphere wrapping obstacle to the path.
+            obstacle = osim.WrapSphere()
+            obstacle.setName('obstacle')
+            obstacle.set_translation(osim.Vec3(0.25, 0., 0.))
+            obstacle.set_radius(0.1)
+            obstacle.setFrame(offset)
+            mutableOffset = osim.PhysicalOffsetFrame.safeDownCast(
+                model.getComponent('/offset'))
+            mutableOffset.addWrapObject(obstacle)
+            path.addPathWrap(obstacle)
+
+        # Initialize the system.
+        # model.setUseVisualizer(True)
+        state = model.initSystem()
+        # model.updVisualizer().updSimbodyVisualizer().setBackgroundTypeByInt(2)
+
+        # Simulate.
+        manager = osim.Manager(model)
+        if integrator == 'rk4':
+            manager.setIntegratorMethod(osim.Manager.IntegratorMethod_RungeKuttaMerson)
+        elif integrator == 'cpodes':
+            manager.setIntegratorMethod(osim.Manager.IntegratorMethod_CPodes)
+        # manager.initialize(state)
+        # manager.integrate(20.0)
+
+        integration_times = np.zeros((self.iterations,), dtype=np.float64)
+        for i in range(self.iterations):
+            manager.initialize(state)
+
+            t = time()
+            manager.integrate(20.0)
+            integration_time = time() - t
+            integration_times[i] = integration_time
+
+        avg_integration_time = np.mean(integration_times)
+        std_integration_time = np.std(integration_times)
+        print(f' --> GeometryPath, '
+              f'obstacle {obstacle_type}, integrator {integrator}: '
+              f'{avg_integration_time:.4f} s '
+              f'+/- {std_integration_time:.4f} s')
+
+
+    def simulate_scholz2015_geometry_path(self, file_dep, target, integrator,
+                                          obstacle_type):
+        import opensim as osim
+        from time import time
+
+        model = osim.ModelFactory.createPendulum()
+
+        # Create a PathSpring with a Scholz2015GeometryPath.
+        spring = osim.PathSpring()
+        spring.setName("path_spring")
+        spring.setRestingLength(0.0)
+        spring.setDissipation(0.1)
+        spring.setStiffness(50.0)
+        spring.set_path(osim.Scholz2015GeometryPath())
+        model.addComponent(spring)
+
+        # Configure the Scholz2015GeometryPath.
+        path = osim.Scholz2015GeometryPath.safeDownCast(spring.updPath())
+        path.setName("path")
+        path.setOrigin(model.getGround(), osim.Vec3(-0.1, 0., 0.))
+        path.setInsertion(model.getBodySet().get("b0"),
+                osim.Vec3(-0.5, 0.1, 0.))
+
+        # Add a ContactCylinder wrapping obstacle to the path.
+        if obstacle_type == 'cylinder':
+            obstacle = osim.ContactCylinder(0.1,
+                osim.Vec3(0.25, 0., 0.), osim.Vec3(0),
+                model.getGround())
+            model.addComponent(obstacle)
+            path.addObstacle(obstacle, osim.Vec3(0., 0.1, 0.))
+
+        elif obstacle_type == 'ellipsoid':
+            obstacle = osim.ContactEllipsoid(osim.Vec3(0.1, 0.3, 0.1),
+                osim.Vec3(0.25, 0., 0.), osim.Vec3(0.5*np.pi, 0, 0),
+                model.getGround())
+            model.addComponent(obstacle)
+            path.addObstacle(obstacle, osim.Vec3(0., 0., -0.1))
+
+        elif obstacle_type == 'sphere':
+            obstacle = osim.ContactSphere(0.1,
+                osim.Vec3(0.25, 0., 0.), model.getGround())
+            model.addComponent(obstacle)
+            path.addObstacle(obstacle, osim.Vec3(0., 0.1, 0.))
+
+        # Initialize the system.
+        # model.setUseVisualizer(True)
+        state = model.initSystem()
+        # model.updVisualizer().updSimbodyVisualizer().setBackgroundTypeByInt(2)
+
+        # Simulate.
+        manager = osim.Manager(model)
+        if integrator == 'rk4':
+            manager.setIntegratorMethod(osim.Manager.IntegratorMethod_RungeKuttaMerson)
+        elif integrator == 'cpodes':
+            manager.setIntegratorMethod(osim.Manager.IntegratorMethod_CPodes)
+        # manager.initialize(state)
+        # manager.integrate(20.0)
+
+        integration_times = np.zeros((self.iterations,), dtype=np.float64)
+        for i in range(self.iterations):
+            manager.initialize(state)
+
+            t = time()
+            manager.integrate(20.0)
+            integration_time = time() - t
+            integration_times[i] = integration_time
+
+        avg_integration_time = np.mean(integration_times)
+        std_integration_time = np.std(integration_times)
+        print(f' --> Scholz2015GeometryPath, '
+              f'obstacle {obstacle_type}, integrator {integrator}: '
+              f'{avg_integration_time:.4f} s '
+              f'+/- {std_integration_time:.4f} s')
 
