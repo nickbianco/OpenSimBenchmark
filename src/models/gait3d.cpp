@@ -466,6 +466,24 @@ void addContact(Model& model, const std::string& name, PhysicalFrame* frame,
     model.addForce(contact);
 }
 
+void addJointDamping(Model& model, const std::string& coordName,
+        double damping) {
+    CoordinateLinearDamper* damper =
+        new CoordinateLinearDamper(coordName, damping);
+    damper->setName(coordName + "_damper");
+    model.addForce(damper);
+}
+
+void addJointStop(Model& model, const std::string& coordName, double stiffness,
+            double damping, double qLow, double qHigh) {
+    CoordinateLinearStop* stop =
+        new CoordinateLinearStop(coordName, stiffness, damping,
+                            SimTK::convertDegreesToRadians(qLow),
+                            SimTK::convertDegreesToRadians(qHigh));
+    stop->setName(coordName + "_stop");
+    model.addForce(stop);
+}
+
 int main(int argc, char* argv[]) {
 
     // Parse the command line arguments.
@@ -509,12 +527,6 @@ int main(int argc, char* argv[]) {
         std::string obstacles = args["--obstacles"].asString();
         useObstacles = (obstacles == "true");
     }
-
-    // Parameters
-    // ----------
-    SimTK::Real jointDamping = 1.0;
-    SimTK::Real stopStiffness = 500.0;
-    SimTK::Real stopDamping = 2.95953;
 
     // Create the model.
     // ----------------
@@ -727,167 +739,58 @@ int main(int argc, char* argv[]) {
     lumbarTorqueZ->set_activation_time_constant(0.05);
     model.addForce(lumbarTorqueZ);
 
+    // Joint parameters
+    // ----------
+    SimTK::Real jointDamping = 0.5;
+    SimTK::Real stopStiffness = 500.0;
+    SimTK::Real stopDamping = 5.0;
+
     // Joint damping
     // -------------
-    CoordinateLinearDamper* lumbarDamperX = new CoordinateLinearDamper(
-            "lumbar_coord_0", jointDamping);
-    lumbarDamperX->setName("lumbar_coord_0_damper");
-    model.addForce(lumbarDamperX);
-
-    CoordinateLinearDamper* lumbarDamperY = new CoordinateLinearDamper(
-            "lumbar_coord_1", jointDamping);
-    lumbarDamperY->setName("lumbar_coord_1_damper");
-    model.addForce(lumbarDamperY);
-
-    CoordinateLinearDamper* lumbarDamperZ = new CoordinateLinearDamper(
-            "lumbar_coord_2", jointDamping);
-    lumbarDamperZ->setName("lumbar_coord_2_damper");
-    model.addForce(lumbarDamperZ);
-
-    CoordinateLinearDamper* leftHipDamperX = new CoordinateLinearDamper(
-            "hip_l_coord_0", jointDamping);
-    leftHipDamperX->setName("hip_l_coord_0_damper");
-    model.addForce(leftHipDamperX);
-
-    CoordinateLinearDamper* leftHipDamperY = new CoordinateLinearDamper(
-            "hip_l_coord_1", jointDamping);
-    leftHipDamperY->setName("hip_l_coord_1_damper");
-    model.addForce(leftHipDamperY);
-
-    CoordinateLinearDamper* leftHipDamperZ = new CoordinateLinearDamper(
-            "hip_l_coord_2", jointDamping);
-    leftHipDamperZ->setName("hip_l_coord_2_damper");
-    model.addForce(leftHipDamperZ);
-
-    CoordinateLinearDamper* rightHipDamperX = new CoordinateLinearDamper(
-            "hip_r_coord_0", jointDamping);
-    rightHipDamperX->setName("hip_r_coord_0_damper");
-    model.addForce(rightHipDamperX);
-
-    CoordinateLinearDamper* rightHipDamperY = new CoordinateLinearDamper(
-            "hip_r_coord_1", jointDamping);
-    rightHipDamperY->setName("hip_r_coord_1_damper");
-    model.addForce(rightHipDamperY);
-
-    CoordinateLinearDamper* rightHipDamperZ = new CoordinateLinearDamper(
-            "hip_r_coord_2", jointDamping);
-    rightHipDamperZ->setName("hip_r_coord_2_damper");
-    model.addForce(rightHipDamperZ);
-
-    CoordinateLinearDamper* leftKneeDamper = new CoordinateLinearDamper(
-            "knee_l_coord_0", jointDamping);
-    leftKneeDamper->setName("knee_l_coord_0_damper");
-    model.addForce(leftKneeDamper);
-
-    CoordinateLinearDamper* leftAnkleDamper = new CoordinateLinearDamper(
-            "ankle_l_coord_0", jointDamping);
-    leftAnkleDamper->setName("ankle_l_coord_0_damper");
-    model.addForce(leftAnkleDamper);
-
-    CoordinateLinearDamper* rightKneeDamper = new CoordinateLinearDamper(
-            "knee_r_coord_0", jointDamping);
-    rightKneeDamper->setName("knee_r_coord_0_damper");
-    model.addForce(rightKneeDamper);
-
-    CoordinateLinearDamper* rightAnkleDamper = new CoordinateLinearDamper(
-            "ankle_r_coord_0", jointDamping);
-    rightAnkleDamper->setName("ankle_r_coord_0_damper");
-    model.addForce(rightAnkleDamper);
+    addJointDamping(model, "lumbar_coord_0", 10.0*jointDamping);
+    addJointDamping(model, "lumbar_coord_1", 10.0*jointDamping);
+    addJointDamping(model, "lumbar_coord_2", 10.0*jointDamping);
+    addJointDamping(model, "hip_l_coord_0", jointDamping);
+    addJointDamping(model, "hip_l_coord_1", jointDamping);
+    addJointDamping(model, "hip_l_coord_2", jointDamping);
+    addJointDamping(model, "hip_r_coord_0", jointDamping);
+    addJointDamping(model, "hip_r_coord_1", jointDamping);
+    addJointDamping(model, "hip_r_coord_2", jointDamping);
+    addJointDamping(model, "knee_l_coord_0", jointDamping);
+    addJointDamping(model, "ankle_l_coord_0", jointDamping);
+    addJointDamping(model, "knee_r_coord_0", jointDamping);
+    addJointDamping(model, "ankle_r_coord_0", jointDamping);
 
     // Joint stops
     // ----------
     if (jointType == JointType::Custom) {
-        CoordinateLinearStop* lumbarStop0 = new CoordinateLinearStop(
-                "lumbar_coord_0", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-20.0),
-                SimTK::convertDegreesToRadians(20.0));
-        lumbarStop0->setName("lumbar_coord_0_stop");
-        model.addForce(lumbarStop0);
-
-        CoordinateLinearStop* lumbarStop1 = new CoordinateLinearStop(
-                "lumbar_coord_1", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-20.0),
-                SimTK::convertDegreesToRadians(20.0));
-        lumbarStop1->setName("lumbar_coord_1_stop");
-        model.addForce(lumbarStop1);
-
-        CoordinateLinearStop* lumbarStop2 = new CoordinateLinearStop(
-                "lumbar_coord_2", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-20.0),
-                SimTK::convertDegreesToRadians(20.0));
-        lumbarStop2->setName("lumbar_coord_2_stop");
-        model.addForce(lumbarStop2);
-
-        CoordinateLinearStop* leftHipStop0 = new CoordinateLinearStop(
-                "hip_l_coord_0", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-30.0),
-                SimTK::convertDegreesToRadians(30.0));
-        leftHipStop0->setName("hip_l_coord_0_stop");
-        model.addForce(leftHipStop0);
-
-        CoordinateLinearStop* leftHipStop1 = new CoordinateLinearStop(
-                "hip_l_coord_1", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-30.0),
-                SimTK::convertDegreesToRadians(30.0));
-        leftHipStop1->setName("hip_l_coord_1_stop");
-        model.addForce(leftHipStop1);
-
-        CoordinateLinearStop* leftHipStop2 = new CoordinateLinearStop(
-                "hip_l_coord_2", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-30.0),
-                SimTK::convertDegreesToRadians(30.0));
-        leftHipStop2->setName("hip_l_coord_2_stop");
-        model.addForce(leftHipStop2);
-
-        CoordinateLinearStop* rightHipStop0 = new CoordinateLinearStop(
-                "hip_r_coord_0", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-30.0),
-                SimTK::convertDegreesToRadians(30.0));
-        rightHipStop0->setName("hip_r_coord_0_stop");
-        model.addForce(rightHipStop0);
-
-        CoordinateLinearStop* rightHipStop1 = new CoordinateLinearStop(
-                "hip_r_coord_1", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-30.0),
-                SimTK::convertDegreesToRadians(30.0));
-        rightHipStop1->setName("hip_r_coord_1_stop");
-        model.addForce(rightHipStop1);
-
-        CoordinateLinearStop* rightHipStop2 = new CoordinateLinearStop(
-                "hip_r_coord_2", stopStiffness, stopDamping,
-                SimTK::convertDegreesToRadians(-30.0),
-                SimTK::convertDegreesToRadians(30.0));
-        rightHipStop2->setName("hip_r_coord_2_stop");
-        model.addForce(rightHipStop2);
+        addJointStop(model, "lumbar_coord_0", stopStiffness, stopDamping,
+                     -20.0, 20.0);
+        addJointStop(model, "lumbar_coord_1", stopStiffness, stopDamping,
+                     -20.0, 20.0);
+        addJointStop(model, "lumbar_coord_2", stopStiffness, stopDamping,
+                     -20.0, 20.0);
+        addJointStop(model, "hip_l_coord_0", stopStiffness, stopDamping,
+                     -30.0, 30.0);
+        addJointStop(model, "hip_l_coord_1", stopStiffness, stopDamping,
+                     -30.0, 30.0);
+        addJointStop(model, "hip_l_coord_2", stopStiffness, stopDamping,
+                     -30.0, 30.0);
+        addJointStop(model, "hip_r_coord_0", stopStiffness, stopDamping,
+                     -30.0, 30.0);
+        addJointStop(model, "hip_r_coord_1", stopStiffness, stopDamping,
+                     -30.0, 30.0);
+        addJointStop(model, "hip_r_coord_2", stopStiffness, stopDamping,
+                     -30.0, 30.0);
     }
-
-    CoordinateLinearStop* leftKneeStop = new CoordinateLinearStop(
-            "knee_l_coord_0", stopStiffness, stopDamping,
-            SimTK::convertDegreesToRadians(-120.0),
-            SimTK::convertDegreesToRadians(-3.0));
-    leftKneeStop->setName("knee_l_coord_0_stop");
-    model.addForce(leftKneeStop);
-
-    CoordinateLinearStop* rightKneeStop = new CoordinateLinearStop(
-            "knee_r_coord_0", stopStiffness, stopDamping,
-            SimTK::convertDegreesToRadians(-120.0),
-            SimTK::convertDegreesToRadians(-3.0));
-    rightKneeStop->setName("knee_r_coord_0_stop");
-    model.addForce(rightKneeStop);
-
-    CoordinateLinearStop* leftAnkleStopX = new CoordinateLinearStop(
-            "ankle_l_coord_0", stopStiffness, stopDamping,
-            SimTK::convertDegreesToRadians(-60.0),
-            SimTK::convertDegreesToRadians(25.0));
-    leftAnkleStopX->setName("ankle_l_coord_0_stop");
-    model.addForce(leftAnkleStopX);
-
-    CoordinateLinearStop* rightAnkleStopX = new CoordinateLinearStop(
-            "ankle_r_coord_0", stopStiffness, stopDamping,
-            SimTK::convertDegreesToRadians(-60.0),
-            SimTK::convertDegreesToRadians(25.0));
-    rightAnkleStopX->setName("ankle_r_coord_0_stop");
-    model.addForce(rightAnkleStopX);
+    addJointStop(model, "knee_l_coord_0", stopStiffness, stopDamping,
+                 -120.0, -3.0);
+    addJointStop(model, "knee_r_coord_0", stopStiffness, stopDamping,
+                 -120.0, -3.0);
+    addJointStop(model, "ankle_l_coord_0", stopStiffness, stopDamping,
+                 -60.0, 25.0);
+    addJointStop(model, "ankle_r_coord_0", stopStiffness, stopDamping,
+                 -60.0, 25.0);
 
     // Contact
     // -------
@@ -998,11 +901,33 @@ int main(int argc, char* argv[]) {
     model.finalizeConnections();
     model.initSystem();
     model.updComponent<Coordinate>(
-            "/jointset/pelvis_ground/pelvis_ground_coord_4")
-                    .set_default_value(1.05);
+        "/jointset/pelvis_ground/pelvis_ground_coord_4").set_default_value(1.1);
     model.updComponent<Coordinate>(
-            "/jointset/pelvis_ground/pelvis_ground_coord_4")
-                    .set_default_speed_value(0.0);
+        "/jointset/lumbar/lumbar_coord_2").set_default_value(-SimTK::Pi/8);
+    model.updComponent<Coordinate>(
+        "/jointset/hip_l/hip_l_coord_0").set_default_value(
+            SimTK::convertDegreesToRadians(20.0));
+    model.updComponent<Coordinate>(
+        "/jointset/hip_l/hip_l_coord_2").set_default_value(
+            SimTK::convertDegreesToRadians(30.0));
+    model.updComponent<Coordinate>(
+        "/jointset/hip_r/hip_r_coord_0").set_default_value(
+            SimTK::convertDegreesToRadians(-20.0));
+    model.updComponent<Coordinate>(
+        "/jointset/hip_r/hip_r_coord_2").set_default_value(
+            SimTK::convertDegreesToRadians(30.0));
+    model.updComponent<Coordinate>(
+        "/jointset/knee_l/knee_l_coord_0").set_default_value(
+            SimTK::convertDegreesToRadians(-60.0));
+    model.updComponent<Coordinate>(
+        "/jointset/ankle_l/ankle_l_coord_0").set_default_value(
+            SimTK::convertDegreesToRadians(30.0));
+    model.updComponent<Coordinate>(
+        "/jointset/knee_r/knee_r_coord_0").set_default_value(
+            SimTK::convertDegreesToRadians(-60.0));
+    model.updComponent<Coordinate>(
+        "/jointset/ankle_r/ankle_r_coord_0").set_default_value(
+            SimTK::convertDegreesToRadians(30.0));
     model.initSystem();
 
     // Save the model to file.

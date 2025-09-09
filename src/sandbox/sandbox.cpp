@@ -8,20 +8,8 @@ using namespace OpenSim;
 
 int main() {
 
-    Model model("Gait3DMillard.osim");
+    Model model("Gait3D.osim");
     model.initSystem();
-
-    // Model model("Rajagopal22MusclesContact.osim");
-    // model.initSystem();
-
-    // Model model("RajagopalContact.osim");
-    // model.initSystem();
-
-    for (auto& path : model.updComponentList<Scholz2015GeometryPath>()) {
-        path.setAlgorithm("MinimumLength");
-    }
-
-    // model.setUseVisualizer(true);
 
     // VisualizerUtilities::showModel(model);
 
@@ -31,19 +19,28 @@ int main() {
     model.addController(controller);
     SimTK::State state = model.initSystem();
 
+    // Randomize the initial speeds.
+    state.updU() = 2.0*SimTK::Test::randVector(state.getNU());
 
+    // Default controls
+    // ----------------
+    Vector controls(model.getNumControls(), 0.1);
+    model.getComponent<DiscreteController>("/controllerset/controller").
+        setDiscreteControls(state, controls);
 
-    // Vector controls(model.getNumControls(), 1.0);
-    // controller->setDiscreteControls(state, controls);
-
+    bool visualize = false;
     Manager manager(model);
     manager.setIntegratorMethod(Manager::IntegratorMethod::CPodes);
-    // resetState(state);
+    manager.setIntegratorAccuracy(1e-2);
+    manager.setPerformAnalyses(visualize);
+    manager.setWriteToStorage(visualize);
     manager.initialize(state);
-    manager.integrate(20.0);
+    manager.integrate(10.0);
 
-    // TimeSeriesTable statesTable = manager.getStatesTable();
-    // VisualizerUtilities::showMotion(model, statesTable);
+    TimeSeriesTable statesTable = manager.getStatesTable();
+    if (visualize) {
+        VisualizerUtilities::showMotion(model, statesTable);
+    }
 
     return 0;
 }

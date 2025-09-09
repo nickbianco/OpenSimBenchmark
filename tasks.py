@@ -1255,8 +1255,11 @@ class TaskCreateRajagopalModels(StudyTask):
                             'RajagopalFunctionBasedPathsDGFContact',
                             'RajagopalFunctionBasedPathsDGFContactNoConstraints',
                             'RajagopalContact',
+                            'RajagopalPathActuatorsContact',
                             'Rajagopal22Muscles',
-                            'Rajagopal22MusclesContact']
+                            'Rajagopal22MusclesContact',
+                            'Rajagopal22PathActuatorsContact']
+
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'],
@@ -1267,6 +1270,42 @@ class TaskCreateRajagopalModels(StudyTask):
                          self.contact_geometry_set, self.contact_force_set],
                         self.model_paths,
                         self.create_rajagopal_models)
+
+    def set_default_state(self, model):
+
+        deg2rad = np.pi / 180.0
+        coordset = model.updCoordinateSet()
+
+        pelvis_ty = coordset.get('pelvis_ty')
+        pelvis_ty.set_default_value(1.2)
+        pelvis_ty.set_default_speed_value(0.0)
+
+        lumbar_extension = coordset.get('lumbar_extension')
+        lumbar_extension.set_default_value(-20.0 * deg2rad)
+
+        hip_flexion_l = coordset.get('hip_flexion_l')
+        hip_flexion_l.set_default_value(10.0 * deg2rad)
+
+        hip_flexion_r = coordset.get('hip_flexion_r')
+        hip_flexion_r.set_default_value(10.0 * deg2rad)
+
+        hip_adduction_l = coordset.get('hip_adduction_l')
+        hip_adduction_l.set_default_value(-10.0 * deg2rad)
+
+        hip_adduction_r = coordset.get('hip_adduction_r')
+        hip_adduction_r.set_default_value(-10.0 * deg2rad)
+
+        knee_angle_l = coordset.get('knee_angle_l')
+        knee_angle_l.set_default_value(40.0 * deg2rad)
+
+        knee_angle_r = coordset.get('knee_angle_r')
+        knee_angle_r.set_default_value(40.0 * deg2rad)
+
+        ankle_angle_l = coordset.get('ankle_angle_l')
+        ankle_angle_l.set_default_value(10.0 * deg2rad)
+
+        ankle_angle_r = coordset.get('ankle_angle_r')
+        ankle_angle_r.set_default_value(10.0 * deg2rad)
 
     def create_rajagopal_models(self, file_dep, target):
         osim.Logger.setLevelString('error')
@@ -1280,6 +1319,7 @@ class TaskCreateRajagopalModels(StudyTask):
         modelProcessor.append(osim.ModOpReplaceMusclesWithPathActuators())
         model = modelProcessor.process()
         model.finalizeConnections()
+        self.set_default_state(model)
         model.initSystem()
         model.printToXML(target[1])
         print(f' --> Created {target[1]}')
@@ -1289,6 +1329,7 @@ class TaskCreateRajagopalModels(StudyTask):
         modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(file_dep[1]))
         model = modelProcessor.process()
         model.finalizeConnections()
+        self.set_default_state(model)
         model.initSystem()
         model.printToXML(target[2])
         print(f' --> Created {target[2]}')
@@ -1298,10 +1339,10 @@ class TaskCreateRajagopalModels(StudyTask):
         constraints.clearAndDestroy()
 
         bodyset = model.updBodySet()
-        obstacle_l = bodyset.get('obstacle_l')
-        obstacle_r = bodyset.get('obstacle_r')
-        bodyset.remove(obstacle_l)
-        bodyset.remove(obstacle_r)
+        patella_l = bodyset.get('patella_l')
+        patella_r = bodyset.get('patella_r')
+        bodyset.remove(patella_l)
+        bodyset.remove(patella_r)
 
         jointset = model.updJointSet()
         patellofemoral_l = jointset.get('patellofemoral_l')
@@ -1310,6 +1351,8 @@ class TaskCreateRajagopalModels(StudyTask):
         jointset.remove(patellofemoral_r)
 
         model.finalizeConnections()
+        self.set_default_state(model)
+        model.initSystem()
         model.printToXML(target[3])
         print(f' --> Created {target[3]}')
 
@@ -1319,6 +1362,7 @@ class TaskCreateRajagopalModels(StudyTask):
         modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(file_dep[1]))
         model = modelProcessor.process()
         model.finalizeConnections()
+        self.set_default_state(model)
         model.initSystem()
         model.printToXML(target[4])
         print(f' --> Created {target[4]}')
@@ -1328,10 +1372,10 @@ class TaskCreateRajagopalModels(StudyTask):
         constraints.clearAndDestroy()
 
         bodyset = model.updBodySet()
-        obstacle_l = bodyset.get('obstacle_l')
-        obstacle_r = bodyset.get('obstacle_r')
-        bodyset.remove(obstacle_l)
-        bodyset.remove(obstacle_r)
+        patella_l = bodyset.get('patella_l')
+        patella_r = bodyset.get('patella_r')
+        bodyset.remove(patella_l)
+        bodyset.remove(patella_r)
 
         jointset = model.updJointSet()
         patellofemoral_l = jointset.get('patellofemoral_l')
@@ -1340,6 +1384,8 @@ class TaskCreateRajagopalModels(StudyTask):
         jointset.remove(patellofemoral_r)
 
         model.finalizeConnections()
+        self.set_default_state(model)
+        model.initSystem()
         model.printToXML(target[5])
         print(f' --> Created {target[5]}')
 
@@ -1348,6 +1394,7 @@ class TaskCreateRajagopalModels(StudyTask):
         modelProcessor.append(osim.ModOpReplaceMusclesWithDeGrooteFregly2016())
         model = modelProcessor.process()
         model.finalizeConnections()
+        self.set_default_state(model)
         model.initSystem()
         model.printToXML(target[6])
 
@@ -1357,6 +1404,7 @@ class TaskCreateRajagopalModels(StudyTask):
         modelProcessor.append(osim.ModOpReplacePathsWithFunctionBasedPaths(file_dep[1]))
         model = modelProcessor.process()
         model.finalizeConnections()
+        self.set_default_state(model)
         model.initSystem()
         model.printToXML(target[7])
         print(f' --> Created {target[7]}')
@@ -1366,10 +1414,10 @@ class TaskCreateRajagopalModels(StudyTask):
         constraints.clearAndDestroy()
 
         bodyset = model.updBodySet()
-        obstacle_l = bodyset.get('obstacle_l')
-        obstacle_r = bodyset.get('obstacle_r')
-        bodyset.remove(obstacle_l)
-        bodyset.remove(obstacle_r)
+        patella_l = bodyset.get('patella_l')
+        patella_r = bodyset.get('patella_r')
+        bodyset.remove(patella_l)
+        bodyset.remove(patella_r)
 
         jointset = model.updJointSet()
         patellofemoral_l = jointset.get('patellofemoral_l')
@@ -1378,6 +1426,8 @@ class TaskCreateRajagopalModels(StudyTask):
         jointset.remove(patellofemoral_r)
 
         model.finalizeConnections()
+        self.set_default_state(model)
+        model.initSystem()
         model.printToXML(target[8])
         print(f' --> Created {target[8]}')
 
@@ -1412,14 +1462,7 @@ class TaskCreateRajagopalModels(StudyTask):
         for i in range(contactForceSet.getSize()):
             model.addComponent(contactForceSet.get(i).clone())
         model.finalizeConnections()
-
-        # Update the default pelvis Y location so that the contact spheres lie just
-        # above the ground.
-        coordset = model.updCoordinateSet()
-        pelvis_ty = coordset.get('pelvis_ty')
-        pelvis_ty.set_default_value(1.03)
-        pelvis_ty.set_default_speed_value(0.0)
-
+        self.set_default_state(model)
         model.initSystem()
         model.printToXML(target[9])
         print(f' --> Created {target[9]}')
@@ -1436,10 +1479,10 @@ class TaskCreateRajagopalModels(StudyTask):
         constraints.clearAndDestroy()
 
         bodyset = model.updBodySet()
-        obstacle_l = bodyset.get('obstacle_l')
-        obstacle_r = bodyset.get('obstacle_r')
-        bodyset.remove(obstacle_l)
-        bodyset.remove(obstacle_r)
+        patella_l = bodyset.get('patella_l')
+        patella_r = bodyset.get('patella_r')
+        bodyset.remove(patella_l)
+        bodyset.remove(patella_r)
 
         jointset = model.updJointSet()
         patellofemoral_l = jointset.get('patellofemoral_l')
@@ -1474,6 +1517,8 @@ class TaskCreateRajagopalModels(StudyTask):
             model.addComponent(contactForceSet.get(i).clone())
         model.finalizeConnections()
 
+        self.set_default_state(model)
+        model.initSystem()
         model.printToXML(target[10])
         print(f' --> Created {target[10]}')
 
@@ -1505,17 +1550,45 @@ class TaskCreateRajagopalModels(StudyTask):
         for i in range(contactForceSet.getSize()):
             model.addComponent(contactForceSet.get(i).clone())
         model.finalizeConnections()
-
-        # Update the default pelvis Y location so that the contact spheres lie just
-        # above the ground.
-        coordset = model.updCoordinateSet()
-        pelvis_ty = coordset.get('pelvis_ty')
-        pelvis_ty.set_default_value(1.03)
-        pelvis_ty.set_default_speed_value(0.0)
-
+        self.set_default_state(model)
         model.initSystem()
         model.printToXML(target[11])
         print(f' --> Created {target[11]}')
+
+        # Base model with PathActuators and contact.
+        modelProcessor = osim.ModelProcessor(file_dep[0])
+        modelProcessor.append(osim.ModOpReplaceMusclesWithPathActuators())
+        model = modelProcessor.process()
+        model.initSystem()
+
+        # Add stiffness and damping to the joints. Toe stiffness and damping values
+        # are based on Falisse et al. (2022), "Modeling toes contributes to
+        # realistic stance knee mechanics in three-dimensional predictive
+        # simulations of walking."
+        expressionBasedForceSet = osim.ForceSet(file_dep[2])
+        for i in range(expressionBasedForceSet.getSize()):
+            model.addComponent(expressionBasedForceSet.get(i).clone())
+
+        # Add the contact geometry to the model.
+        contactGeometrySet = osim.ContactGeometrySet(file_dep[3])
+        for i in range(contactGeometrySet.getSize()):
+            contactGeometry = contactGeometrySet.get(i).clone()
+            # Raise the ContactSpheres by 2 cm so that bottom of the spheres
+            # are better aligned with the ground.
+            if 'floor' not in contactGeometry.getName():
+                location = contactGeometry.upd_location()
+                location.set(1, location.get(1) + 0.02)
+            model.addContactGeometry(contactGeometry)
+
+        # Add the contact forces to the model.
+        contactForceSet = osim.ForceSet(file_dep[4])
+        for i in range(contactForceSet.getSize()):
+            model.addComponent(contactForceSet.get(i).clone())
+        model.finalizeConnections()
+        self.set_default_state(model)
+        model.initSystem()
+        model.printToXML(target[12])
+        print(f' --> Created {target[12]}')
 
         # 22 muscle model.
         model = osim.Model(file_dep[0])
@@ -1570,11 +1643,13 @@ class TaskCreateRajagopalModels(StudyTask):
             muscle = muscles.get(muscle_name)
             forceset.remove(forceset.getIndex(muscle))
 
+        model.finalizeConnections()
+        self.set_default_state(model)
         model.initSystem()
-        model.printToXML(target[12])
-        print(f' --> Created {target[12]}')
+        model.printToXML(target[13])
+        print(f' --> Created {target[13]}')
 
-        # 18 muscle model with contact.
+        # 22 muscle model with contact.
         # Add stiffness and damping to the joints. Toe stiffness and damping values
         # are based on Falisse et al. (2022), "Modeling toes contributes to
         # realistic stance knee mechanics in three-dimensional predictive
@@ -1603,17 +1678,20 @@ class TaskCreateRajagopalModels(StudyTask):
         for i in range(contactForceSet.getSize()):
             model.addComponent(contactForceSet.get(i).clone())
         model.finalizeConnections()
-
-        # Update the default pelvis Y location so that the contact spheres lie just
-        # above the ground.
-        coordset = model.updCoordinateSet()
-        pelvis_ty = coordset.get('pelvis_ty')
-        pelvis_ty.set_default_value(1.03)
-        pelvis_ty.set_default_speed_value(0.0)
-
+        self.set_default_state(model)
         model.initSystem()
-        model.printToXML(target[13])
-        print(f' --> Created {target[13]}')
+        model.printToXML(target[14])
+        print(f' --> Created {target[14]}')
+
+        # Model with 22 PathActuators and contact.
+        modelProcessor = osim.ModelProcessor(model)
+        modelProcessor.append(osim.ModOpReplaceMusclesWithPathActuators())
+        model = modelProcessor.process()
+        model.finalizeConnections()
+        self.set_default_state(model)
+        model.initSystem()
+        model.printToXML(target[15])
+        print(f' --> Created {target[15]}')
 
 
 class TaskCreateGait3DModels(StudyTask):
@@ -1632,7 +1710,10 @@ class TaskCreateGait3DModels(StudyTask):
         self.model_names = ['Gait3DMillard',
                             'Gait3DDeGrooteFregly',
                             'Gait3DPathActuator',
-                            'Gait3DMillardNoWrap']
+                            'Gait3DMillardNoWrap',
+                            'Gait3DDeGrooteFreglyNoWrap',
+                            'Gait3DPathActuatorNoWrap']
+
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'],
@@ -1641,7 +1722,9 @@ class TaskCreateGait3DModels(StudyTask):
         self.flags_list = ['--joint=custom --muscle=millard --obstacles=true',
                            '--joint=custom --muscle=degrootefregly --obstacles=true',
                            '--joint=custom --muscle=pathactuator --obstacles=true',
-                           '--joint=custom --muscle=millard --obstacles=false']
+                           '--joint=custom --muscle=millard --obstacles=false',
+                           '--joint=custom --muscle=degrootefregly --obstacles=false',
+                           '--joint=custom --muscle=pathactuator --obstacles=false']
 
         for model_path, flags in zip(self.model_paths, self.flags_list):
             self.add_action([self.dummy_path], [model_path],

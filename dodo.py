@@ -108,8 +108,7 @@ def add_model(model_file, label, flags=[]):
     # Add the model to the study.
     model = study.add_model(model_file, label)
     model.add_task(TaskGenerateModels, flags)
-    step = 0.001
-    time = 5.0
+    time = 20.0
     accuracy = 0.01
 
     # Benchmark tests.
@@ -197,11 +196,17 @@ add_model('RajagopalContact',
                  'ignore_passive_fiber_force',
                  'remove_muscles'])
 
+add_model('RajagopalPathActuatorsContact',
+            'Rajagopal\npath actuators\ncontact')
+
 add_model('Rajagopal22MusclesContact',
-          'Rajagopal\n18 muscles\ncontact',
+          'Rajagopal\n22 muscles\ncontact',
           flags=['ignore_activation_dynamics',
                  'ignore_passive_fiber_force',
                  'remove_muscles'])
+
+add_model('Rajagopal22PathActuatorsContact',
+            'Rajagopal\n22 path actuators\ncontact')
 
 add_model('Gait3DMillard',
           'Gait3D\nMillard',
