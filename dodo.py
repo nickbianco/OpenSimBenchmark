@@ -108,7 +108,7 @@ def add_model(model_file, label, flags=[]):
     # Add the model to the study.
     model = study.add_model(model_file, label)
     model.add_task(TaskGenerateModels, flags)
-    time = 20.0
+    time = 5.0
     accuracy = 0.01
 
     # Benchmark tests.
@@ -131,98 +131,91 @@ def add_model(model_file, label, flags=[]):
     return model
 
 
-add_model('Rajagopal', 'Rajagopal',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('Rajagopal', 'Rajagopal',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
-add_model('Rajagopal22Muscles', 'Rajagopal\n22 muscles',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('Rajagopal22Muscles', 'Rajagopal\n22 muscles',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
-add_model('RajagopalPathActuators', 'Rajagopal\npath actuators')
+# add_model('RajagopalPathActuators', 'Rajagopal\npath actuators')
 
-add_model('RajagopalFunctionBasedPaths', 'Rajagopal\nfunction based paths',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('RajagopalFunctionBasedPaths', 'Rajagopal\nfunction based paths',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
-add_model('RajagopalFunctionBasedPathsNoConstraints',
-          'Rajagopal\nfunction based paths\nno constraints',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('RajagopalFunctionBasedPathsNoConstraints',
+#           'Rajagopal\nfunction based paths\nno constraints',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
-add_model('RajagopalFunctionBasedPathActuators',
-          'Rajagopal\npath actuators\nfunction based paths')
+# add_model('RajagopalFunctionBasedPathActuators',
+#           'Rajagopal\npath actuators\nfunction based paths')
 
-add_model('RajagopalFunctionBasedPathActuatorsNoConstraints',
-          'Rajagopal\npath actuators\nfunction based paths\nno constraints',)
+# add_model('RajagopalFunctionBasedPathActuatorsNoConstraints',
+#           'Rajagopal\npath actuators\nfunction based paths\nno constraints',)
 
-add_model('RajagopalDGF', 'Rajagopal\nDeGroote-Fregly muscles',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('RajagopalDGF', 'Rajagopal\nDeGroote-Fregly muscles',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
-add_model('RajagopalFunctionBasedPathsDGF',
-          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('RajagopalFunctionBasedPathsDGF',
+#           'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
-add_model('RajagopalFunctionBasedPathsDGFNoConstraints',
-          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\nno constraints',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('RajagopalFunctionBasedPathsDGFNoConstraints',
+#           'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\nno constraints',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
-add_model('RajagopalFunctionBasedPathsDGFContact',
-          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('RajagopalFunctionBasedPathsDGFContact',
+#           'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
 
-add_model('RajagopalFunctionBasedPathsDGFContactNoConstraints',
-          'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact\nno constraints',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('RajagopalFunctionBasedPathsDGFContactNoConstraints',
+#           'Rajagopal\nDeGroote-Fregly muscles\nfunction based paths\ncontact\nno constraints',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
 
-add_model('RajagopalContact',
-          'Rajagopal\ncontact',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
+# add_model('RajagopalContact',
+#           'Rajagopal\ncontact',
+#           flags=['ignore_activation_dynamics',
+#                  'ignore_passive_fiber_force',
+#                  'remove_muscles'])
+
+# add_model('Rajagopal22MusclesContact',
+#           'Rajagopal\n22 muscles\ncontact')
 
 add_model('RajagopalPathActuatorsContact',
             'Rajagopal\npath actuators\ncontact')
 
-add_model('Rajagopal22MusclesContact',
-          'Rajagopal\n22 muscles\ncontact',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
-
 add_model('Rajagopal22PathActuatorsContact',
             'Rajagopal\n22 path actuators\ncontact')
 
-add_model('Gait3DMillard',
-          'Gait3D\nMillard',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
-
-add_model('Gait3DDeGrooteFregly',
-          'Gait3D\nDeGroote-Fregly',
-          flags=['ignore_activation_dynamics',
-                 'ignore_passive_fiber_force',
-                 'remove_muscles'])
-
 add_model('Gait3DPathActuator',
-          'Gait3D\nPath Actuator',
-          flags=['remove_muscles'])
+          'Gait3D\nPath Actuator')
+
+add_model('Gait3DPathActuatorNoWrap',
+          'Gait3D\nPath Actuator\nNo Wrap')
+
+add_model('Gait3DPathActuatorBallJoints',
+          'Gait3D\nPath Actuator\nBall Joints')
+
+add_model('Gait3DPathActuatorNoWrapBallJoints',
+          'Gait3D\nPath Actuator\nBall Joints\nNo Wrap')
 
 # model_tuples = []
 # empty_flags = ['']

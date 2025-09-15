@@ -1707,24 +1707,20 @@ class TaskCreateGait3DModels(StudyTask):
         if not os.path.exists(self.models_path):
             os.makedirs(self.models_path)
 
-        self.model_names = ['Gait3DMillard',
-                            'Gait3DDeGrooteFregly',
-                            'Gait3DPathActuator',
-                            'Gait3DMillardNoWrap',
-                            'Gait3DDeGrooteFreglyNoWrap',
-                            'Gait3DPathActuatorNoWrap']
+        self.model_names = ['Gait3DPathActuator',
+                            'Gait3DPathActuatorNoWrap',
+                            'Gait3DPathActuatorBallJoints',
+                            'Gait3DPathActuatorNoWrapBallJoints']
 
         self.model_paths = list()
         for model_name in self.model_names:
             self.model_paths.append(os.path.join(self.study.config['models_path'],
                                                  f'{model_name}.osim'))
 
-        self.flags_list = ['--joint=custom --muscle=millard --obstacles=true',
-                           '--joint=custom --muscle=degrootefregly --obstacles=true',
-                           '--joint=custom --muscle=pathactuator --obstacles=true',
-                           '--joint=custom --muscle=millard --obstacles=false',
-                           '--joint=custom --muscle=degrootefregly --obstacles=false',
-                           '--joint=custom --muscle=pathactuator --obstacles=false']
+        self.flags_list = ['--joint=custom --muscle=pathactuator --obstacles=true',
+                           '--joint=custom --muscle=pathactuator --obstacles=false',
+                           '--joint=ball --muscle=pathactuator --obstacles=true',
+                           '--joint=ball --muscle=pathactuator --obstacles=false']
 
         for model_path, flags in zip(self.model_paths, self.flags_list):
             self.add_action([self.dummy_path], [model_path],
@@ -2759,6 +2755,15 @@ class TaskSimulateDoublePendulumWithWrapping(StudyTask):
         b0.addWrapObject(obstacle)
         path.addPathWrap(obstacle)
 
+        # model.setUseVisualizer(True)
+        # state = model.initSystem()
+        # model.updVisualizer().updSimbodyVisualizer().setBackgroundTypeByInt(2)
+        # xform = osim.Transform(osim.Vec3(0.25, -0.75, 3.25));
+        # model.updVisualizer().updSimbodyVisualizer().setCameraTransform(xform);
+        # manager = osim.Manager(model)
+        # manager.initialize(state)
+        # manager.integrate(20.0)
+
         # Initialize the system.
         state = model.initSystem()
 
@@ -2772,15 +2777,13 @@ class TaskSimulateDoublePendulumWithWrapping(StudyTask):
             t = time()
             manager.integrate(20.0)
             integration_time = time() - t
-            integration_times[i] = integration_time
+            integration_times[i] = 1000.0*integration_time
 
         avg_integration_time = np.mean(integration_times)
         std_integration_time = np.std(integration_times)
         print(f' --> {self.name}: GeometryPath average integration time over '
-              f'{self.iterations} iterations: {avg_integration_time:.4f} s '
-              f'+/- {std_integration_time:.4f} s')
-
-
+              f'{self.iterations} iterations: {avg_integration_time:.3f} ms '
+              f'+/- {std_integration_time:.3f} ms')
     def simulate_scholz2015_geometry_path(self, file_dep, target):
         import opensim as osim
         from time import time
@@ -2832,13 +2835,13 @@ class TaskSimulateDoublePendulumWithWrapping(StudyTask):
             t = time()
             manager.integrate(20.0)
             integration_time = time() - t
-            integration_times[i] = integration_time
+            integration_times[i] = 1000.0*integration_time
 
         avg_integration_time = np.mean(integration_times)
         std_integration_time = np.std(integration_times)
         print(f' --> {self.name}: Scholz2015GeometryPath average integration time over '
-              f'{self.iterations} iterations: {avg_integration_time:.4f} s '
-              f'+/- {std_integration_time:.4f} s')
+              f'{self.iterations} iterations: {avg_integration_time:.3f} ms '
+              f'+/- {std_integration_time:.3f} ms')
 
 
 class TaskSimulateHangingPendulum(StudyTask):

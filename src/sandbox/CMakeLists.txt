@@ -15,3 +15,6 @@ target_link_libraries(sandbox_jaredsdude ${OpenSim_LIBRARIES})
 add_executable(sandbox_integrators sandbox_integrators.cpp ../../utilities/utilities.h)
 target_link_libraries(sandbox_integrators ${OpenSim_LIBRARIES})
 
+add_executable(sandbox_gait3d sandbox_gait3d.cpp ../../utilities/utilities.h)
+target_link_libraries(sandbox_gait3d ${OpenSim_LIBRARIES} docopt_s)
+

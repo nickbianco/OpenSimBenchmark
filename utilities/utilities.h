@@ -1,5 +1,6 @@
 #include <OpenSim/OpenSim.h>
 #include <Simbody.h>
+#include <simbody/internal/CableSpan.h>
 #include "docopt.h"
 
 using namespace OpenSim;
@@ -138,7 +139,7 @@ inline SimTK::Vector run_benchmarks(Model model, double time, double step,
     SimTK::State state = model.initSystem();
 
     // Randomize the initial speeds.
-    state.updU() = 2.0*SimTK::Test::randVector(state.getNU());
+    state.updU() = SimTK::Test::randVector(state.getNU());
 
     // Default controls
     Vector controls(model.getNumControls(), 0.1);
@@ -146,7 +147,7 @@ inline SimTK::Vector run_benchmarks(Model model, double time, double step,
         setDiscreteControls(state, controls);
 
     Manager manager(model);
-    manager.setIntegratorMethod(Manager::IntegratorMethod::CPodes);
+    manager.setIntegratorMethod(integratorMethod);
     manager.setIntegratorAccuracy(accuracy);
     manager.setPerformAnalyses(false);
     manager.setWriteToStorage(false);
@@ -438,6 +439,32 @@ private:
 };
 
 
+class MyPathActuator : public SimTK::Force::Custom::Implementation {
+public:
+    MyPathActuator(CableSubsystem& cables,
+        const Real& optimalForce, MobilizedBodyIndex originBody,
+        const Vec3& originStation, MobilizedBodyIndex insertionBody,
+        const Vec3& insertionStation);
+
+    void addViaPoint(MobilizedBodyIndex body, const Vec3& station);
+
+    void addObstacle(MobilizedBodyIndex body, const Transform& X_BS,
+            const std::shared_ptr<SimTK::ContactGeometry>& obstacleGeometry,
+            const Vec3& contactHint);
+
+    virtual void calcForce(const State& state,
+                            Vector_<SpatialVec>& bodyForces,
+                            Vector_<Vec3>& particleForces,
+                            Vector& mobilityForces) const override;
+
+    virtual Real calcPotentialEnergy(const State& state) const override;
+
+private:
+    Real m_optimalForce;
+    CableSpan m_cable;
+};
+
+
 class Gait3D {
 public:
     enum BodyType    {LeftFoot=0, RightFoot,
@@ -465,6 +492,7 @@ public:
     SimbodyMatterSubsystem             m_matter;
     GeneralForceSubsystem              m_forces;
     ContactTrackerSubsystem            m_tracker;
+    SimTK::CableSubsystem              m_cables;
     SimTK::CompliantContactSubsystem   m_compliantContacts;
     GeneralContactSubsystem            m_generalContacts;
     DecorationSubsystem                m_viz;
@@ -475,7 +503,7 @@ public:
 
     std::map<BodyType, SimTK::Body>     m_body;
     std::map<BodyType, MobilizedBody>   m_mobod;
-    std::map<Muscle, PointPathMuscle*>  m_muscles;
+    std::map<Muscle, MyPathActuator*>  m_muscles;
 
 private:
     static Real massData[NBodyType];
@@ -488,7 +516,7 @@ private:
     constexpr static Real mu_static = 0.9;
     constexpr static Real mu_dynamic = 0.6;
     constexpr static Real mu_viscous = 0.;
-    constexpr static Real transitionVelocity = .1;
+    constexpr static Real transitionVelocity = .01;
     constexpr static Real radius = 0.02;
 };
 
@@ -513,7 +541,7 @@ Vec3 Gait3D::rightContactPoints[] = {Vec3(-0.085, -0.015, -0.005), // heel
                                      Vec3(0.085, -0.03, -0.0275)}; // medial toe
 
 Gait3D::Gait3D(ContactType contactType)
-:   m_matter(m_system), m_forces(m_system), m_tracker(m_system),
+:   m_matter(m_system), m_forces(m_system), m_tracker(m_system), m_cables(m_system),
     m_compliantContacts(m_system, m_tracker), m_generalContacts(m_system),
     m_viz(m_system), m_gravity(m_forces, m_matter, -YAxis, 9.81),
     m_mass(NBodyType, massData), m_inertia(NBodyType, inertiaData)
@@ -689,6 +717,86 @@ Gait3D::Gait3D(ContactType contactType)
         SimTK::ExponentialSpringForce rightMedialToe(m_forces, groundFrame,
                 m_mobod[RightFoot], rightContactPoints[2], params);
 
+        // Torso contact points
+        SimTK::ExponentialSpringForce torsoFront(m_forces, groundFrame,
+                m_mobod[Torso], Vec3(0, 0.1, 0), params);
+        SimTK::ExponentialSpringForce torsoBack(m_forces, groundFrame,
+                m_mobod[Torso], Vec3(0, -0.1, 0), params);
+        SimTK::ExponentialSpringForce torsoLeft(m_forces, groundFrame,
+                m_mobod[Torso], Vec3(0, 0, 0.05), params);
+        SimTK::ExponentialSpringForce torsoRight(m_forces, groundFrame,
+                m_mobod[Torso], Vec3(0, 0, -0.05), params);
+
+        // Pelvis contact points
+        SimTK::ExponentialSpringForce pelvisFront(m_forces, groundFrame,
+            m_mobod[Pelvis], Vec3(0, 0.05, 0), params);
+        SimTK::ExponentialSpringForce pelvisBack(m_forces, groundFrame,
+            m_mobod[Pelvis], Vec3(0, -0.05, 0), params);
+        SimTK::ExponentialSpringForce pelvisLeft(m_forces, groundFrame,
+            m_mobod[Pelvis], Vec3(0, 0, 0.06), params);
+        SimTK::ExponentialSpringForce pelvisRight(m_forces, groundFrame,
+            m_mobod[Pelvis], Vec3(0, 0, -0.06), params);
+
+        // Left hip contact points
+        SimTK::ExponentialSpringForce leftHipFront(m_forces, groundFrame,
+            m_mobod[LeftThigh], Vec3(0, 0.15, 0), params);
+        SimTK::ExponentialSpringForce leftHipBack(m_forces, groundFrame,
+            m_mobod[LeftThigh], Vec3(0, 0.19, 0), params);
+        SimTK::ExponentialSpringForce leftHipMedial(m_forces, groundFrame,
+            m_mobod[LeftThigh], Vec3(0, 0.17, 0.02), params);
+        SimTK::ExponentialSpringForce leftHipLateral(m_forces, groundFrame,
+            m_mobod[LeftThigh], Vec3(0, 0.17, -0.02), params);
+
+        // Right hip contact points
+        SimTK::ExponentialSpringForce rightHipFront(m_forces, groundFrame,
+            m_mobod[RightThigh], Vec3(0, 0.15, 0), params);
+        SimTK::ExponentialSpringForce rightHipBack(m_forces, groundFrame,
+            m_mobod[RightThigh], Vec3(0, 0.19, 0), params);
+        SimTK::ExponentialSpringForce rightHipMedial(m_forces, groundFrame,
+            m_mobod[RightThigh], Vec3(0, 0.17, -0.02), params);
+        SimTK::ExponentialSpringForce rightHipLateral(m_forces, groundFrame,
+            m_mobod[RightThigh], Vec3(0, 0.17, 0.02), params);
+
+        // Left knee contact points
+        SimTK::ExponentialSpringForce leftKneeFront(m_forces, groundFrame,
+            m_mobod[LeftShank], Vec3(0, 0.15, 0), params);
+        SimTK::ExponentialSpringForce leftKneeBack(m_forces, groundFrame,
+            m_mobod[LeftShank], Vec3(0, 0.22, 0), params);
+        SimTK::ExponentialSpringForce leftKneeMedial(m_forces, groundFrame,
+            m_mobod[LeftShank], Vec3(0, 0.1867, 0.015), params);
+        SimTK::ExponentialSpringForce leftKneeLateral(m_forces, groundFrame,
+            m_mobod[LeftShank], Vec3(0, 0.1867, -0.015), params);
+
+        // Right knee contact points
+        SimTK::ExponentialSpringForce rightKneeFront(m_forces, groundFrame,
+            m_mobod[RightShank], Vec3(0, 0.15, 0), params);
+        SimTK::ExponentialSpringForce rightKneeBack(m_forces, groundFrame,
+            m_mobod[RightShank], Vec3(0, 0.22, 0), params);
+        SimTK::ExponentialSpringForce rightKneeMedial(m_forces, groundFrame,
+            m_mobod[RightShank], Vec3(0, 0.1867, -0.015), params);
+        SimTK::ExponentialSpringForce rightKneeLateral(m_forces, groundFrame,
+            m_mobod[RightShank], Vec3(0, 0.1867, 0.015), params);
+
+        // Left ankle contact points
+        SimTK::ExponentialSpringForce leftAnkleFront(m_forces, groundFrame,
+            m_mobod[LeftFoot], Vec3(-0.03, 0.012, 0.008), params);
+        SimTK::ExponentialSpringForce leftAnkleBack(m_forces, groundFrame,
+            m_mobod[LeftFoot], Vec3(-0.07, 0.012, 0.008), params);
+        SimTK::ExponentialSpringForce leftAnkleMedial(m_forces, groundFrame,
+            m_mobod[LeftFoot], Vec3(-0.05123, 0.012, 0.013), params);
+        SimTK::ExponentialSpringForce leftAnkleLateral(m_forces, groundFrame,
+            m_mobod[LeftFoot], Vec3(-0.05123, 0.012, 0.003), params);
+
+        // Right ankle contact points
+        SimTK::ExponentialSpringForce rightAnkleFront(m_forces, groundFrame,
+            m_mobod[RightFoot], Vec3(-0.03, 0.012, -0.008), params);
+        SimTK::ExponentialSpringForce rightAnkleBack(m_forces, groundFrame,
+            m_mobod[RightFoot], Vec3(-0.07, 0.012, -0.008), params);
+        SimTK::ExponentialSpringForce rightAnkleMedial(m_forces, groundFrame,
+            m_mobod[RightFoot], Vec3(-0.05123, 0.012, -0.013), params);
+        SimTK::ExponentialSpringForce rightAnkleLateral(m_forces, groundFrame,
+            m_mobod[RightFoot], Vec3(-0.05123, 0.012, -0.003), params);
+
     } else if (contactType == ContactType::HuntCrossleyForce) {
 
         ContactSetIndex setIndex = m_generalContacts.createContactSet();
@@ -736,7 +844,7 @@ Gait3D::Gait3D(ContactType contactType)
 
     // Joint damping forces.
     // -------------------
-    Real jointDamping = 0.1;
+    Real jointDamping = 0.5;
     SimTK::Force::MobilityLinearDamper lumbarDamperX(m_forces, m_mobod[Torso],
             MobilizerUIndex(0), 10.0*jointDamping);
     SimTK::Force::MobilityLinearDamper lumbarDamperY(m_forces, m_mobod[Torso],
@@ -780,18 +888,18 @@ Gait3D::Gait3D(ContactType contactType)
     //         MobilizerQIndex(3), 500, 9.02585,
     //         convertDegreesToRadians(-60.0), convertDegreesToRadians(30.0));
 
-    SimTK::Force::MobilityLinearStop leftHipForceX(m_forces, m_mobod[LeftThigh],
-            MobilizerQIndex(1), 20, 1.22629,
-            convertDegreesToRadians(-20.0), convertDegreesToRadians(45.0));
-    SimTK::Force::MobilityLinearStop rightHipForceX(m_forces, m_mobod[RightThigh],
-            MobilizerQIndex(1), 20, 1.22629,
-            convertDegreesToRadians(-20.0), convertDegreesToRadians(45.0));
-    SimTK::Force::MobilityLinearStop leftHipForceZ(m_forces, m_mobod[LeftThigh],
-            MobilizerQIndex(3), 20, 1.22629,
-            convertDegreesToRadians(-30.0), convertDegreesToRadians(120.0));
-    SimTK::Force::MobilityLinearStop rightHipForceZ(m_forces, m_mobod[RightThigh],
-            MobilizerQIndex(3), 20, 1.22629,
-            convertDegreesToRadians(-30.0), convertDegreesToRadians(120.0));
+    // SimTK::Force::MobilityLinearStop leftHipForceX(m_forces, m_mobod[LeftThigh],
+    //         MobilizerQIndex(1), 20, 1.22629,
+    //         convertDegreesToRadians(-20.0), convertDegreesToRadians(45.0));
+    // SimTK::Force::MobilityLinearStop rightHipForceX(m_forces, m_mobod[RightThigh],
+    //         MobilizerQIndex(1), 20, 1.22629,
+    //         convertDegreesToRadians(-20.0), convertDegreesToRadians(45.0));
+    // SimTK::Force::MobilityLinearStop leftHipForceZ(m_forces, m_mobod[LeftThigh],
+    //         MobilizerQIndex(3), 20, 1.22629,
+    //         convertDegreesToRadians(-30.0), convertDegreesToRadians(120.0));
+    // SimTK::Force::MobilityLinearStop rightHipForceZ(m_forces, m_mobod[RightThigh],
+    //         MobilizerQIndex(3), 20, 1.22629,
+    //         convertDegreesToRadians(-30.0), convertDegreesToRadians(120.0));
 
     SimTK::Force::MobilityLinearStop leftKneeForce(m_forces, m_mobod[LeftShank],
             MobilizerQIndex(0), 500, 2.95953,
@@ -809,203 +917,216 @@ Gait3D::Gait3D(ContactType contactType)
 
     // Muscles
     // -------
-    DecorativeLine baseLine;
-    baseLine.setColor(Red).setLineThickness(4).setOpacity(.2);
-    PointPathMuscle* muscle;
+    MyPathActuator* actu;
 
     // glut_med_r
-    muscle = new PointPathMuscle(m_matter, 2045, 0.0733, 0.066, 0.3578);
-    muscle->addPoint(m_mobod[Pelvis],     Vec3(-0.0148, 0.0445, 0.0766));
-    muscle->addPoint(m_mobod[RightThigh], Vec3(-0.0258, 0.1642, 0.0527));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[GlutMed_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2045,
+            m_mobod[Pelvis], Vec3(-0.0148, 0.0445, 0.0766),
+            m_mobod[RightThigh], Vec3(-0.0258, 0.1642, 0.0527));
+    m_muscles[GlutMed_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // add_mag_r
-    muscle = new PointPathMuscle(m_matter, 2268, 0.087, 0.06, 0.0872665);
-    muscle->addPoint(m_mobod[Pelvis],     Vec3(-0.0025, -0.1174, 0.0255));
-    muscle->addPoint(m_mobod[RightThigh], Vec3(-0.0045, 0.0489, 0.0339));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[AddMag_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2268,
+            m_mobod[Pelvis], Vec3(-0.0025, -0.1174, 0.0255),
+            m_mobod[RightThigh], Vec3(-0.0045, 0.0489, 0.0339));
+    m_muscles[AddMag_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // hamstrings_r
-    muscle = new PointPathMuscle(m_matter, 2594, 0.0976, 0.319, 0.2025);
-    muscle->addPoint(m_mobod[Pelvis],     Vec3(-0.05526, -0.10257, 0.06944));
-    muscle->addPoint(m_mobod[RightShank], Vec3(-0.028, 0.1667, 0.02943));
-    muscle->addPoint(m_mobod[RightShank], Vec3(-0.021, 0.1467, 0.0343));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Hamstrings_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2594,
+            m_mobod[Pelvis], Vec3(-0.05526, -0.10257, 0.06944),
+            m_mobod[RightShank], Vec3(-0.021, 0.1467, 0.0343));
+    actu->addViaPoint(m_mobod[RightShank], Vec3(-0.028, 0.1667, 0.02943));
+    m_muscles[Hamstrings_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // bifemsh_r
-    muscle = new PointPathMuscle(m_matter, 804, 0.1103, 0.095, 0.2147);
-    muscle->addPoint(m_mobod[RightThigh], Vec3(0.005, -0.0411, 0.0234));
-    muscle->addPoint(m_mobod[RightShank], Vec3(-0.028, 0.1667, 0.02943));
-    muscle->addPoint(m_mobod[RightShank], Vec3(-0.021, 0.1467, 0.0343));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Bifemsh_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 804,
+            m_mobod[RightThigh], Vec3(0.005, -0.0411, 0.0234),
+            m_mobod[RightShank], Vec3(-0.021, 0.1467, 0.0343));
+    actu->addViaPoint(m_mobod[RightShank], Vec3(-0.028, 0.1667, 0.02943));
+    m_muscles[Bifemsh_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // glut_max_r
-    muscle = new PointPathMuscle(m_matter, 1944, 0.1569, 0.111, 0.3822);
-    muscle->addPoint(m_mobod[Pelvis],     Vec3(-0.0642, 0.0176, 0.0563));
-    muscle->addPoint(m_mobod[Pelvis],     Vec3(-0.0669, -0.052, 0.0914));
-    muscle->addPoint(m_mobod[RightThigh], Vec3(-0.0426, 0.117, 0.0293));
-    muscle->addPoint(m_mobod[RightThigh], Vec3(-0.0156, 0.0684, 0.0419));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[GlutMax_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 1944,
+            m_mobod[Pelvis], Vec3(-0.0642, 0.0176, 0.0563),
+            m_mobod[RightThigh], Vec3(-0.0156, 0.0684, 0.0419));
+    SimTK::Transform xform_glut_max_r;
+    xform_glut_max_r.updP() = SimTK::Vec3(-0.04, -0.085, 0.09);
+    Rotation R;
+    R.setRotationToBodyFixedXYZ(SimTK::Vec3(-0.2, 0.5, 0.));
+    xform_glut_max_r.updR() = R;
+    actu->addObstacle(
+        m_mobod[Pelvis],
+        xform_glut_max_r,
+        std::shared_ptr<SimTK::ContactGeometry>(
+            new SimTK::ContactGeometry::Ellipsoid({0.04, 0.04, 0.1})),
+        {-0.04, 0., 0.});
+    m_muscles[GlutMax_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // iliopsoas_r
-    muscle = new PointPathMuscle(m_matter, 2186, 0.1066, 0.152, 0.2496);
-    muscle->addPoint(m_mobod[Pelvis],     Vec3(0.006, 0.0887, 0.0289));
-    muscle->addPoint(m_mobod[Pelvis],     Vec3(0.0407, -0.01, 0.076));
-    muscle->addPoint(m_mobod[RightThigh], Vec3(0.033, 0.135, 0.0038));
-    muscle->addPoint(m_mobod[RightThigh], Vec3(-0.0188, 0.1103, 0.0104));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Iliopsoas_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2186,
+            m_mobod[Pelvis], Vec3(0.006, 0.0887, 0.0289),
+            m_mobod[RightThigh], Vec3(-0.0188, 0.1103, 0.0104));
+    actu->addViaPoint(m_mobod[Pelvis],     Vec3(0.0407, -0.01, 0.076));
+    actu->addViaPoint(m_mobod[RightThigh], Vec3(0.033, 0.135, 0.0038));
+    m_muscles[Iliopsoas_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // rect_fem_r
-    muscle = new PointPathMuscle(m_matter, 1169, 0.0759, 0.3449, 0.2426);
-    muscle->addPoint(m_mobod[Pelvis],     Vec3(0.0412, -0.0311, 0.0968));
-    muscle->addPoint(m_mobod[RightThigh], Vec3(0.038, -0.17, 0.004));
-    muscle->addPoint(m_mobod[RightShank], Vec3(0.038, 0.2117, 0.0018));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[RectFem_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 1169,
+            m_mobod[Pelvis], Vec3(0.0412, -0.0311, 0.0968),
+            m_mobod[RightShank], Vec3(0.038, 0.2117, 0.0018));
+    actu->addViaPoint(m_mobod[RightThigh], Vec3(0.038, -0.17, 0.004));
+    m_muscles[RectFem_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // vasti_r
-    muscle = new PointPathMuscle(m_matter, 4530, 0.0993, 0.1231, 0.0785);
-    muscle->addPoint(m_mobod[RightThigh], Vec3(0.029, -0.0224, 0.031));
-    muscle->addPoint(m_mobod[RightThigh], Vec3(0.038, -0.17, 0.007));
-    muscle->addPoint(m_mobod[RightShank], Vec3(0.038, 0.2117, 0.0018));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Vasti_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 4530,
+            m_mobod[RightThigh], Vec3(0.029, -0.0224, 0.031),
+            m_mobod[RightShank], Vec3(0.038, 0.2117, 0.0018));
+    actu->addViaPoint(m_mobod[RightThigh], Vec3(0.038, -0.17, 0.007));
+    m_muscles[Vasti_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // gastroc_r
-    muscle = new PointPathMuscle(m_matter, 2241, 0.051, 0.384, 0.1728);
-    muscle->addPoint(m_mobod[RightThigh], Vec3(-0.02, -0.218, -0.024));
-    muscle->addPoint(m_mobod[RightFoot],  Vec3(-0.095, 0.001, -0.0053));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Gastroc_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2241,
+           m_mobod[RightThigh], Vec3(-0.02, -0.218, -0.024),
+           m_mobod[RightFoot],  Vec3(-0.095, 0.001, -0.0053));
+    SimTK::Transform xform_gastroc_r;
+    xform_gastroc_r.updP() = SimTK::Vec3(-0.00861, 0.05, 0.);
+    R.setRotationToBodyFixedXYZ(SimTK::Vec3(2.9672, 0.028, -1.478));
+    xform_gastroc_r.updR() = R;
+    actu->addObstacle(
+        m_mobod[Pelvis],
+        xform_gastroc_r,
+        std::shared_ptr<SimTK::ContactGeometry>(
+            new SimTK::ContactGeometry::Ellipsoid({0.065, 0.065, 0.2})),
+        {0., -0.065, 0.});
+    m_muscles[Gastroc_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // soleus_r
-    muscle = new PointPathMuscle(m_matter, 3549, 0.044, 0.248, 0.4939);
-    muscle->addPoint(m_mobod[RightShank], Vec3(-0.0024, 0.0334, 0.0071));
-    muscle->addPoint(m_mobod[RightFoot],  Vec3(-0.095, 0.001, -0.0053));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Soleus_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 3549,
+            m_mobod[RightShank], Vec3(-0.0024, 0.0334, 0.0071),
+            m_mobod[RightFoot],  Vec3(-0.095, 0.001, -0.0053));
+    m_muscles[Soleus_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // tib_ant_r
-    muscle = new PointPathMuscle(m_matter, 1579, 0.0683, 0.243, 0.1676);
-    muscle->addPoint(m_mobod[RightShank], Vec3(0.0179, 0.0243, 0.0115));
-    muscle->addPoint(m_mobod[RightShank], Vec3(0.0329, -0.2084, -0.0177));
-    muscle->addPoint(m_mobod[RightFoot],  Vec3(0.0166, -0.0122, -0.0305));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[TibAnt_R] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 1579,
+            m_mobod[RightShank], Vec3(0.0179, 0.0243, 0.0115),
+            m_mobod[RightFoot],  Vec3(0.0166, -0.0122, -0.0305));
+    actu->addViaPoint(m_mobod[RightShank], Vec3(0.0329, -0.2084, -0.0177));
+    m_muscles[TibAnt_R] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // glut_med_l
-    muscle = new PointPathMuscle(m_matter, 2045, 0.0733, 0.066, 0.3578);
-    muscle->addPoint(m_mobod[Pelvis],    Vec3(-0.0148, 0.0445, -0.0766));
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(-0.0258, 0.1642, -0.0527));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[GlutMed_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2045,
+            m_mobod[Pelvis], Vec3(-0.0148, 0.0445, -0.0766),
+            m_mobod[LeftThigh], Vec3(-0.0258, 0.1642, -0.0527));
+    m_muscles[GlutMed_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // add_mag_l
-    muscle = new PointPathMuscle(m_matter, 2268, 0.087, 0.06, 0.0872665);
-    muscle->addPoint(m_mobod[Pelvis],    Vec3(-0.0025, -0.1174, -0.0255));
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(-0.0045, 0.0489, -0.0339));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[AddMag_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2268,
+            m_mobod[Pelvis], Vec3(-0.0025, -0.1174, -0.0255),
+            m_mobod[LeftThigh], Vec3(-0.0045, 0.0489, -0.0339));
+    m_muscles[AddMag_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // hamstrings_l
-    muscle = new PointPathMuscle(m_matter, 2594, 0.0976, 0.319, 0.2025);
-    muscle->addPoint(m_mobod[Pelvis],   Vec3(-0.05526, -0.10257, -0.06944));
-    muscle->addPoint(m_mobod[LeftShank], Vec3(-0.028, 0.1667, -0.02943));
-    muscle->addPoint(m_mobod[LeftShank], Vec3(-0.021, 0.1467, -0.0343));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Hamstrings_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2594,
+            m_mobod[Pelvis], Vec3(-0.05526, -0.10257, -0.06944),
+            m_mobod[LeftShank], Vec3(-0.021, 0.1467, -0.0343));
+    actu->addViaPoint(m_mobod[LeftShank], Vec3(-0.028, 0.1667, -0.02943));
+    m_muscles[Hamstrings_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // bifemsh_l
-    muscle = new PointPathMuscle(m_matter, 804, 0.1103, 0.095, 0.2147);
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(0.005, -0.0411, -0.0234));
-    muscle->addPoint(m_mobod[LeftShank], Vec3(-0.028, 0.1667, -0.02943));
-    muscle->addPoint(m_mobod[LeftShank], Vec3(-0.021, 0.1467, -0.0343));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Bifemsh_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 804,
+            m_mobod[LeftThigh], Vec3(0.005, -0.0411, -0.0234),
+            m_mobod[LeftShank], Vec3(-0.021, 0.1467, -0.0343));
+    actu->addViaPoint(m_mobod[LeftShank], Vec3(-0.028, 0.1667, -0.02943));
+    m_muscles[Bifemsh_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // glut_max_l
-    muscle = new PointPathMuscle(m_matter, 1944, 0.1569, 0.111, 0.3822);
-    muscle->addPoint(m_mobod[Pelvis],    Vec3(-0.0642, 0.0176, -0.0563));
-    muscle->addPoint(m_mobod[Pelvis],    Vec3(-0.0669, -0.052, -0.0914));
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(-0.0426, 0.117, -0.0293));
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(-0.0156, 0.0684, -0.0419));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[GlutMax_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 1944,
+            m_mobod[Pelvis], Vec3(-0.0642, 0.0176, -0.0563),
+            m_mobod[LeftThigh], Vec3(-0.0156, 0.0684, -0.0419));
+    SimTK::Transform xform_glut_max_l;
+    xform_glut_max_l.updP() = SimTK::Vec3(-0.04, -0.085, -0.09);
+    R.setRotationToBodyFixedXYZ(SimTK::Vec3(-0.2, -0.5, 0.));
+    xform_glut_max_l.updR() = R;
+    actu->addObstacle(
+        m_mobod[Pelvis],
+        xform_glut_max_l,
+        std::shared_ptr<SimTK::ContactGeometry>(
+            new SimTK::ContactGeometry::Ellipsoid({0.04, 0.04, 0.1})),
+        {-0.04, 0., 0.});
+    m_muscles[GlutMax_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // iliopsoas_l
-    muscle = new PointPathMuscle(m_matter, 2186, 0.1066, 0.152, 0.2496);
-    muscle->addPoint(m_mobod[Pelvis],    Vec3(0.006, 0.0887, -0.0289));
-    muscle->addPoint(m_mobod[Pelvis],    Vec3(0.0407, -0.01, -0.076));
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(0.033, 0.135, -0.0038));
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(-0.0188, 0.1103, -0.0104));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Iliopsoas_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2186,
+            m_mobod[Pelvis], Vec3(0.006, 0.0887, -0.0289),
+            m_mobod[LeftThigh], Vec3(-0.0188, 0.1103, -0.0104));
+    actu->addViaPoint(m_mobod[Pelvis],    Vec3(0.0407, -0.01, -0.076));
+    actu->addViaPoint(m_mobod[LeftThigh], Vec3(0.033, 0.135, -0.0038));
+    m_muscles[Iliopsoas_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // rect_fem_l
-    muscle = new PointPathMuscle(m_matter, 1169, 0.0759, 0.3449, 0.2426);
-    muscle->addPoint(m_mobod[Pelvis],    Vec3(0.0412, -0.0311, -0.0968));
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(0.038, -0.17, -0.004));
-    muscle->addPoint(m_mobod[LeftShank], Vec3(0.038, 0.2117, -0.0018));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[RectFem_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 1169,
+            m_mobod[Pelvis], Vec3(0.0412, -0.0311, -0.0968),
+            m_mobod[LeftShank], Vec3(0.038, 0.2117, -0.0018));
+    actu->addViaPoint(m_mobod[LeftThigh], Vec3(0.038, -0.17, -0.004));
+    m_muscles[RectFem_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // vasti_l
-    muscle = new PointPathMuscle(m_matter, 4530, 0.0993, 0.1231, 0.0785);
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(0.029, -0.0224, -0.031));
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(0.038, -0.17, -0.007));
-    muscle->addPoint(m_mobod[LeftShank], Vec3(0.038, 0.2117, -0.0018));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Vasti_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 4530,
+            m_mobod[LeftThigh], Vec3(0.029, -0.0224, -0.031),
+            m_mobod[LeftShank], Vec3(0.038, 0.2117, -0.0018));
+    actu->addViaPoint(m_mobod[LeftThigh], Vec3(0.038, -0.17, -0.007));
+    m_muscles[Vasti_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // gastroc_l
-    muscle = new PointPathMuscle(m_matter, 2241, 0.051, 0.384, 0.1728);
-    muscle->addPoint(m_mobod[LeftThigh], Vec3(-0.02, -0.218, 0.024));
-    muscle->addPoint(m_mobod[LeftFoot],  Vec3(-0.095, 0.001, 0.0053));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Gastroc_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 2241,
+            m_mobod[LeftThigh], Vec3(-0.02, -0.218, 0.024),
+            m_mobod[LeftFoot],  Vec3(-0.095, 0.001, 0.0053));
+    SimTK::Transform xform_gastroc_l;
+    xform_gastroc_l.updP() = SimTK::Vec3(-0.00861, 0.05, 0.);
+    R.setRotationToBodyFixedXYZ(SimTK::Vec3(-2.9672, 0.028, 1.478));
+    xform_gastroc_l.updR() = R;
+    actu->addObstacle(
+        m_mobod[Pelvis],
+        xform_gastroc_l,
+        std::shared_ptr<SimTK::ContactGeometry>(
+            new SimTK::ContactGeometry::Ellipsoid({0.065, 0.065, 0.2})),
+        {-0.065, 0., 0.});
+    m_muscles[Gastroc_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // soleus_l
-    muscle = new PointPathMuscle(m_matter, 3549, 0.044, 0.248, 0.4939);
-    muscle->addPoint(m_mobod[LeftShank], Vec3(-0.0024, 0.0334, -0.0071));
-    muscle->addPoint(m_mobod[LeftFoot],  Vec3(-0.095, 0.001, 0.0053));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[Soleus_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 3549,
+            m_mobod[LeftShank], Vec3(-0.0024, 0.0334, -0.0071),
+            m_mobod[LeftFoot],  Vec3(-0.095, 0.001, 0.0053));
+    m_muscles[Soleus_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 
     // tib_ant_l
-    muscle = new PointPathMuscle(m_matter, 1579, 0.0683, 0.243, 0.1676);
-    muscle->addPoint(m_mobod[LeftShank], Vec3(0.0179, 0.0243, -0.0115));
-    muscle->addPoint(m_mobod[LeftShank], Vec3(0.0329, -0.2084, 0.0177));
-    muscle->addPoint(m_mobod[LeftFoot],  Vec3(0.0166, -0.0122, 0.0305));
-    muscle->addDecorativeLines(m_viz, baseLine);
-    m_muscles[TibAnt_L] = muscle;
-    SimTK::Force::Custom(m_forces, muscle);
+    actu = new MyPathActuator(m_cables, 1579,
+            m_mobod[LeftShank], Vec3(0.0179, 0.0243, -0.0115),
+            m_mobod[LeftFoot],  Vec3(0.0166, -0.0122, 0.0305));
+    actu->addViaPoint(m_mobod[LeftShank], Vec3(0.0329, -0.2084, 0.0177));
+    m_muscles[TibAnt_L] = actu;
+    SimTK::Force::Custom(m_forces, actu);
 }
 
 void Gait3D::loadDefaultState(State& state) {
@@ -1016,17 +1137,17 @@ void Gait3D::loadDefaultState(State& state) {
 
     m_mobod[Pelvis].setQToFitTranslation(state, Vec3(0,1.05,0));
 
-    // m_mobod[Torso].setQToFitRotation(state, Rotation(-Pi/6, ZAxis));
+    m_mobod[Torso].setQToFitRotation(state, Rotation(-Pi/6, ZAxis));
 
-    // m_mobod[LeftThigh].setOneQ(state, 1, hipAbductionAngle);
-    // m_mobod[LeftThigh].setOneQ(state, 3, hipFlexionAngle);
-    // m_mobod[LeftShank].setOneQ(state, 0, kneeAngle);
-    // m_mobod[LeftFoot].setOneQ(state, 0, ankleAngle);
+    m_mobod[LeftThigh].setOneQ(state, 1, hipAbductionAngle);
+    m_mobod[LeftThigh].setOneQ(state, 3, hipFlexionAngle);
+    m_mobod[LeftShank].setOneQ(state, 0, kneeAngle);
+    m_mobod[LeftFoot].setOneQ(state, 0, ankleAngle);
 
-    // m_mobod[RightThigh].setOneQ(state, 1, -hipAbductionAngle);
-    // m_mobod[RightThigh].setOneQ(state, 3, hipFlexionAngle);
-    // m_mobod[RightShank].setOneQ(state, 0, kneeAngle);
-    // m_mobod[RightFoot].setOneQ(state, 0, ankleAngle);
+    m_mobod[RightThigh].setOneQ(state, 1, -hipAbductionAngle);
+    m_mobod[RightThigh].setOneQ(state, 3, hipFlexionAngle);
+    m_mobod[RightShank].setOneQ(state, 0, kneeAngle);
+    m_mobod[RightFoot].setOneQ(state, 0, ankleAngle);
 
 }
 
@@ -1164,3 +1285,38 @@ Real PointPathMuscle::calcPotentialEnergy(const State& state) const {
     return 1.0;
 }
 
+///////////////////////////////////////////////////////////////////////////
+
+MyPathActuator::MyPathActuator(CableSubsystem& cables,
+        const Real& optimalForce, MobilizedBodyIndex originBody,
+        const Vec3& originStation, MobilizedBodyIndex insertionBody,
+        const Vec3& insertionStation) : m_optimalForce(optimalForce) {
+
+    m_cable = CableSpan(cables, originBody, originStation,
+            insertionBody, insertionStation);
+}
+
+void MyPathActuator::addViaPoint(MobilizedBodyIndex body, const Vec3& station) {
+    m_cable.addViaPoint(body, station);
+
+}
+
+void MyPathActuator::addObstacle(MobilizedBodyIndex body, const Transform& X_BS,
+        const std::shared_ptr<SimTK::ContactGeometry>& obstacleGeometry,
+        const Vec3& contactHint) {
+    m_cable.addObstacle(body, X_BS, obstacleGeometry, contactHint);
+}
+
+void MyPathActuator::calcForce(const State& state,
+                                Vector_<SpatialVec>& bodyForces,
+                                Vector_<Vec3>& particleForces,
+                                Vector& mobilityForces) const {
+    Real excitation = 0.1;
+    Real tension = m_optimalForce * excitation;
+    m_cable.applyBodyForces(state, tension, bodyForces);
+}
+
+Real MyPathActuator::calcPotentialEnergy(const State& state) const {
+    // TODO
+    return 1.0;
+}

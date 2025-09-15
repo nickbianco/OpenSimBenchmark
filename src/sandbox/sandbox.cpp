@@ -10,6 +10,7 @@ int main() {
 
     Model model("Gait3D.osim");
     model.initSystem();
+    // model.setUseVisualizer(true);
 
     // VisualizerUtilities::showModel(model);
 
@@ -20,7 +21,7 @@ int main() {
     SimTK::State state = model.initSystem();
 
     // Randomize the initial speeds.
-    state.updU() = 2.0*SimTK::Test::randVector(state.getNU());
+    state.updU() = SimTK::Test::randVector(state.getNU());
 
     // Default controls
     // ----------------
@@ -28,18 +29,21 @@ int main() {
     model.getComponent<DiscreteController>("/controllerset/controller").
         setDiscreteControls(state, controls);
 
-    bool visualize = false;
+    bool visualize = true;
     Manager manager(model);
     manager.setIntegratorMethod(Manager::IntegratorMethod::CPodes);
-    manager.setIntegratorAccuracy(1e-2);
+    manager.setIntegratorAccuracy(1e-3);
     manager.setPerformAnalyses(visualize);
     manager.setWriteToStorage(visualize);
+    manager.setRecordStatesTrajectory(visualize);
     manager.initialize(state);
-    manager.integrate(10.0);
+    manager.integrate(5.0);
 
     TimeSeriesTable statesTable = manager.getStatesTable();
     if (visualize) {
         VisualizerUtilities::showMotion(model, statesTable);
+        // StatesDocument statesDoc = manager.getStatesTrajectory().exportToStatesDocument(model);
+        // statesDoc.serialize("test.ostates");
     }
 
     return 0;
